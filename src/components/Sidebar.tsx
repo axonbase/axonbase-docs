@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 const sections = [
   { label: "nav_intro", links: [
-    { to: "/", label: "nav_home" },
+    { to: "/docs", label: "nav_home" },
     { to: "/use-cases", label: "nav_use_cases" },
     { to: "/getting-started", label: "nav_getting_started" },
     { to: "/installation", label: "nav_installation" },
@@ -82,7 +82,7 @@ export default function Sidebar({ open, onNavigate }: { open: boolean; onNavigat
             <NavLink
               key={link.to}
               to={link.to}
-              end={link.to === "/"}
+              end={link.to === "/docs"}
               className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}
               onClick={onNavigate}
             >
