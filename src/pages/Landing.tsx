@@ -13,7 +13,7 @@ export default function Landing() {
   const pt = i18n.language.startsWith("pt");
   const copy = pt ? {
     nav: "Documentação", hero: "Dados que acompanham a ambição do seu produto.",
-    lead: "AxonBase reúne transações, busca e múltiplos modelos de dados em um único motor para equipes que não querem montar a infraestrutura peça por peça.",
+    lead: "Banco de dados multimodelo para produtos que evoluem, feito 100% em Java. Reúne transações, busca e múltiplos modelos de dados em um único motor para equipes que não querem montar a infraestrutura peça por peça.",
     start: "Ler a documentação", github: "GitHub", docs: "Documentação", signal: "Java 21+ / código aberto",
     proof: "Uma superfície de dados. Menos serviços para operar.",
     modalTitle: "Um motor. Seis maneiras de modelar seu produto.", modalLead: "Escolha a estrutura que o domínio pede e combine modelos na mesma plataforma.", modal: [["Documentos e tabelas", "Dados flexíveis ou com esquema, sob o mesmo catálogo."], ["Grafos", "Relações e travessias direcionadas para domínios conectados."], ["Chave-valor", "Leituras e gravações diretas por namespace e banco."], ["Vetores", "Embeddings e similaridade HNSW junto dos registros."], ["Texto completo", "BM25, analisadores, relevância e trechos destacados."], ["Geoespacial", "Pontos GeoJSON, índice GEO e distância em metros."]],
@@ -23,7 +23,7 @@ export default function Landing() {
     final: "Comece com uma consulta. Cresça sem trocar de banco.", footer: "Banco de dados multimodelo para produtos que evoluem.", registry: "Abrir registry",
   } : {
     nav: "Documentation", hero: "Data infrastructure that keeps up with product ambition.",
-    lead: "AxonBase brings transactions, search, and multiple data models into one engine for teams that refuse to assemble infrastructure piece by piece.",
+    lead: "A multi-model database for evolving products, built entirely in Java. It brings transactions, search, and multiple data models into one engine for teams that refuse to assemble infrastructure piece by piece.",
     start: "Read the documentation", github: "GitHub", docs: "Documentation", signal: "Java 21+ / open source",
     proof: "One data surface. Fewer services to operate.",
     modalTitle: "One engine. Six ways to model your product.", modalLead: "Choose the structure your domain needs and combine models on the same platform.", modal: [["Documents and tables", "Flexible or schema-full data under the same catalog."], ["Graphs", "Directed relationships and traversals for connected domains."], ["Key-value", "Direct reads and writes per namespace and database."], ["Vectors", "Embeddings and HNSW similarity next to the records."], ["Full-text", "BM25, analyzers, relevance scoring, and highlighted snippets."], ["Geospatial", "GeoJSON points, GEO indexes, and distance in meters."]],
