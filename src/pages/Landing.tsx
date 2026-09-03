@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 const connectors = [
   ["Java", "java/java-original.svg", "https://central.sonatype.com/artifact/com.axondatabase/axonbase-sdk-java"], ["Python", "python/python-original.svg", "https://pypi.org/project/axonbase-sdk/"],
@@ -10,6 +11,7 @@ const connectors = [
 
 export default function Landing() {
   const { i18n } = useTranslation();
+  const [javaOpen, setJavaOpen] = useState(false);
   const pt = i18n.language.startsWith("pt");
   const copy = pt ? {
     nav: "Documentação", hero: "Dados que acompanham a ambição do seu produto.",
@@ -20,7 +22,7 @@ export default function Landing() {
     platform: "Recursos que mantêm o produto em movimento.", features: [["DATABASE LINK", "Consulte e faça joins entre bancos AxonBase remotos sem sair da consulta."], ["Sagas distribuídas", "Coordene fluxos independentes com compensação local em caso de cancelamento."], ["Data Rules", "Aplique predicados por linha e mascaramento de campos de forma transparente."], ["Time Travel", "Leia estados anteriores do ledger WAL dentro dos limites de retenção configurados."], ["Cluster Raft", "Replicação por quorum, roteamento ao líder e recuperação após failover."], ["Índice colunar", "Acelere agregações count, sum, avg, min e max sem carregar documentos completos."], ["AI Audit", "Regras de segurança classificam consultas antes da execução."], ["Segurança de ponta a ponta", "JWT, escopos, TLS, mTLS, certificados, CORS e limites de taxa."], ["Operação observável", "Métricas Prometheus, health checks, logs JSON, backups e replicação Raft."]],
     cases: "Feito para sistemas que não cabem em uma tabela", caseItems: [["Produtos com IA", "Contexto, recuperação vetorial e regras de segurança para cada consulta."], ["Operações distribuídas", "Fluxos de pagamento, estoque e logística com sagas e trilhas de auditoria."], ["Plataformas de dados", "Uma API para dados relacionais, documentos, grafos e análises operacionais."]],
     connectorTitle: "Escreva na linguagem da sua equipe.", connectorLead: "SDKs publicados nos principais registries, todos sobre o mesmo protocolo.",
-    final: "Comece com uma consulta. Cresça sem trocar de banco.", footer: "Banco de dados multimodelo para produtos que evoluem.", registry: "Abrir registry",
+    final: "Comece com uma consulta. Cresça sem trocar de banco.", footer: "Banco de dados multimodelo para produtos que evoluem.", registry: "Abrir registry", javaTitle: "Ecossistema Java", javaLead: "Escolha a integração que corresponde à sua aplicação.", close: "Fechar",
   } : {
     nav: "Documentation", hero: "Data infrastructure that keeps up with product ambition.",
     lead: "A multi-model database for evolving products, built entirely in Java. It brings transactions, search, and multiple data models into one engine for teams that refuse to assemble infrastructure piece by piece.",
@@ -30,7 +32,7 @@ export default function Landing() {
     platform: "Capabilities that keep product moving.", features: [["DATABASE LINK", "Query and join remote AxonBase databases without leaving the query."], ["Distributed Sagas", "Coordinate independent flows with local compensation on cancellation."], ["Data Rules", "Apply row predicates and field masking transparently."], ["Time Travel", "Read earlier WAL-ledger states within configured retention limits."], ["Raft Cluster", "Quorum replication, leader routing, and recovery after failover."], ["Columnar index", "Accelerate count, sum, avg, min, and max without loading complete documents."], ["AI Audit", "Security rules classify queries before execution."], ["End-to-end security", "JWT, scopes, TLS, mTLS, certificates, CORS, and rate limits."], ["Observable operations", "Prometheus metrics, health checks, JSON logs, backups, and Raft replication."]],
     cases: "Built for systems that outgrow a single table", caseItems: [["AI products", "Context, vector retrieval, and security rules for every query."], ["Distributed operations", "Payment, inventory, and logistics flows with sagas and audit trails."], ["Data platforms", "One API for relational data, documents, graphs, and operational analytics."]],
     connectorTitle: "Write in your team's language.", connectorLead: "SDKs published to the major registries, all over the same protocol.",
-    final: "Start with a query. Grow without changing databases.", footer: "A multi-model database for products that evolve.", registry: "Open registry",
+    final: "Start with a query. Grow without changing databases.", footer: "A multi-model database for products that evolve.", registry: "Open registry", javaTitle: "Java ecosystem", javaLead: "Choose the integration that fits your application.", close: "Close",
   };
 
   return <main className="landing">
@@ -52,9 +54,10 @@ export default function Landing() {
     <section className="landing-section landing-modal"><p className="landing-index">01 / MULTI-MODEL</p><h2>{copy.modalTitle}</h2><p className="landing-modal-lead">{copy.modalLead}</p><div className="landing-model-grid">{copy.modal.map(([title, text], index) => <article key={title}><FeatureGlyph group="model" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
     <section className="landing-section landing-features"><p className="landing-index">02 / PLATFORM</p><div className="landing-section-head"><h2>{copy.platform}</h2></div><div className="landing-feature-list landing-feature-list-six">{copy.features.map(([title, text], index) => <article key={title}><FeatureGlyph group="feature" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
     <section className="landing-section landing-cases"><p className="landing-index">03 / USE CASES</p><h2>{copy.cases}</h2><div className="landing-case-list">{copy.caseItems.map(([title, text], index) => <article key={title}><div className={`case-orb orb-${index}`} /><FeatureGlyph group="case" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
-    <section className="landing-connectors"><div><p className="landing-index">04 / SDKS</p><h2>{copy.connectorTitle}</h2><p>{copy.connectorLead}</p></div><div className="connector-wall">{connectors.map(([name, icon, href]) => <a key={name} href={href} target="_blank" rel="noreferrer" className="connector"><img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${icon}`} alt="" /><span>{name}</span><small>{copy.registry} ↗</small></a>)}</div></section>
+    <section className="landing-connectors"><div><p className="landing-index">04 / SDKS</p><h2>{copy.connectorTitle}</h2><p>{copy.connectorLead}</p></div><div className="connector-wall">{connectors.map(([name, icon, href]) => name === "Java" ? <button key={name} type="button" className="connector" onClick={() => setJavaOpen(true)}><img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${icon}`} alt="" /><span>{name}</span><small>{copy.registry} ↗</small></button> : <a key={name} href={href} target="_blank" rel="noreferrer" className="connector"><img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${icon}`} alt="" /><span>{name}</span><small>{copy.registry} ↗</small></a>)}</div></section>
     <section className="landing-cta"><p className="landing-kicker">AXONBASE / READY WHEN YOU ARE</p><h2>{copy.final}</h2><Link to="/docs" className="landing-primary">{copy.start} <b>→</b></Link></section>
     <footer className="landing-footer"><span className="landing-brand"><span>A</span>AxonBase</span><p>{copy.footer}</p><a href="https://github.com/axonbase/axonbase" target="_blank" rel="noreferrer">github.com/axonbase/axonbase</a></footer>
+    {javaOpen && <div className="java-modal-backdrop" role="presentation" onClick={() => setJavaOpen(false)}><section className="java-modal" role="dialog" aria-modal="true" aria-labelledby="java-modal-title" onClick={(event) => event.stopPropagation()}><button type="button" className="java-modal-close" aria-label={copy.close} onClick={() => setJavaOpen(false)}>×</button><p className="landing-index">MAVEN CENTRAL</p><h2 id="java-modal-title">{copy.javaTitle}</h2><p>{copy.javaLead}</p><div className="java-artifacts"><a href="https://central.sonatype.com/artifact/com.axondatabase/axonbase-sdk-java" target="_blank" rel="noreferrer"><b>SDK Java</b><span>axonbase-sdk-java</span><i>↗</i></a><a href="https://central.sonatype.com/artifact/com.axondatabase/axonbase-spring-data" target="_blank" rel="noreferrer"><b>Spring Data</b><span>axonbase-spring-data</span><i>↗</i></a><a href="https://central.sonatype.com/artifact/com.axondatabase/axonbase-jdbc" target="_blank" rel="noreferrer"><b>Hibernate / JDBC</b><span>axonbase-jdbc</span><i>↗</i></a></div></section></div>}
   </main>;
 }
 
