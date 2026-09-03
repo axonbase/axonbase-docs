@@ -9,6 +9,12 @@ const connectors = [
   ["PHP", "php/php-original.svg", "https://packagist.org/packages/axonbase/sdk"], [".NET", "dot-net/dot-net-original.svg", "https://www.nuget.org/packages/AxonBase.Sdk"],
 ];
 
+const caseImages = [
+  "/images/landing/axonbase-agent-network.png",
+  "/images/landing/axonbase-distributed-operations.png",
+  "/images/landing/axonbase-data-platforms.png",
+];
+
 export default function Landing() {
   const { i18n } = useTranslation();
   const [javaOpen, setJavaOpen] = useState(false);
@@ -53,7 +59,7 @@ export default function Landing() {
   axonbase/axonbase:latest`}</code></pre></section>
     <section className="landing-section landing-modal"><p className="landing-index">01 / MULTI-MODEL</p><h2>{copy.modalTitle}</h2><p className="landing-modal-lead">{copy.modalLead}</p><div className="landing-model-grid">{copy.modal.map(([title, text], index) => <article key={title}><FeatureGlyph group="model" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
     <section className="landing-section landing-features"><p className="landing-index">02 / PLATFORM</p><div className="landing-section-head"><h2>{copy.platform}</h2></div><div className="landing-feature-list landing-feature-list-six">{copy.features.map(([title, text], index) => <article key={title}><FeatureGlyph group="feature" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
-    <section className="landing-section landing-cases"><p className="landing-index">03 / USE CASES</p><h2>{copy.cases}</h2><div className="landing-case-list">{copy.caseItems.map(([title, text], index) => <article key={title} className={index === 0 ? "case-ai" : ""}>{index === 0 && <img src="/images/landing/axonbase-agent-network.png" alt="Rede abstrata de agentes de IA" />}<div className={`case-orb orb-${index}`} /><FeatureGlyph group="case" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+    <section className="landing-section landing-cases"><p className="landing-index">03 / USE CASES</p><h2>{copy.cases}</h2><div className="landing-case-list">{copy.caseItems.map(([title, text], index) => <article key={title} className="case-visual"><img src={caseImages[index]} alt="Ilustração abstrata da capacidade AxonBase" /><div className={`case-orb orb-${index}`} /><FeatureGlyph group="case" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
     <section className="landing-connectors"><div><p className="landing-index">04 / SDKS</p><h2>{copy.connectorTitle}</h2><p>{copy.connectorLead}</p></div><div className="connector-wall">{connectors.map(([name, icon, href]) => name === "Java" ? <button key={name} type="button" className="connector" onClick={() => setJavaOpen(true)}><img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${icon}`} alt="" /><span>{name}</span><small>{copy.registry} ↗</small></button> : <a key={name} href={href} target="_blank" rel="noreferrer" className="connector"><img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${icon}`} alt="" /><span>{name}</span><small>{copy.registry} ↗</small></a>)}</div></section>
     <section className="landing-cta"><p className="landing-kicker">AXONBASE / READY WHEN YOU ARE</p><h2>{copy.final}</h2><Link to="/docs" className="landing-primary">{copy.start} <b>→</b></Link></section>
     <footer className="landing-footer"><span className="landing-brand"><span>A</span>AxonBase</span><p>{copy.footer}</p><a href="https://github.com/axonbase/axonbase" target="_blank" rel="noreferrer">github.com/axonbase/axonbase</a></footer>
