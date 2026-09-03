@@ -1,0 +1,16 @@
+export default function CliServerFlowDiagram() {
+  return (
+    <svg aria-labelledby="cli-server-flow-title cli-server-flow-description" role="img" viewBox="0 0 760 270" width="100%" style={{ display: "block", height: "auto", margin: "1.75rem 0" }} xmlns="http://www.w3.org/2000/svg">
+      <title id="cli-server-flow-title">CLI to server flow</title>
+      <desc id="cli-server-flow-description">A shell command is parsed by the AxonBase command-line interface, sent to the server, executed, and rendered back as structured terminal output.</desc>
+      <defs><linearGradient id="cli-surface" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#f8fafc" /><stop offset="1" stopColor="#eef6ff" /></linearGradient><marker id="cli-arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0 0L8 4L0 8Z" fill="#2463a2" /></marker></defs>
+      <rect width="760" height="270" rx="20" fill="url(#cli-surface)" /><text x="40" y="42" fill="#2463a2" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11" fontWeight="700" letterSpacing="1.8">COMMAND LINE / EXECUTION PATH</text>
+      <g transform="translate(43 82)"><rect width="204" height="119" rx="15" fill="#0c1f35" /><circle cx="25" cy="24" r="5" fill="#ff7a7a" /><circle cx="42" cy="24" r="5" fill="#facc6a" /><circle cx="59" cy="24" r="5" fill="#8ff5c6" /><text x="20" y="61" fill="#8ff5c6" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="12">$ axon query</text><text x="20" y="84" fill="#d5efff" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11">"MATCH (n) RETURN n"</text></g>
+      <path d="M247 141H310" fill="none" markerEnd="url(#cli-arrow)" stroke="#2463a2" strokeWidth="2.5" /><text x="278" y="128" fill="#2463a2" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="10" fontWeight="700" textAnchor="middle">PARSE</text>
+      <g transform="translate(310 91)"><rect width="140" height="100" rx="15" fill="#fff" stroke="#bad1e8" strokeWidth="2" /><path d="M38 31h25l10 10v28H38zM62 31v11h11" fill="none" stroke="#2463a2" strokeWidth="2.5" /><text x="70" y="80" fill="#102a43" fontFamily="ui-sans-serif, system-ui" fontSize="14" fontWeight="800" textAnchor="middle">CLI client</text></g>
+      <path d="M450 141H513" fill="none" markerEnd="url(#cli-arrow)" stroke="#2463a2" strokeWidth="2.5" /><text x="482" y="128" fill="#2463a2" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="10" fontWeight="700" textAnchor="middle">HTTP</text>
+      <g transform="translate(513 82)"><rect width="204" height="119" rx="15" fill="#2463a2" /><path d="M37 38h30v20H37zM43 32v6M61 32v6M43 58v7M61 58v7" fill="none" stroke="#cce8ff" strokeWidth="2.5" /><text x="102" y="82" fill="#fff" fontFamily="ui-sans-serif, system-ui" fontSize="15" fontWeight="800" textAnchor="middle">AxonBase server</text><text x="102" y="103" fill="#cce8ff" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="10" textAnchor="middle">EXECUTE + RESPOND</text></g>
+      <path d="M614 201v34H146v-34" fill="none" markerEnd="url(#cli-arrow)" stroke="#75b6e5" strokeDasharray="5 5" strokeWidth="2" /><text x="380" y="253" fill="#486581" fontFamily="ui-sans-serif, system-ui" fontSize="12" fontWeight="700" textAnchor="middle">Readable output returns to the terminal</text>
+    </svg>
+  );
+}

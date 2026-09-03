@@ -1,0 +1,1984 @@
+{
+  "nav_intro": "Introduction",
+  "nav_home": "Home",
+  "nav_use_cases": "Use Cases",
+  "nav_getting_started": "Getting Started",
+  "nav_installation": "Installation",
+  "nav_operations": "Operations",
+  "nav_configuration": "Configuration",
+  "nav_cli": "CLI",
+  "nav_docker": "Docker",
+  "nav_cluster": "Cluster",
+  "nav_storage": "Storage",
+  "nav_backup": "Backup",
+  "nav_sql": "AxonQL",
+  "nav_sql_overview": "Overview",
+  "nav_sql_ddl": "DDL",
+  "nav_sql_dml": "DML",
+  "nav_sql_dql": "DQL",
+  "nav_sql_functions": "Functions",
+  "nav_sql_operators": "Operators",
+  "nav_sql_time_travel": "Time Travel",
+  "nav_http": "HTTP & APIs",
+  "nav_http_overview": "Overview",
+  "nav_http_rest": "REST",
+  "nav_http_rpc": "JSON-RPC",
+  "nav_http_graphql": "GraphQL",
+  "nav_http_mcp": "MCP",
+  "nav_sdks": "SDKs",
+  "nav_sdk_overview": "Overview",
+  "nav_sdk_java": "Java",
+  "nav_sdk_node": "Node.js",
+  "nav_sdk_python": "Python",
+  "nav_sdk_go": "Go",
+  "nav_sdk_dotnet": ".NET",
+  "nav_sdk_rust": "Rust",
+  "nav_integration": "Integration",
+  "nav_jdbc": "JDBC",
+  "nav_certificate": "Digital Certificate",
+  "nav_ops": "Administration",
+  "nav_security": "Security",
+  "nav_observability": "Observability",
+  "nav_faq": "FAQ",
+  "nav_changelog": "Changelog",
+  "nav_search": "Advanced Search",
+  "search_title": "Advanced Search",
+  "search_intro": "AxonBase offers four indexed search modalities: full-text, semantic vectors, geographic coordinates, and graph traversal. Each modality has its own index type and query operator in AxonQL.",
+  "search_ft_title": "Full-Text Search with BM25 Ranking",
+  "search_ft_desc": "The SEARCH index tokenizes text with a configurable analyzer (lowercase, stopwords, stemming) and indexes terms for BM25 (Best Matching 25) relevance search. The @@ operator activates the index, and search::score() and search::highlight() expose the relevance score and highlighted snippet in the projection.",
+  "search_ft_example": "DEFINE ANALYZER en_analyzer LOWERCASE STOPWORDS [\"the\", \"a\", \"an\", \"of\", \"for\"] STEMMING;\nDEFINE INDEX article_body_search ON TABLE article COLUMNS body SEARCH ANALYZER en_analyzer;\nCREATE article:1 CONTENT {title: \"BM25 in AxonBase\", body: \"The BM25 algorithm calculates document relevance by term.\"};\nSELECT title, search::score() AS relevance, search::highlight(body) AS snippet FROM article WHERE body @@ \"bm25 relevance\" ORDER BY search::score() DESC;",
+  "search_ft_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [data:/data]\nvolumes: {data:}",
+  "search_vector_title": "Vector Search with HNSW",
+  "search_vector_desc": "The HNSW (Hierarchical Navigable Small World) index organizes vectors into a multi-level structure for approximate nearest neighbor (ANN) search. Cosine similarity measures the angle between two vectors; the closer to 1, the greater the semantic similarity. The WHERE field @@ $vector operator activates the vector index when an HNSW index is defined on the field.",
+  "search_vector_example": "DEFINE INDEX article_vec ON TABLE article COLUMNS embedding HNSW;\nCREATE article:1 CONTENT {title: \"RAG with AxonBase\", embedding: [0.12, 0.45, 0.78, 0.33]};\nLET $query = [0.11, 0.44, 0.76, 0.35];\nSELECT title, vector::distance::cosine(embedding, $query) AS dist FROM article WHERE embedding @@ $query ORDER BY vector::distance::cosine(embedding, $query) ASC LIMIT 5;",
+  "search_vector_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [vec_data:/data]\nvolumes: {vec_data:}",
+  "search_geo_title": "Geospatial Search with R-Tree",
+  "search_geo_desc": "The GEO index indexes GeoJSON points for geographic proximity searches. geometry::point(lon, lat) builds a point and geo::distance() calculates distance in meters between two points using the haversine formula.",
+  "search_geo_example": "DEFINE INDEX restaurant_geo ON TABLE restaurant COLUMNS location GEO;\nCREATE restaurant:1 CONTENT {name: \"Taco Mexican\", location: geometry::point(-43.2096, -22.9110)};\nCREATE restaurant:2 CONTENT {name: \"Sushi Carioca\", location: geometry::point(-43.1775, -22.9028)};\nLET $user_pos = geometry::point(-43.1965, -22.9055);\nSELECT name, geo::distance(location, $user_pos) AS distance_meters FROM restaurant WHERE location @@ $user_pos AND geo::distance(location, $user_pos) <= 5000 ORDER BY geo::distance(location, $user_pos) ASC;",
+  "search_geo_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [geo_data:/data]\nvolumes: {geo_data:}",
+  "search_graph_title": "Graph Search with AxonQL",
+  "search_graph_desc": "AxonQL treats graph relations as first-class citizens. RELATE creates a directed edge between two record identifiers. Traversal uses -> (outgoing), <- (incoming), and <-> (both) arrows followed by the edge type and destination table.",
+  "search_graph_traditional": "-- Traditional SQL (multi-JOIN) for friends of friends\nSELECT f2.name FROM person p1\nJOIN friendship f1 ON f1.from_id = p1.id\nJOIN person p2 ON p2.id = f1.to_id\nJOIN friendship f2 ON f2.from_id = p2.id\nJOIN person f2_name ON f2_name.id = f2.to_id\nWHERE p1.name = 'Ana';",
+  "search_graph_axonql": "-- AxonQL: single traversal line\nRELATE person:ana->friend->person:bob;\nRELATE person:bob->friend->person:carol;\nSELECT ->friend->person->friend->person.name AS friends_of_friends FROM person:ana;",
+  "search_graph_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [graph_data:/data]\nvolumes: {graph_data:}",
+  "table_method": "Method",
+  "table_params": "Parameters",
+  "table_returns": "Returns",
+  "table_description": "Description",
+  "table_key": "Key",
+  "table_type": "Type",
+  "table_default": "Default",
+  "table_operator": "Operator",
+  "table_name": "Name",
+  "table_example": "Example",
+  "home_title": "AxonBase",
+  "home_subtitle": "Multi-model database in Java, with documents, graphs, key-value, AxonQL, and access via HTTP and WebSocket.",
+  "home_positioning_badge": "POSITIONING",
+  "home_positioning_text": "The database for microservices and AI agents that need distributed transactions, AI governance, and multi-model search, all in a single SQL engine.",
+  "home_get_started": "Get Started",
+  "home_use_cases_link": "View Use Cases",
+  "home_read_docs": "View Installation",
+  "home_quick_start": "Quick Start",
+  "home_quick_start_desc": "Pull the Docker image, start a server with RocksDB, and send an AxonQL statement via HTTP.",
+  "home_quick_start_code": "docker pull axonbase/axonbase:latest\ndocker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_REQUIRE_AUTH=false \\\n  axonbase/axonbase:latest\n\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\"}'",
+  "home_paths_title": "Choose a Path",
+  "home_paths_intro": "Start with the workflow that matches what you need to do with the server.",
+  "home_paths": [
+    {
+      "title": "Run with Docker",
+      "desc": "Pull the official image, start the server, and run your first AxonQL queries in seconds.",
+      "action": "View Getting Started",
+      "path": "/getting-started"
+    },
+    {
+      "title": "Model and Query Data",
+      "desc": "Create tables and records, define fields and indexes, or connect records with graph relations.",
+      "action": "Explore AxonQL",
+      "path": "/sql"
+    },
+    {
+      "title": "Connect an Application",
+      "desc": "Use HTTP, JSON-RPC over HTTP or WebSocket, GraphQL, MCP, SDKs, or the JDBC driver.",
+      "action": "View Interfaces",
+      "path": "/http"
+    },
+    {
+      "title": "Configure and Operate",
+      "desc": "Choose storage, configure authentication, S3 backup, clustering, and monitor server health.",
+      "action": "View Operations",
+      "path": "/configuration"
+    }
+  ],
+  "home_architecture_title": "How AxonBase Is Organized",
+  "home_architecture_desc": "The server receives client queries and calls, executes AxonQL in the engine, and maintains state in memory or in persistent storage on the file system.",
+  "home_architecture_points": [
+    "The parser transforms AxonQL statements into a syntax tree for the executor.",
+    "The engine combines catalog, transactions, indexes, functions, records, and graph relations.",
+    "The server exposes HTTP and WebSocket, including REST, JSON-RPC, GraphQL, and MCP.",
+    "Storage can be ephemeral in memory or use RocksDB (default) for persistence and recovery; clusters replicate writes via Raft.",
+    "Run via Docker: docker run axonbase/axonbase:latest -p 8000:8000"
+  ],
+  "home_use_cases_title": "Work with Data",
+  "home_use_cases_intro": "AxonBase provides documented operations for records, relations, real-time queries, and direct key access.",
+  "home_use_cases": [
+    {
+      "title": "Table Records",
+      "desc": "Store documents with CREATE, INSERT, UPDATE, UPSERT, and DELETE; define fields and indexes when you need catalog metadata.",
+      "path": "/sql/dml",
+      "action": "View DML"
+    },
+    {
+      "title": "Graph Relations",
+      "desc": "Create a directed edge with RELATE and traverse outgoing, incoming, or both directions in SELECT.",
+      "path": "/sql/dql",
+      "action": "View Queries & Graphs"
+    },
+    {
+      "title": "Real-Time Changes",
+      "desc": "Register a live query on a WebSocket connection to receive CREATE, UPDATE, and DELETE notifications.",
+      "path": "/http/rpc",
+      "action": "View JSON-RPC"
+    },
+    {
+      "title": "Key Access",
+      "desc": "Read, write, delete, and scan key-value pairs directly via RPC methods or kv::* functions.",
+      "path": "/sql/functions",
+      "action": "View AxonQL Functions"
+    }
+  ],
+  "home_resources_title": "Reference Guides",
+  "home_resources": [
+    {
+      "title": "Installation",
+      "desc": "Compile with Maven or run the Docker image and Compose configuration provided by the repository.",
+      "path": "/installation",
+      "action": "View Installation"
+    },
+    {
+      "title": "Storage & Backup",
+      "desc": "Learn about the storage backends: RocksDB (default), memory, and WAL, plus database export and S3 backups.",
+      "path": "/storage",
+      "action": "View Storage"
+    },
+    {
+      "title": "Raft Cluster",
+      "desc": "Configure members, quorum, write routing to the leader, and leader failover behavior.",
+      "path": "/cluster",
+      "action": "View Cluster"
+    },
+    {
+      "title": "Security & Observability",
+      "desc": "Configure authentication, TLS, rate limiting, and check health, readiness, status, and metrics endpoints.",
+      "path": "/security",
+      "action": "View Security"
+    }
+  ],
+  "home_features": [
+    {
+      "title": "Documents & Tables",
+      "desc": "Stores objects, arrays, and records with or without schema."
+    },
+    {
+      "title": "AxonQL",
+      "desc": "Executes CREATE, SELECT, UPDATE, DELETE, RELATE, DEFINE, and INFO."
+    },
+    {
+      "title": "Graph",
+      "desc": "Creates edges with RELATE and traverses relationships with ->, <-, and <->."
+    },
+    {
+      "title": "Transactions",
+      "desc": "Offers ACID transactions with snapshot isolation and savepoints."
+    },
+    {
+      "title": "Raft Cluster",
+      "desc": "Replicates writes via Raft consensus, with quorum and leader failover."
+    },
+    {
+      "title": "APIs & Connectors",
+      "desc": "Exposes REST, JSON-RPC, GraphQL, MCP, and SDKs for six languages."
+    },
+    {
+      "title": "Columnar Index",
+      "desc": "Creates columnar indexes to aggregate count, sum, avg, min, and max without loading documents."
+    }
+  ],
+  "getting_started_title": "Getting Started",
+  "getting_started_intro": "Pull the Docker image, start the server on port 8000, select a namespace and database, and send AxonQL queries.",
+  "getting_started_steps": [
+    {
+      "title": "Pull the Docker image",
+      "desc": "The official image is available on Docker Hub. Pull the latest version.",
+      "code": "docker pull axonbase/axonbase:latest"
+    },
+    {
+      "title": "Start the Server",
+      "desc": "Default is RocksDB in the /data directory. Use --path memory for disposable development.",
+      "code": "docker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_REQUIRE_AUTH=false \\\n  axonbase/axonbase:latest"
+    },
+    {
+      "title": "Create Data",
+      "desc": "The /sql endpoint receives an AxonQL statement in the request body.",
+      "code": "curl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'"
+    },
+    {
+      "title": "Query Records",
+      "desc": "Use SELECT to read the table.",
+      "code": "curl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'"
+    }
+  ],
+  "installation_title": "Installation",
+  "installation_intro": "The quickest way to run AxonBase is with the published Docker image. You can also compile from source with Maven.",
+  "installation_docker_title": "Docker (recommended)",
+  "installation_docker_desc": "Pull the official image and start a single instance with RocksDB persistence.",
+  "installation_docker_code": "docker pull axonbase/axonbase:latest\ndocker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_REQUIRE_AUTH=false \\\n  axonbase/axonbase:latest",
+  "installation_maven_title": "Maven",
+  "installation_maven_desc": "Compile all project modules from source.",
+  "installation_maven_code": "mvn install",
+  "installation_runsh_title": "run.sh (source)",
+  "installation_runsh_desc": "After compiling with Maven, use run.sh to start the server.",
+  "installation_runsh_code": "mvn install\n./run.sh start --port 8000",
+  "installation_compose_title": "Docker Compose",
+  "installation_compose_desc": "The provided docker-compose.cluster.yml starts a three-node Raft cluster with the published image. Each node has its own RocksDB volume and Raft binding on port 7000. Ports 18001-18003 expose HTTP for each node.",
+  "installation_compose_code": "x-cluster-env: &cluster_env\n  AXON_PATH: /data\n  AXON_BIND: 0.0.0.0\n  AXON_PORT: 8000\n  AXON_REQUIRE_AUTH: \"false\"\n  AXON_CLUSTER_ID: axonbase-cluster\n\nservices:\n  n1:\n    image: axonbase/axonbase:latest\n    hostname: n1\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n1\n      AXON_RAFT_BIND: n1:7000\n      AXON_RAFT_PEERS: n2:7000,n3:7000\n    volumes: [n1-data:/data]\n    ports: [\"18001:8000\"]\n  n2:\n    image: axonbase/axonbase:latest\n    hostname: n2\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n2\n      AXON_RAFT_BIND: n2:7000\n      AXON_RAFT_PEERS: n1:7000,n3:7000\n    volumes: [n2-data:/data]\n    ports: [\"18002:8000\"]\n  n3:\n    image: axonbase/axonbase:latest\n    hostname: n3\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n3\n      AXON_RAFT_BIND: n3:7000\n      AXON_RAFT_PEERS: n1:7000,n2:7000\n    volumes: [n3-data:/data]\n    ports: [\"18003:8000\"]\n\nvolumes:\n  n1-data:\n  n2-data:\n  n3-data:",
+  "config_title": "Configuration",
+  "config_intro": "AxonBase reads configuration from three sources in order: the axonbase.conf INI file, AXON_* environment variables, and CLI flags. In Docker the recommended approach is environment variables via -e; for many options you can also mount an axonbase.conf file.",
+  "config_options": [
+    {
+      "key": "path",
+      "env": "AXON_PATH",
+      "type": "string",
+      "default": "data",
+      "desc": "Directory for RocksDB storage (default), or memory to keep data only in RAM."
+    },
+    {
+      "key": "secret",
+      "env": "AXON_SECRET",
+      "type": "string",
+      "default": "axonbase-dev-secret",
+      "desc": "Secret used to sign JWT tokens. Never commit a production value."
+    },
+    {
+      "key": "user",
+      "env": "AXON_USER",
+      "type": "string",
+      "default": "root",
+      "desc": "Root user name for authentication."
+    },
+    {
+      "key": "pass",
+      "env": "AXON_PASS",
+      "type": "string",
+      "default": "root",
+      "desc": "Root user password. Never commit a production value."
+    },
+    {
+      "key": "bind",
+      "env": "AXON_BIND",
+      "type": "string",
+      "default": "127.0.0.1",
+      "desc": "Server bind address. Use 0.0.0.0 inside Docker."
+    },
+    {
+      "key": "port",
+      "env": "AXON_PORT",
+      "type": "int",
+      "default": "8000",
+      "desc": "HTTP and WebSocket port."
+    },
+    {
+      "key": "plain_port",
+      "env": "AXON_PLAIN_PORT",
+      "type": "int",
+      "default": "0",
+      "desc": "Additional non-TLS WS port; useful with TLS configured."
+    },
+    {
+      "key": "require_auth",
+      "env": "AXON_REQUIRE_AUTH",
+      "type": "bool",
+      "default": "true",
+      "desc": "Require authentication for queries. Set false for local development."
+    },
+    {
+      "key": "lang",
+      "env": "AXON_LANG",
+      "type": "string",
+      "default": "pt-BR",
+      "desc": "Server message language: pt-BR or en."
+    },
+    {
+      "key": "cluster_id",
+      "env": "AXON_CLUSTER_ID",
+      "type": "string",
+      "default": "empty",
+      "desc": "Cluster identifier; empty keeps local mode."
+    },
+    {
+      "key": "node_id",
+      "env": "AXON_NODE_ID",
+      "type": "string",
+      "default": "empty",
+      "desc": "Raft node identifier."
+    },
+    {
+      "key": "raft_bind",
+      "env": "AXON_RAFT_BIND",
+      "type": "string",
+      "default": "empty",
+      "desc": "Raft communication bind address (host:port)."
+    },
+    {
+      "key": "raft_peers",
+      "env": "AXON_RAFT_PEERS",
+      "type": "string",
+      "default": "empty",
+      "desc": "Comma-separated Raft peers (host:port)."
+    },
+    {
+      "key": "query_timeout",
+      "env": "AXON_QUERY_TIMEOUT",
+      "type": "long",
+      "default": "30000",
+      "desc": "Query execution timeout in milliseconds."
+    },
+    {
+      "key": "txn_timeout",
+      "env": "AXON_TXN_TIMEOUT",
+      "type": "long",
+      "default": "300000",
+      "desc": "Transaction timeout in milliseconds."
+    },
+    {
+      "key": "shutdown_timeout",
+      "env": "AXON_SHUTDOWN_TIMEOUT",
+      "type": "long",
+      "default": "10000",
+      "desc": "Graceful shutdown timeout in milliseconds."
+    },
+    {
+      "key": "rate_limit",
+      "env": "AXON_RATE_LIMIT",
+      "type": "int",
+      "default": "0",
+      "desc": "Maximum requests per minute; 0 disables rate limiting."
+    },
+    {
+      "key": "cors_origins",
+      "env": "AXON_CORS_ORIGINS",
+      "type": "string",
+      "default": "empty",
+      "desc": "Comma-separated allowed CORS origins."
+    },
+    {
+      "key": "http_threads",
+      "env": "AXON_HTTP_THREADS",
+      "type": "int",
+      "default": "4",
+      "desc": "Jetty HTTP worker threads."
+    },
+    {
+      "key": "http_queue",
+      "env": "AXON_HTTP_QUEUE",
+      "type": "int",
+      "default": "100",
+      "desc": "Jetty HTTP request queue size."
+    },
+    {
+      "key": "tls_cert",
+      "env": "AXON_TLS_CERT",
+      "type": "string",
+      "default": "empty",
+      "desc": "Path to PKCS12 keystore for HTTPS/WSS."
+    },
+    {
+      "key": "tls_key",
+      "env": "AXON_TLS_KEY",
+      "type": "string",
+      "default": "empty",
+      "desc": "Keystore password (or key password) for TLS."
+    },
+    {
+      "key": "tls_ca",
+      "env": "AXON_TLS_CA",
+      "type": "string",
+      "default": "empty",
+      "desc": "JKS truststore for mTLS client certificate validation."
+    },
+    {
+      "key": "s3_endpoint",
+      "env": "AXON_S3_ENDPOINT",
+      "type": "string",
+      "default": "empty",
+      "desc": "S3-compatible endpoint, such as MinIO or AWS S3."
+    },
+    {
+      "key": "s3_bucket",
+      "env": "AXON_S3_BUCKET",
+      "type": "string",
+      "default": "empty",
+      "desc": "Bucket for periodic backups; empty disables remote backup."
+    },
+    {
+      "key": "s3_prefix",
+      "env": "AXON_S3_PREFIX",
+      "type": "string",
+      "default": "backups",
+      "desc": "Prefix for backup keys in the bucket."
+    },
+    {
+      "key": "s3_access",
+      "env": "AXON_S3_ACCESS",
+      "type": "string",
+      "default": "empty",
+      "desc": "S3 access key."
+    },
+    {
+      "key": "s3_secret",
+      "env": "AXON_S3_SECRET",
+      "type": "string",
+      "default": "empty",
+      "desc": "S3 secret key. Never commit a production value."
+    },
+    {
+      "key": "s3_interval",
+      "env": "AXON_S3_INTERVAL",
+      "type": "long",
+      "default": "60000",
+      "desc": "Backup interval in milliseconds."
+    },
+    {
+      "key": "s3_encrypt_key",
+      "env": "AXON_S3_ENCRYPT_KEY",
+      "type": "string",
+      "default": "empty",
+      "desc": "AES-256-GCM encryption key for backups; empty sends unencrypted."
+    },
+    {
+      "key": "s3_retention",
+      "env": "AXON_S3_RETENTION",
+      "type": "int",
+      "default": "10",
+      "desc": "Number of recent backups to keep on S3."
+    }
+  ],
+  "cli_title": "Command Line",
+  "cli_intro": "Use run.sh start to start the server. The axon executable offers sql, repl, export, and import.",
+  "cli_commands": [
+    {
+      "name": "start",
+      "desc": "Starts the AxonBase server.",
+      "usage": "./run.sh start --path memory --port 8000 --no-auth"
+    },
+    {
+      "name": "axon sql",
+      "desc": "Executes a query via WebSocket.",
+      "usage": "axon sql ws://127.0.0.1:8000/rpc/ws \"SELECT * FROM person\""
+    },
+    {
+      "name": "axon export",
+      "desc": "Exports a database in AxonQL.",
+      "usage": "axon export ws://127.0.0.1:8000/rpc/ws test dev > backup.sql"
+    },
+    {
+      "name": "axon import",
+      "desc": "Imports an AxonQL dump.",
+      "usage": "axon import ws://127.0.0.1:8000/rpc/ws test dev backup.sql"
+    }
+  ],
+  "docker_title": "Docker",
+  "docker_intro": "The official image is available on Docker Hub. Use it for single instances or three-node clusters with RocksDB and S3 backup support.",
+  "docker_dockerfile_title": "Quick Start (Single Instance)",
+  "docker_dockerfile_desc": "Pull the image and start a single node with RocksDB persistent storage on port 8000. Data lives inside the container; mount a volume to preserve it across restarts.",
+  "docker_dockerfile_code": "docker pull axonbase/axonbase:latest\ndocker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_REQUIRE_AUTH=false \\\n  axonbase/axonbase:latest\n\n# With data volume and S3 backup:\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_REQUIRE_AUTH=false \\\n  -e AXON_S3_ENDPOINT=http://minio:9000 \\\n  -e AXON_S3_BUCKET=my-backups \\\n  -e AXON_S3_ACCESS=minioadmin \\\n  -e AXON_S3_SECRET=minioadmin \\\n  -e AXON_S3_INTERVAL=60000 \\\n  -e AXON_S3_RETENTION=10 \\\n  axonbase/axonbase:latest\n\n# Query it:\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name:\"Ana\",age:30}'",
+  "docker_compose_title": "Single Instance with Docker Compose",
+  "docker_compose_desc": "A minimal docker-compose.yml for a single AxonBase node with RocksDB and a volume for data persistence.",
+  "docker_compose_code": "services:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_REQUIRE_AUTH: \"false\"\n    volumes: [axonbase-data:/data]\n\nvolumes:\n  axonbase-data:",
+  "docker_cluster_title": "Three-Node Cluster with Docker Compose",
+  "docker_cluster_desc": "Use the published image to start a three-node Raft cluster. Each node has its own RocksDB storage and Raft binding on port 7000. Ports 18001-18003 expose HTTP for each node.",
+  "docker_cluster_code": "x-cluster-env: &cluster_env\n  AXON_PATH: /data\n  AXON_BIND: 0.0.0.0\n  AXON_PORT: 8000\n  AXON_REQUIRE_AUTH: \"false\"\n  AXON_CLUSTER_ID: axonbase-cluster\n\nservices:\n  n1:\n    image: axonbase/axonbase:latest\n    hostname: n1\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n1\n      AXON_RAFT_BIND: n1:7000\n      AXON_RAFT_PEERS: n2:7000,n3:7000\n    volumes: [n1-data:/data]\n    ports: [\"18001:8000\"]\n  n2:\n    image: axonbase/axonbase:latest\n    hostname: n2\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n2\n      AXON_RAFT_BIND: n2:7000\n      AXON_RAFT_PEERS: n1:7000,n3:7000\n    volumes: [n2-data:/data]\n    ports: [\"18002:8000\"]\n  n3:\n    image: axonbase/axonbase:latest\n    hostname: n3\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n3\n      AXON_RAFT_BIND: n3:7000\n      AXON_RAFT_PEERS: n1:7000,n2:7000\n    volumes: [n3-data:/data]\n    ports: [\"18003:8000\"]\n\nvolumes:\n  n1-data:\n  n2-data:\n  n3-data:",
+  "cluster_title": "Raft Cluster",
+  "cluster_intro": "AxonBase replicates state via Raft over TCP. Each group elects a leader; reads can be served by any replica, but every write must reach the leader and be confirmed by the quorum.",
+  "cluster_raft_title": "Consensus",
+  "cluster_raft_desc": "In a three-node cluster, the quorum is two active nodes. The leader appends the write to the Raft log and only responds after majority confirmation. A write sent to a follower fails with NOT_LEADER and provides leader and leader_address when a leader exists.",
+  "cluster_membership_title": "Membership",
+  "cluster_membership_desc": "Membership changes are administrative writes and must be sent to the leader. The address is the Raft address in host:port format, not the HTTP port.",
+  "cluster_membership_code": "curl -X POST http://127.0.0.1:8000/admin/cluster/join -H 'Content-Type: application/json' --data '{\"node\":\"n4\",\"address\":\"10.0.0.4:7000\"}'\ncurl -X POST http://127.0.0.1:8000/admin/cluster/leave -H 'Content-Type: application/json' --data '{\"address\":\"10.0.0.4:7000\"}'",
+  "cluster_failover_title": "Leader Failover",
+  "cluster_failover_desc": "When the leader stops sending heartbeats, followers start an election. With two of three nodes available, a candidate can obtain a majority and assume leadership.",
+  "cluster_config_title": "Configuration",
+  "cluster_config_desc": "Use the published Docker image with docker-compose for a three-node Raft cluster. Each node is identified by AXON_NODE_ID and binds Raft on port 7000. The leader is elected automatically; writes to a follower return HTTP 307 with the leader's HTTP address in the Location header.",
+  "cluster_config_code": "x-cluster-env: &cluster_env\n  AXON_PATH: /data\n  AXON_BIND: 0.0.0.0\n  AXON_PORT: 8000\n  AXON_REQUIRE_AUTH: \"false\"\n  AXON_CLUSTER_ID: axonbase-cluster\n\nservices:\n  n1:\n    image: axonbase/axonbase:latest\n    hostname: n1\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n1\n      AXON_RAFT_BIND: n1:7000\n      AXON_RAFT_PEERS: n2:7000,n3:7000\n    volumes: [n1-data:/data]\n    ports: [\"18001:8000\"]\n  n2:\n    image: axonbase/axonbase:latest\n    hostname: n2\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n2\n      AXON_RAFT_BIND: n2:7000\n      AXON_RAFT_PEERS: n1:7000,n3:7000\n    volumes: [n2-data:/data]\n    ports: [\"18002:8000\"]\n  n3:\n    image: axonbase/axonbase:latest\n    hostname: n3\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n3\n      AXON_RAFT_BIND: n3:7000\n      AXON_RAFT_PEERS: n1:7000,n2:7000\n    volumes: [n3-data:/data]\n    ports: [\"18003:8000\"]\n\nvolumes:\n  n1-data:\n  n2-data:\n  n3-data:",
+  "storage_title": "Storage",
+  "storage_intro": "The server uses RocksDB (LSM-tree with ZSTD compression, bloom filters) as the default persistent backend, with fallback to memory for development and WAL legacy available.",
+  "storage_decision_title": "Backend Selection",
+  "storage_decision_desc": "Use memory for testing and disposable data. The default is RocksDB: mature LSM-tree with leveled compaction, ZSTD compression, and bloom filters, used by Meta in production. WalBackend (WAL + snapshot) is available as a legacy alternative.",
+  "storage_backends": [
+    {
+      "name": "RocksDB (default)",
+      "desc": "LSM-tree with leveled compaction, ZSTD compression, and bloom filters. Supports hundreds of millions of records with minimal heap. 243K inserts/s sustained in 50K batches. Built-in WAL + crash recovery.",
+      "code": "docker run -d --name axonbase -p 8000:8000 -e AXON_REQUIRE_AUTH=false axonbase/axonbase:latest"
+    },
+    {
+      "name": "Memory",
+      "desc": "Data disappears when the process terminates. Useful for testing and CI.",
+      "code": "docker run -d --name axonbase -p 8000:8000 -e AXON_REQUIRE_AUTH=false -e AXON_PATH=memory axonbase/axonbase:latest"
+    },
+    {
+      "name": "WAL (legacy)",
+      "desc": "WAL + snapshot backend with fsync and crash recovery. Legacy alternative maintained for compatibility.",
+      "code": "docker run -d --name axonbase -p 8000:8000 -e AXON_REQUIRE_AUTH=false -e AXON_PATH=/data-wal axonbase/axonbase:latest"
+    }
+  ],
+  "storage_wal_title": "RocksDB: LSM-tree and Compaction",
+  "storage_wal_desc": "RocksDB stores data in SSTables (Sorted String Tables) organized in levels (leveled compaction). ZSTD compression reduces JSON records from ~200 B to about 25 B for repetitive textual data. Bloom filters avoid disk reads for absent keys. Writes go first to the RocksDB internal WAL and then to the memtable; when the memtable fills, it is flushed to level 0 and compacted to lower levels.",
+  "storage_recovery_title": "Crash Recovery",
+  "storage_recovery_desc": "Each backend (RocksDB or WAL legacy) performs automatic recovery on directory open: RocksDB replays the internal WAL and applies pending compaction; the WAL backend reads the snapshot and replays the .wal, truncating incomplete records at the end.",
+  "storage_transaction_title": "Transactions",
+  "storage_transaction_desc": "BEGIN creates a transaction with pending changes and a per-key view captured on first read. COMMIT validates versions and read ranges against the versioned backend before applying changes; CANCEL discards them. SAVEPOINT, RELEASE, and ROLLBACK TO control checkpoints of pending writes and deletes.",
+  "storage_scenarios_title": "When to Use",
+  "storage_scenarios": [
+    {
+      "title": "Production: RocksDB Persistent",
+      "desc": "The default. Use a directory for RocksDB: performance and reliability for tens of millions of records with minimal heap."
+    },
+    {
+      "title": "Local Disposable Test",
+      "desc": "Start with --path memory when you don't need to preserve data after stopping the process."
+    },
+    {
+      "title": "WAL Legacy",
+      "desc": "Use --path ./data-wal for the previous snapshot + WAL backend, maintained for compatibility."
+    },
+    {
+      "title": "Related Changes",
+      "desc": "Group reads and writes in BEGIN and COMMIT when changes need to be confirmed together or discarded with CANCEL."
+    }
+  ],
+  "backup_title": "Backup",
+  "backup_intro": "GET /export and POST /import transfer an AxonQL dump of the selected database. With S3 bucket and endpoint configured, the server also schedules cluster snapshot backups.",
+  "backup_export_title": "Database Export and Import",
+  "backup_export_desc": "GET /export generates an AxonQL dump only for the namespace and database indicated by Axon-Ns and Axon-Db. POST /import executes that dump in the same scope. These endpoints are not the cluster snapshot format used by remote backup.",
+  "backup_s3_title": "S3 Configuration",
+  "backup_s3_desc": "Configure the bucket, credentials, and interval in the INI file or AXON_S3_* environment variables.",
+  "backup_s3_code": "s3_bucket = axonbase\ns3_endpoint = https://s3.example.com\ns3_prefix = backups\ns3_access = ACCESS_KEY\ns3_secret = SECRET_KEY\ns3_interval = 60000",
+  "backup_minio_title": "MinIO",
+  "backup_minio_desc": "MinIO can be used as a local S3 endpoint.",
+  "backup_minio_code": "s3_endpoint = http://127.0.0.1:9000\ns3_bucket = axonbase\ns3_access = minioadmin\ns3_secret = minioadmin",
+  "backup_restore_title": "Restore",
+  "backup_restore_desc": "GET /export and POST /import operate on the namespace and database selected by Axon-Ns and Axon-Db. With require_auth active, these endpoints require authentication.",
+  "backup_restore_code": "curl http://127.0.0.1:8000/export -H 'Axon-Ns: test' -H 'Axon-Db: dev' > backup.axql\ncurl -X POST http://127.0.0.1:8000/import -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data-binary @backup.axql",
+  "backup_schedule_title": "S3 Scheduling",
+  "backup_schedule_desc": "When s3_bucket and s3_endpoint are configured, the server starts periodic synchronization. s3_interval sets the interval in milliseconds; if zero or negative, the interval used is 60 seconds.",
+  "backup_failure_title": "Failures and Startup",
+  "backup_failure_desc": "A failed backup execution logs the error and returns failure without stopping the scheduler. On startup, the server tries to restore S3 backups only when local storage is empty.",
+  "backup_retention_title": "Retention",
+  "backup_retention_desc": "s3_retention determines how many recent remote backups are kept; default is 10 and values less than or equal to zero also use 10.",
+  "backup_encryption_title": "Encryption",
+  "backup_encryption_desc": "S3 upload uses streaming in 8 KiB blocks. AES-256-GCM encryption is applied only when s3_encrypt_key is configured.",
+  "backup_scenarios_title": "Choose Operation",
+  "backup_scenarios": [
+    {
+      "title": "Move a Database Between Environments",
+      "desc": "Use GET /export and POST /import with Axon-Ns and Axon-Db to generate and execute an AxonQL dump of the selected database."
+    },
+    {
+      "title": "Retain Remote Cluster Snapshots",
+      "desc": "Configure S3 to create periodic backups of the cluster state and use s3_retention to limit stored quantity."
+    },
+    {
+      "title": "Restore Cluster State",
+      "desc": "With S3 configured, the server attempts to restore the cluster snapshot format on startup with empty local storage. POST /import remains reserved for per-database AxonQL dumps."
+    }
+  ],
+  "sql_overview_title": "AxonQL",
+  "sql_overview_intro": "AxonQL is the AxonBase query language. Statements operate on the session's namespace and database, using table records, graph relations, catalog, transactions, and real-time queries.",
+  "sql_overview_model_title": "Data Model",
+  "sql_overview_model_desc": "Each record belongs to a table and receives an id field. CREATE accepts an identifier like person:ana; without an explicit key, the engine generates a UUID. RELATE creates a directed relationship between record identifiers.",
+  "sql_overview_lifecycle_title": "Query Execution",
+  "sql_overview_lifecycle_desc": "The parser transforms each statement into a syntax tree and the executor evaluates it in the session context. SELECT obtains a source, applies WHERE and permissions, sorts, limits, and projects the result. Writes update indexes, notify live queries, and can trigger table events.",
+  "sql_overview_ddl_title": "DDL",
+  "sql_overview_ddl_desc": "DEFINE creates catalog objects such as tables, fields, indexes, and users.",
+  "sql_overview_ddl_example": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD name ON TABLE person TYPE string;",
+  "sql_overview_ddl_java": "axon.query(\"DEFINE TABLE person;\");",
+  "sql_overview_dml_title": "DML",
+  "sql_overview_dml_desc": "CREATE, INSERT, UPDATE, UPSERT, DELETE, and RELATE modify records.",
+  "sql_overview_dml_example": "CREATE person:ana CONTENT {name: \"Ana\", age: 30};\nUPDATE person:ana SET age = 31;",
+  "sql_overview_dml_python": "await axon.query('CREATE person CONTENT {name: \"Ana\"}')",
+  "sql_overview_dql_title": "DQL",
+  "sql_overview_dql_desc": "SELECT accepts projections, filters, JOIN, ordering, START, LIMIT, GROUP BY, FETCH, subqueries, and traversals. EXPLAIN shows the strategy chosen for a query.",
+  "sql_overview_dql_example": "SELECT name FROM person WHERE age >= 18 ORDER BY name LIMIT 10;",
+  "sql_overview_dql_node": "await axon.query('SELECT * FROM person');",
+  "sql_ddl_title": "Data Definition",
+  "sql_ddl_intro": "DEFINE statements create and configure catalog objects. Tables, fields, analyzers, indexes, events, users, and access methods belong to the selected database catalog.",
+  "sql_ddl_schema_title": "Schema and Validation",
+  "sql_ddl_schema_desc": "SCHEMAFULL is stored as table metadata; the current implementation does not use it to reject undefined fields. Defined fields can apply DEFAULT, type coercion, ASSERT, and REFERENCES.",
+  "sql_ddl_schema_code": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD age ON TABLE person TYPE int DEFAULT 18 ASSERT $value >= 0;\nDEFINE FIELD manager ON TABLE person REFERENCES person;",
+  "sql_ddl_statements": [
+    {
+      "name": "DEFINE TABLE",
+      "desc": "Creates a SCHEMALESS or SCHEMAFULL table.",
+      "example": "DEFINE TABLE person SCHEMAFULL;"
+    },
+    {
+      "name": "DEFINE FIELD",
+      "desc": "Defines type, default, and validation for a field.",
+      "example": "DEFINE FIELD age ON TABLE person TYPE number ASSERT $value >= 0;"
+    },
+    {
+      "name": "DEFINE INDEX",
+      "desc": "Creates a UNIQUE, COUNT, SEARCH, GEO, or HNSW index. SEARCH uses a previously defined analyzer.",
+      "example": "DEFINE INDEX email ON TABLE person COLUMNS email UNIQUE;"
+    },
+    {
+      "name": "DEFINE ANALYZER",
+      "desc": "Configures normalization for a SEARCH index, with optional LOWERCASE, STOPWORDS, and STEMMING.",
+      "example": "DEFINE ANALYZER plain LOWERCASE;\nDEFINE INDEX body_search ON TABLE article COLUMNS body SEARCH ANALYZER plain;"
+    },
+    {
+      "name": "DEFINE USER",
+      "desc": "Creates an identity at ROOT, NAMESPACE, or DATABASE scope.",
+      "example": "DEFINE USER app ON DATABASE PASSWORD \"password\" ROLES writer;"
+    }
+  ],
+  "sql_dml_title": "Data Manipulation",
+  "sql_dml_intro": "Use CREATE, INSERT, UPDATE, UPSERT, DELETE, and RELATE to modify records. CREATE and INSERT accept documents; UPDATE and UPSERT accept CONTENT, SET, MERGE, PATCH, or REPLACE.",
+  "sql_dml_semantics_title": "Identifiers, Returns, and Effects",
+  "sql_dml_semantics_desc": "CREATE preserves the key of an explicit identifier and generates a UUID key when none is given. INSERT accepts an object or array of objects. UPDATE only changes records that match WHERE; UPSERT creates a record when none is found.",
+  "sql_dml_semantics_code": "CREATE person:ana CONTENT {name: \"Ana\", age: 30};\nUPDATE person:ana MERGE {age: 31} RETURN BEFORE;\nUPSERT person:bob SET name = \"Bob\", age = 25;\nDELETE FROM person WHERE age > 100 RETURN BEFORE;",
+  "sql_dml_statements": [
+    {
+      "name": "CREATE",
+      "desc": "Creates a record with CONTENT or SET. An explicit identifier fixes the record key.",
+      "example": "CREATE person:ana CONTENT {name: \"Ana\", age: 30};\nCREATE person SET name = \"Bob\", age = 25;"
+    },
+    {
+      "name": "INSERT",
+      "desc": "Inserts an object or each object in an array into the specified table.",
+      "example": "INSERT INTO person [{name: \"Ana\", age: 30}, {name: \"Bob\", age: 25}];"
+    },
+    {
+      "name": "UPDATE and UPSERT",
+      "desc": "UPDATE modifies existing records; UPSERT creates a record when the target produces no results.",
+      "example": "UPDATE person:ana MERGE {age: 31};\nUPSERT person:bob SET name = \"Bob\", age = 25;"
+    },
+    {
+      "name": "DELETE",
+      "desc": "Removes a record or the results of a filter.",
+      "example": "DELETE FROM person WHERE age > 100;"
+    },
+    {
+      "name": "RELATE",
+      "desc": "Creates an edge between two records.",
+      "example": "RELATE person:ana->friend->person:bob;"
+    }
+  ],
+  "sql_dml_java": "axon.query(\"CREATE person CONTENT {name: 'Ana'}\");",
+  "sql_dml_python": "await axon.create('person', {'name': 'Ana'})",
+  "sql_dql_title": "Data Query",
+  "sql_dql_intro": "SELECT reads tables, record identifiers, subqueries, and arrays. The query applies WHERE before ordering and the START/LIMIT window. Create a relationship with RELATE before using the label in a traversal.",
+  "sql_dql_planner_title": "Sources and Execution Plan",
+  "sql_dql_planner_desc": "EXPLAIN returns strategy, table, indexName when applicable, and examinedRows. The executor chooses UNIQUE_LOOKUP for equality on a field with a UNIQUE index; also recognizes FULLTEXT, GEO, VECTOR, and HYBRID in specific SELECT forms.",
+  "sql_dql_planner_code": "DEFINE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;\nEXPLAIN SELECT * FROM person WHERE email = \"ana@example.com\";\nEXPLAIN ANALYZE SELECT * FROM person WHERE email = \"ana@example.com\";",
+  "sql_dql_statements": [
+    {
+      "name": "Filter and Order",
+      "desc": "WHERE, ORDER BY, START, and LIMIT restrict the result.",
+      "example": "SELECT * FROM person WHERE age >= 18 ORDER BY age DESC LIMIT 10;"
+    },
+    {
+      "name": "Aggregation",
+      "desc": "GROUP BY works with count, sum, avg, min, and max aggregate calls.",
+      "example": "SELECT city, count() AS total FROM person GROUP BY city;"
+    },
+    {
+      "name": "JOIN",
+      "desc": "JOIN combines the FROM source with another source when ON contains a field equality. The flattened result uses table-prefixed keys.",
+      "example": "SELECT person.name, city.name FROM person JOIN city ON person.city_id = city.id;"
+    },
+    {
+      "name": "Links and Graph",
+      "desc": "RELATE creates a directed edge. The ->label->table projection returns destination records from the FROM record.",
+      "example": "RELATE person:ana->friend->person:bob;\nSELECT ->friend->person FROM person:ana;"
+    },
+    {
+      "name": "Reverse and Bidirectional Traversal",
+      "desc": "Use <-label<-table to follow incoming edges and <->label<->table for both directions.",
+      "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
+    },
+    {
+      "name": "Live Query",
+      "desc": "LIVE SELECT sends changes over the WebSocket connection.",
+      "example": "LIVE SELECT * FROM person DIFF;"
+    }
+  ],
+  "sql_dql_java": "AxonValue rows = axon.query(\"SELECT * FROM person\");",
+  "sql_dql_node": "const rows = await axon.select('person');",
+  "sql_dql_python": "rows = await axon.select('person')",
+  "sql_dql_go": "rows, err := axon.Select(\"person\")",
+  "sql_functions_title": "AxonQL Functions",
+  "sql_functions_intro": "AxonQL includes built-in functions to transform values, inspect records, compute results, and access specialized resources. Names use namespaces like string::uppercase and vector::distance::euclidean; aggregations like count and avg are used in SELECT projections.",
+  "sql_functions_model_title": "Execution Model",
+  "sql_functions_model_desc": "A call receives expressions as arguments and returns an AxonQL value. Use RETURN to evaluate an expression without a source, use a SELECT projection or SELECT VALUE to evaluate it on each record, and use aggregations with GROUP BY to summarize groups.",
+  "sql_functions_scalar_title": "Scalar Functions",
+  "sql_functions_scalar_desc": "Scalar functions operate on their arguments at each evaluation. They can be nested, used in filters and ordering, or receive current row fields like string::uppercase(name).",
+  "sql_functions_aggregate_title": "Aggregations",
+  "sql_functions_aggregate_desc": "count, sum, avg, min, and max summarize selected records. Without GROUP BY, the projection produces a summary of the entire source; with GROUP BY, it produces a summary for each grouping value.",
+  "sql_functions_aggregate_code": "SELECT city, count() AS total, avg(age) AS average_age FROM person GROUP BY city;",
+  "sql_functions_discovery_title": "Discovery",
+  "sql_functions_discovery_desc": "INFO FOR ROOT returns the names of registered built-in functions. Use this to confirm availability before assembling a query.",
+  "sql_functions_discovery_code": "INFO FOR ROOT;",
+  "sql_functions_categories_title": "Available Categories",
+  "sql_functions_categories_desc": "The namespaces below reflect the functions registered in the executor. Each family accepts the types indicated by the function and returns a value that can feed another expression, projection, or ordering.",
+  "sql_functions_categories": [
+    {
+      "name": "String",
+      "desc": "string::* transforms, combines, and examines text. concat, join, split, trim, slice, replace, slug, lowercase, uppercase, and matches return strings, arrays, or booleans."
+    },
+    {
+      "name": "Math",
+      "desc": "math::* calculates rounding, power, logarithms, limits, and argument statistics. math::pi, math::e, and math::tau are parameterless constants; math::sum and math::mean compute over provided arguments."
+    },
+    {
+      "name": "Arrays",
+      "desc": "array::* creates or reorganizes collections without modifying the original argument. distinct, union, intersect, difference, flatten, sort, slice, first, last, and len cover set operations, ordering, and access."
+    },
+    {
+      "name": "Objects, Types, and Records",
+      "desc": "object::* exposes keys, values, and entries of objects. type::* converts values and tests types with type::is::*, while record::* extracts the key or table from a record identifier."
+    },
+    {
+      "name": "Time and Randomness",
+      "desc": "time::now and now return the current instant; time::from::unix and time::from::millis construct datetimes, and time::year, month, day, hour, and other extractors read their parts. rand::* generates numbers, strings, UUIDs, or a random option."
+    },
+    {
+      "name": "Cryptography, Encoding, and Values",
+      "desc": "crypto::* computes MD5, SHA-1, SHA-256, or SHA-512 hashes. encoding::base64::* encodes and decodes UTF-8 text, and value::coalesce or value::default choose values when the first argument is NULL or NONE."
+    },
+    {
+      "name": "Key-Value",
+      "desc": "kv::get, kv::set, kv::del, and kv::scan access the key-value store of the current namespace and database. Use them for direct pairs, separate from table records."
+    },
+    {
+      "name": "Geometry and Vectors",
+      "desc": "geometry::* creates GeoJSON values, geo::* calculates distance, area, and containment, and vector::* calculates Euclidean or Manhattan distance and cosine similarity."
+    },
+    {
+      "name": "Search",
+      "desc": "search::score() and search::highlight(field) only gain meaning in the projection of a text query with field @@ terms. score exposes the BM25 relevance of the row and highlight returns the highlighted text."
+    }
+  ],
+  "sql_functions_list": [
+    {
+      "name": "string::slug",
+      "desc": "Normalizes text into a hyphen-separated identifier.",
+      "example": "RETURN string::slug(\"Hello, World!\");"
+    },
+    {
+      "name": "math::clamp",
+      "desc": "Limits a number to the specified min and max range.",
+      "example": "RETURN math::clamp(15, 0, 10);"
+    },
+    {
+      "name": "array::distinct",
+      "desc": "Removes duplicate values, preserving the resulting collection.",
+      "example": "RETURN array::distinct([1, 1, 2, 3]);"
+    },
+    {
+      "name": "object::keys",
+      "desc": "Returns the keys of an object as an array.",
+      "example": "RETURN object::keys({name: \"Ana\", age: 30});"
+    },
+    {
+      "name": "type::is::number",
+      "desc": "Tests whether the value is numeric.",
+      "example": "RETURN type::is::number(42);"
+    },
+    {
+      "name": "record::id",
+      "desc": "Extracts the key from a record identifier.",
+      "example": "RETURN record::id(person:ana);"
+    },
+    {
+      "name": "time::now and duration",
+      "desc": "time::now returns the current instant, and duration literals like 1h represent AxonQL intervals.",
+      "example": "RETURN time::now();\nRETURN 1h;"
+    },
+    {
+      "name": "crypto::sha256",
+      "desc": "Computes the hexadecimal SHA-256 hash of text.",
+      "example": "RETURN crypto::sha256(\"abc\");"
+    },
+    {
+      "name": "encoding::base64::encode",
+      "desc": "Encodes UTF-8 text to Base64.",
+      "example": "RETURN encoding::base64::encode(\"AxonBase\");"
+    },
+    {
+      "name": "kv::set and kv::get",
+      "desc": "Writes and reads a value by key name in the session's key-value space.",
+      "example": "LET $saved = kv::set(\"theme\", \"dark\"); RETURN kv::get(\"theme\");"
+    },
+    {
+      "name": "geo::distance and vector::distance::euclidean",
+      "desc": "Calculate distance between GeoJSON points and between numeric vectors, respectively.",
+      "example": "RETURN geo::distance(geometry::point(0, 0), geometry::point(0, 1));\nRETURN vector::distance::euclidean([0, 0], [3, 4]);"
+    },
+    {
+      "name": "search::score and search::highlight",
+      "desc": "Project relevance score and highlighted snippet from an indexed text match.",
+      "example": "SELECT title, search::score() AS score, search::highlight(body) AS snippet FROM article WHERE body @@ \"cat\" ORDER BY search::score() DESC;"
+    }
+  ],
+  "sql_operators_title": "Operators",
+  "sql_operators_intro": "AxonQL expressions offer arithmetic, comparison, logical, collection, text, and traversal operators.",
+  "sql_operators_notes_title": "Expression Reading",
+  "sql_operators_notes_desc": "AND and &&, as well as OR and ||, are equivalent. IN tests whether the left value is in the right value; CONTAINS tests the opposite direction. @@ represents text matching; it uses a SEARCH index when WHERE has the form field @@ text and an applicable index exists.",
+  "sql_operators_list": [
+    {
+      "symbol": "=",
+      "name": "equal",
+      "desc": "Compares values.",
+      "example": "age = 18"
+    },
+    {
+      "symbol": "AND",
+      "name": "logical and",
+      "desc": "Requires both expressions to be true.",
+      "example": "age >= 18 AND active = true"
+    },
+    {
+      "symbol": "IN",
+      "name": "belongs to",
+      "desc": "Checks if the left value is in the right array or result.",
+      "example": "city IN [\"Rio\", \"Sao Paulo\"]"
+    },
+    {
+      "symbol": "CONTAINS, NOT CONTAINS",
+      "name": "contains",
+      "desc": "Checks if the left collection or text contains the right value.",
+      "example": "tags CONTAINS \"java\""
+    },
+    {
+      "symbol": "??",
+      "name": "coalescence",
+      "desc": "Uses the right operand when the left is NULL or NONE.",
+      "example": "nickname ?? name"
+    },
+    {
+      "symbol": "@@",
+      "name": "text search",
+      "desc": "Queries a full-text index.",
+      "example": "body @@ \"database\""
+    },
+    {
+      "symbol": "->",
+      "name": "outgoing traversal",
+      "desc": "Follows an outgoing edge.",
+      "example": "->friend->person"
+    }
+  ],
+  "sql_time_travel_title": "Time Travel",
+  "sql_time_travel_intro": "Time travel reads values kept in the WAL backend ledger. It is a point-in-time value view, not a general SQL command replay: only changes recorded in the ledger after history was enabled can appear in the past.",
+  "sql_time_travel_as_of_title": "AT",
+  "sql_time_travel_as_of_desc": "AT accepts TIMESTAMP with a datetime, ISO 8601 string, or numeric value in milliseconds since Unix Epoch. Use the timestamp captured before the change you want to compare.",
+  "sql_time_travel_as_of_sql": "CREATE person:ana CONTENT {name: \"Ana\", age: 30};\nSELECT VALUE now();\nUPDATE person:ana SET age = 31;\nSELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z');",
+  "sql_time_travel_as_of_java": "axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\");",
+  "sql_time_travel_as_of_node": "await axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\");",
+  "sql_time_travel_as_of_python": "await axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\")",
+  "sql_time_travel_as_of_go": "rows, err := axon.Query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\", nil)",
+  "sql_time_travel_as_of_rust": "let rows = axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\", None).await?;",
+  "sql_time_travel_between_title": "History Limits",
+  "sql_time_travel_between_desc": "The parser recognizes BEFORE (STATEMENT => ...), but the current engine does not maintain or resolve a timeline by statement identifier.",
+  "sql_time_travel_between_sql": "SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z');\nSELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:05:00Z');",
+  "sql_time_travel_between_java": "var before = axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:00:00Z')\");\nvar after = axon.query(\"SELECT * FROM person AT (TIMESTAMP => '2026-08-27T12:05:00Z')\");",
+  "sql_time_travel_diff_title": "Differences",
+  "sql_time_travel_diff_desc": "There is no clause to compute differences between historical versions. LIVE SELECT DIFF produces JSON Patch only for real-time changes.",
+  "sql_time_travel_diff_sql": "LIVE SELECT * FROM person DIFF;",
+  "http_overview_title": "HTTP Interfaces",
+  "http_overview_intro": "The server exposes REST, JSON-RPC over HTTP and WebSocket, GraphQL, and MCP (Model Context Protocol).",
+  "http_overview_rest_title": "REST",
+  "http_overview_rest_desc": "Send AxonQL to the /sql endpoint with namespace and database in headers.",
+  "http_overview_rest_example": "curl -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'SELECT * FROM person'",
+  "http_overview_rpc_title": "JSON-RPC",
+  "http_overview_rpc_desc": "POST /rpc receives the JSON-RPC envelope; the HTTP session does not persist between requests.",
+  "http_overview_rpc_example": "curl -X POST http://127.0.0.1:8000/rpc -H 'Content-Type: application/json' --data '{\"id\":1,\"method\":\"query\",\"params\":[\"SELECT * FROM person\"]}'",
+  "http_overview_graphql_title": "GraphQL",
+  "http_overview_graphql_desc": "POST /graphql translates GraphQL queries to AxonQL from the catalog.",
+  "http_overview_graphql_example": "query { person { id name } }",
+  "http_overview_mcp_title": "MCP",
+  "http_overview_mcp_desc": "The /mcp endpoint serves MCP-compatible clients.",
+  "http_overview_mcp_example": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}",
+  "http_rest_title": "REST API",
+  "http_rest_intro": "The /sql endpoint executes AxonQL. Axon-Ns and Axon-Db define the target database.",
+  "http_rest_query_title": "Query",
+  "http_rest_query_desc": "Send a query in the request body.",
+  "http_rest_query_curl": "curl -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'SELECT * FROM person'",
+  "http_rest_query_java": "var request = HttpRequest.newBuilder(URI.create(\"http://127.0.0.1:8000/sql\")).header(\"Axon-Ns\", \"test\").header(\"Axon-Db\", \"dev\").POST(HttpRequest.BodyPublishers.ofString(\"SELECT * FROM person\")).build();",
+  "http_rest_query_python": "requests.post('http://127.0.0.1:8000/sql', headers={'Axon-Ns': 'test', 'Axon-Db': 'dev'}, data='SELECT * FROM person')",
+  "http_rest_exec_title": "Write",
+  "http_rest_exec_desc": "CREATE and UPDATE use the same /sql endpoint.",
+  "http_rest_exec_curl": "curl -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'CREATE person CONTENT {name: \"Ana\"}'",
+  "http_rest_exec_node": "await fetch('http://127.0.0.1:8000/sql', {method: 'POST', headers: {'Axon-Ns':'test','Axon-Db':'dev'}, body: 'CREATE person CONTENT {name: \"Ana\"}'});",
+  "http_rest_stream_title": "Real-Time",
+  "http_rest_stream_desc": "Live query notifications are delivered via WebSocket, not REST.",
+  "http_rest_stream_curl": "curl -X POST http://127.0.0.1:8000/sql --data 'LIVE SELECT * FROM person DIFF'",
+  "http_rest_stream_go": "// Use axon.Live to receive WebSocket notifications.",
+  "http_rpc_title": "JSON-RPC",
+  "http_rpc_intro": "JSON-RPC is available on POST /rpc and WebSocket /rpc/ws.",
+  "http_rpc_methods_title": "Methods",
+  "http_rpc_methods": [
+    {
+      "method": "use",
+      "params": "[namespace, database]",
+      "returns": "object",
+      "desc": "Selects the session context."
+    },
+    {
+      "method": "query",
+      "params": "[AxonQL, vars?]",
+      "returns": "JSON value",
+      "desc": "Executes AxonQL."
+    },
+    {
+      "method": "signin",
+      "params": "[{user, pass, access?}]",
+      "returns": "JWT",
+      "desc": "Authenticates the session."
+    },
+    {
+      "method": "live",
+      "params": "[table, diff?]",
+      "returns": "id",
+      "desc": "Registers a live query."
+    },
+    {
+      "method": "kv_get",
+      "params": "[namespace, database, key]",
+      "returns": "value",
+      "desc": "Reads a key directly."
+    }
+  ],
+  "http_rpc_example_title": "Example",
+  "http_rpc_example_desc": "The current protocol version is 1; on WebSocket, read the hello frame first.",
+  "http_rpc_example_curl": "curl -X POST http://127.0.0.1:8000/rpc -H 'Content-Type: application/json' --data '{\"id\":1,\"method\":\"query\",\"version\":1,\"params\":[\"SELECT * FROM person\"]}'",
+  "http_rpc_example_java": "Axon axon = Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\");\naxon.use(\"test\", \"dev\");\nAxonValue result = axon.query(\"SELECT * FROM person\");",
+  "http_rpc_example_node": "const axon = await Axon.connect('ws://127.0.0.1:8000/rpc/ws');\nawait axon.use('test', 'dev');\nconst result = await axon.query('SELECT * FROM person');",
+  "http_graphql_title": "GraphQL",
+  "http_graphql_intro": "POST /graphql creates the schema from catalog tables and translates simple queries to AxonQL.",
+  "http_graphql_queries_title": "Queries",
+  "http_graphql_queries_desc": "Query a table in the database selected by headers. The endpoint also responds to __schema introspection.",
+  "http_graphql_query_example": "query { person { id name age } }",
+  "http_graphql_query_curl": "curl -X POST http://127.0.0.1:8000/graphql -H 'Content-Type: application/json' -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data '{\"query\":\"{ person { id name } }\"}'",
+  "http_graphql_mutations_title": "Mutations",
+  "http_graphql_mutations_desc": "The current GraphQL endpoint does not execute mutations. Use POST /sql or JSON-RPC to write data.",
+  "http_graphql_mutation_example": "# GraphQL mutations are not supported.\nCREATE person CONTENT {name: \"Ana\"};",
+  "http_graphql_mutation_curl": "curl -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'CREATE person CONTENT {name: \"Ana\"}'",
+  "http_graphql_subscriptions_title": "Subscriptions",
+  "http_graphql_subscriptions_desc": "Real-time transport is WebSocket JSON-RPC with live queries; there is no separate GraphQL subscription endpoint.",
+  "http_graphql_subscription_example": "LIVE SELECT * FROM person DIFF;",
+  "http_mcp_title": "MCP (Model Context Protocol)",
+  "http_mcp_intro": "AxonBase exposes an MCP (Model Context Protocol) server over SSE (Server-Sent Events) at /mcp. AI coding agents like Claude Code, Cursor, VS Code, and bolt.diy connect to discover tables, query data, and retrieve schema information using structured tools, not arbitrary AxonQL.",
+  "http_mcp_tools_title": "Available Tools",
+  "http_mcp_tools_desc": "The MCP server exposes two read-only tools by default. Use tools/list to discover them.",
+  "http_mcp_tools_list_req": "{\"id\":1,\"method\":\"tools/list\"}",
+  "http_mcp_tools_list_curl": "curl -X POST http://127.0.0.1:8000/mcp/message -H 'Content-Type: application/json' --data '{\"id\":1,\"method\":\"tools/list\"}'",
+  "http_mcp_tools_call_title": "Calling Tools",
+  "http_mcp_tools_call_desc": "Invoke axon_select to read up to 100 rows from a table, or axon_info to inspect the database catalog. Both tools respect Data Rules, row permissions, and authentication scope.",
+  "http_mcp_tools_call_select": "{\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"axon_select\",\"arguments\":{\"table\":\"person\",\"limit\":20}}}",
+  "http_mcp_tools_call_info": "{\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"axon_info\",\"arguments\":{}}}",
+  "http_mcp_resources_title": "Resources",
+  "http_mcp_resources_desc": "resources/list provides one resource per table in the selected namespace and database, using the axon:// URI scheme.",
+  "http_mcp_resources_example": "{\"id\":4,\"method\":\"resources/list\"}",
+  "http_mcp_config_title": "Transport and Session",
+  "http_mcp_config_desc": "Open GET /mcp/sse to start an SSE session. The server responds with an endpoint event containing the POST /mcp/message URL for the session. All subsequent tool calls use that URL.",
+  "http_mcp_config_example": "# Start SSE session (long-lived connection)\ncurl -N http://127.0.0.1:8000/mcp/sse\n\n# Response contains:\nevent: endpoint\ndata: /mcp/message?session_id=<uuid>\n\n# Send tool calls to the returned URL:\ncurl -X POST http://127.0.0.1:8000/mcp/message?session_id=<uuid> \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"id\":1,\"method\":\"tools/list\"}'",
+  "http_mcp_clients_title": "Client Configuration",
+  "http_mcp_clients_desc": "Connect AxonBase MCP to your preferred AI coding agent. Below are the configuration snippets for each supported client.",
+  "http_mcp_clients_claude": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+  "http_mcp_clients_vscode": "{\n  \"mcp\": {\n    \"servers\": {\n      \"axonbase\": {\n        \"url\": \"http://localhost:8000/mcp/sse\"\n      }\n    }\n  }\n}",
+  "http_mcp_clients_cursor": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+  "http_mcp_clients_boltdiy": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+  "http_mcp_use_cases_title": "Real-World Use Cases",
+  "http_mcp_use_cases_intro": "These scenarios show how an AI coding agent uses AxonBase MCP to interact with the database during development and operations.",
+  "http_mcp_use_case_scenario": "Scenario:",
+  "http_mcp_use_case_config": "MCP configuration:",
+  "http_mcp_use_case_usage": "Agent prompt:",
+  "http_mcp_use_cases": [
+    {
+      "title": "Schema Discovery and Query",
+      "scenario": "An AI agent needs to understand the database schema before writing application code. It connects to MCP, discovers tables via resources/list, inspects the catalog with axon_info, and samples data with axon_select.",
+      "config": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+      "code": "List all tables in the current database.\nThen describe the structure of the 'orders' table.\nFinally, show me the 5 most recent orders.",
+      "language": "text"
+    },
+    {
+      "title": "Debugging a Slow Query",
+      "scenario": "A developer reports that a query is slow. The agent uses axon_select to inspect table sizes, uses axon_info to check indexes, and analyzes the data distribution before suggesting an index.",
+      "config": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+      "code": "Check how many rows are in the 'orders' table.\nWhat indexes are defined on it?\nShow me the distribution of order_status values.",
+      "language": "text"
+    },
+    {
+      "title": "Auditing Data Access",
+      "scenario": "A compliance officer needs to verify that sensitive data is properly protected. The agent connects to MCP, inspects Data Rules, and confirms that PII fields are masked and access is scoped.",
+      "config": "{\n  \"mcpServers\": {\n    \"axonbase\": {\n      \"url\": \"http://localhost:8000/mcp/sse\"\n    }\n  }\n}",
+      "code": "Show me the table definitions and check which fields have Data Rules or permissions defined.\nVerify that the 'cpf' field is masked for non-admin users.",
+      "language": "text"
+    }
+  ],
+  "http_mcp_limitations_title": "Limitations",
+  "http_mcp_limitations_desc": "The current MCP implementation has the following constraints:",
+  "http_mcp_limitations_list": [
+    "Read-only by default: axon_query, axon_create, and axon_export are not exposed. Only axon_select and axon_info are available.",
+    "No prompts support: prompts/list is not implemented.",
+    "Authentication: when require_auth is enabled, clients must send Authorization: Bearer <token> headers on the SSE connection and every message POST.",
+    "Single session per SSE connection: each SSE connection creates one MCP session. The session is tied to the HTTP connection lifecycle.",
+    "No cursor-based pagination: axon_select returns up to 100 rows. Larger result sets require multiple queries.",
+    "No table name validation beyond regex: the server validates table names with a simple pattern, not against the full catalog."
+  ],
+  "auth_title": "Authentication and Authorization",
+  "auth_intro": "The server uses JWT, scoped users, and table permissions.",
+  "auth_jwt_title": "JWT",
+  "auth_jwt_desc": "With require_auth active, send Authorization: Bearer <token> in HTTP requests.",
+  "auth_jwt_code": "curl -X POST http://127.0.0.1:8000/signin -H 'Content-Type: application/json' --data '{\"user\":\"root\",\"pass\":\"root\"}'",
+  "auth_signin_title": "Login",
+  "auth_signin_desc": "SDKs authenticate the WebSocket session with signin and authenticate.",
+  "auth_signin_java": "String token = axon.signin(\"root\", \"root\");\naxon.authenticate(token);",
+  "auth_signin_node": "const token = await axon.signin('root', 'root');\nawait axon.authenticate(token);",
+  "auth_signin_python": "token = await axon.signin('root', 'root')\nawait axon.authenticate(token)",
+  "auth_cert_title": "Certificate",
+  "auth_cert_desc": "Certificate login uses mTLS or the certificate.begin and certificate.complete RPC flow.",
+  "auth_cert_code": "curl https://127.0.0.1:8000/certificate/login/icp_brasil --cert client.pem --key client.key",
+  "auth_temp_title": "Temporary Credential",
+  "auth_temp_desc": "certificate.complete returns a temporary credential after validating the challenge and certificate chain.",
+  "auth_temp_code": "{\"id\":2,\"method\":\"certificate.complete\",\"params\":[{\"id\":\"challenge\",\"challenge\":\"base64\",\"store\":\"icp_brasil\",\"user\":\"user\",\"chain\":[\"base64\"],\"signature\":\"base64\"}]}",
+  "auth_scopes_title": "Scopes",
+  "auth_scopes_desc": "Users can have ROOT, NAMESPACE, or DATABASE scope.",
+  "auth_scopes_code": "DEFINE USER app ON DATABASE PASSWORD \"password\" ROLES writer;\nDEFINE ACCESS app_login ON DATABASE;",
+  "auth_permissions_title": "Permissions",
+  "auth_permissions_desc": "PERMISSIONS FOR controls operations per record.",
+  "auth_permissions_code": "DEFINE TABLE person PERMISSIONS FOR SELECT TRUE, FOR CREATE WHERE $token.scope = \"ROOT\", FOR DELETE FALSE;",
+  "cert_title": "Digital Certificate",
+  "cert_intro": "Certificate authentication combines a JKS trust anchor, a user linked to the store, and one of two proof methods: mTLS transport or JSON-RPC challenge.",
+  "cert_root_title": "1. ROOT Administrative Limit",
+  "cert_root_desc": "CREATE JKS is an administrative runtime operation and only a ROOT-scoped authenticated session can execute it.",
+  "cert_root_flow_title": "Recommended Flow: JKS Administration",
+  "cert_root_flow_desc": "A ROOT administrator imports the authorities into the JKS and executes CREATE JKS.",
+  "cert_truststore_title": "2. Build and Import the JKS Truststore",
+  "cert_truststore_desc": "Create a JKS containing the CA certificates that can issue the accepted client certificates.",
+  "cert_truststore_code": "keytool -importcert -noprompt -alias company-ca -file /etc/axonbase/certs/company-ca.pem -keystore /etc/axonbase/truststores/company.jks -storepass changeit",
+  "cert_register_title": "3. Register the JKS at Runtime",
+  "cert_register_desc": "In a ROOT session, CREATE JKS loads the file and associates it with a store name.",
+  "cert_register_code": "CREATE JKS company PATH \"/etc/axonbase/truststores/company.jks\" PASSWORD \"changeit\";",
+  "cert_oid_title": "4. Generic OID Collection",
+  "cert_oid_desc": "COLLECT USER BY OID reads values from the certificate's subject distinguished name (DN).",
+  "cert_collector_flow_title": "Recommended Flow: Choose the Collector",
+  "cert_collector_flow_desc": "Use OID when the identity is in specific known subject DN attributes, declaring them in preference order.",
+  "cert_oid_code": "CREATE JKS company PATH \"/etc/axonbase/truststores/company.jks\" PASSWORD \"changeit\" COLLECT USER BY OID \"2.5.4.5\", \"2.16.76.1.3.1\";",
+  "cert_icp_title": "5. ICPBRASIL Collector",
+  "cert_icp_desc": "COLLECT USER BY ICPBRASIL selects the built-in CPF or CNPJ collection at the certificate login endpoint.",
+  "cert_user_title": "6. Link Certificate to User",
+  "cert_user_desc": "DEFINE USER associates the identity with the registered store name via CERTIFICATE.",
+  "cert_user_code": "DEFINE USER 12345678901 ON DATABASE CERTIFICATE icp_brasil ROLES writer;",
+  "cert_mtls_title": "7. mTLS Transport",
+  "cert_mtls_desc": "tls_cert and tls_key configure the server's PKCS12 keystore.",
+  "cert_mtls_code": "tls_cert = /etc/axonbase/certs/server.p12\ntls_key = changeit\ntls_ca = /etc/axonbase/truststores/icpbrasil.jks",
+  "cert_proof_title": "8. certificate.begin and certificate.complete Proof",
+  "cert_proof_desc": "certificate.begin returns an id, a 32-byte Base64URL challenge, and expires_at, 30 seconds ahead.",
+  "cert_proof_code": "{\"id\":1,\"method\":\"certificate.begin\",\"params\":[{\"store\":\"icp_brasil\"}]}",
+  "cert_credential_title": "9. Temporary Credential and DataGrip Session",
+  "cert_credential_desc": "After validating the chain, signature, and DEFINE USER binding, certificate.complete or mTLS login issues an axontc_ opaque credential.",
+  "cert_temp_flow_title": "Recommended Flow: Temporary Credential",
+  "cert_temp_flow_desc": "Complete mTLS login or certificate.complete, use the axontc_ credential with the same user in signin, and authenticate the session with the returned JWT.",
+  "cert_credential_code": "https://127.0.0.1:8000/certificate/login/icp_brasil?ns=test&db=dev",
+  "jdbc_title": "JDBC Driver",
+  "jdbc_intro": "JDBC (Java Database Connectivity) connects Java applications and SQL tools to the AxonBase WebSocket JSON-RPC.",
+  "jdbc_url_title": "URL JDBC",
+  "jdbc_url_desc": "The URL includes the endpoint, namespace, and database.",
+  "jdbc_url_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev",
+  "jdbc_driver_title": "Dependency",
+  "jdbc_driver_desc": "Add the axonbase-jdbc module to the application classpath.",
+  "jdbc_driver_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>",
+  "jdbc_datagrip_title": "DataGrip e DBeaver",
+  "jdbc_datagrip_desc": "Use the com.axonbase.jdbc.AxonDriver class and the AxonBase JDBC URL.",
+  "jdbc_examples_title": "Query",
+  "jdbc_examples_desc": "The API follows java.sql.Connection and Statement interfaces.",
+  "jdbc_example_java": "Class.forName(\"com.axonbase.jdbc.AxonDriver\");\ntry (Connection c = DriverManager.getConnection(\"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev\", \"root\", \"root\"); Statement s = c.createStatement(); ResultSet rs = s.executeQuery(\"SELECT * FROM person\")) {\n  while (rs.next()) System.out.println(rs.getString(\"name\"));\n}",
+  "jdbc_example_kotlin": "DriverManager.getConnection(\"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev\", \"root\", \"root\").use { connection ->\n  connection.createStatement().use { it.executeQuery(\"SELECT * FROM person\") }\n}",
+  "security_title": "Security",
+  "security_intro": "Configuration includes JWT, CORS, rate limiting, and TLS.",
+  "security_cors_title": "CORS",
+  "security_cors_desc": "AXON_CORS_ORIGINS defines comma-separated allowed origins.",
+  "security_cors_code": "AXON_CORS_ORIGINS=https://app.example.com ./run.sh start --port 8000",
+  "security_rate_limit_title": "Rate Limit",
+  "security_rate_limit_desc": "AXON_RATE_LIMIT defines the maximum requests per minute. Exceeded requests receive HTTP 429.",
+  "security_rate_limit_code": "AXON_RATE_LIMIT=120 ./run.sh start --port 8000",
+  "security_mtls_title": "mTLS",
+  "security_mtls_desc": "Setting AXON_TLS_CA requires a trusted client certificate.",
+  "security_mtls_code": "AXON_TLS_CERT=/etc/axonbase/server.p12 AXON_TLS_KEY=password AXON_TLS_CA=/etc/axonbase/ca.jks ./run.sh start --port 8000",
+  "security_jwt_title": "JWT",
+  "security_jwt_desc": "With authentication active, the server validates signature, expiry, and token scope.",
+  "security_jwt_code": "curl -X POST http://127.0.0.1:8000/sql -H 'Authorization: Bearer TOKEN' -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'SELECT * FROM person'",
+  "observability_title": "Observability",
+  "observability_intro": "The server exposes Prometheus metrics on GET /metrics, health check on /health, readiness on /ready, and status on /status.",
+  "observability_metrics_title": "Prometheus Metrics",
+  "observability_metrics_desc": "GET /metrics returns Prometheus-format metrics covering HTTP requests, WebSocket, slow queries, authentication, storage, JVM, and cluster.",
+  "observability_metrics_code": "# Requests and WebSocket\naxe_requests_total 45\naxe_ws_open 0\naxe_ws_frames_received_total 407\naxe_ws_frames_sent_total 461\naxe_ws_response_time_ns_total 5541540553\naxe_ws_query_errors_total 29\n\n# AxonQL Queries\naxe_query_total 0\naxe_query_slow_total 0\naxe_query_error_total 0\n\n# Authentication\naxe_auth_signin_total 0\naxe_auth_signin_fail_total 0\n\n# Storage and JVM\naxe_storage_keys_total 0\naxe_jvm_heap_bytes 5553120\naxe_jvm_heap_max_bytes 8589934592\naxe_jvm_nonheap_bytes 31211992\n\n# Uptime and Cluster\naxe_uptime_seconds 4316.87\naxe_cluster_role{role=\"LEADER\"} 1\naxe_cluster_term 0",
+  "observability_health_title": "Health Check",
+  "observability_health_desc": "GET /health confirms the process is serving requests. Returns {\"status\":\"ok\"} when operational.",
+  "observability_health_code": "curl http://127.0.0.1:8000/health\n# {\"status\":\"ok\"}",
+  "observability_ready_title": "Readiness",
+  "observability_ready_desc": "GET /ready reports whether the node is ready in the cluster.",
+  "observability_ready_code": "curl http://127.0.0.1:8000/ready\n# {\"ready\":true,\"role\":\"LEADER\",\"leader\":\"local\",\"active\":1,\"quorum\":1}",
+  "observability_status_title": "Cluster Status",
+  "observability_status_desc": "GET /status details the node state: node_id, cluster_id, Raft role, leader, term, commit_index, active, members, quorum, and ready.",
+  "observability_status_code": "curl http://127.0.0.1:8000/status\n# {\"node_id\":\"local\",\"role\":\"LEADER\",\"leader\":\"local\",\"leader_address\":\"\",\n#  \"term\":0,\"commit_index\":0,\"active\":1,\"members\":1,\"quorum\":1}",
+  "observability_logging_title": "Structured Logging",
+  "observability_logging_desc": "Each request is logged as a JSON line to stderr with fields: event, method, path, status, elapsed_ms, namespace, database, and error when applicable.",
+  "observability_logging_code": "{\"event\":\"request\",\"method\":\"POST\",\"path\":\"/sql\",\"status\":200,\"elapsed_ms\":12,\"namespace\":\"test\",\"database\":\"dev\"}\n{\"event\":\"ws_connect\",\"remote\":\"127.0.0.1:54321\"}\n{\"event\":\"ws_disconnect\",\"remote\":\"127.0.0.1:54321\",\"duration_ms\":482000}\n{\"event\":\"query_slow\",\"elapsed_ms\":230,\"sql\":\"SELECT * FROM large_table\"}",
+  "faq_title": "Frequently Asked Questions",
+  "faq_intro": "Practical answers for development, operations, and integration. Each answer describes the behavior available in the current implementation.",
+  "faq_items": [
+    {
+      "q": "What is AxonBase?",
+      "a": "It is a multi-model database in Java 21+ with AxonQL, documents, graphs, key-value operations, and memory or RocksDB storage. The server offers HTTP, WebSocket JSON-RPC, JDBC, basic GraphQL, and MCP (Model Context Protocol)."
+    },
+    {
+      "q": "What is the default port?",
+      "a": "The server uses 127.0.0.1:8000 by default for HTTP and WebSocket. When TLS is configured, the main port serves HTTPS/WSS; use plain_port to keep an additional non-TLS WS port for development and local JDBC tools."
+    },
+    {
+      "q": "How do I choose between memory and WAL?",
+      "a": "Use path = memory for quick tests and disposable data. The default is RocksDB (path = data): mature LSM-tree with leveled compaction, ZSTD compression, and bloom filters, supporting hundreds of millions of records with minimal heap. The legacy WalBackend (WAL + snapshot) is also available."
+    },
+    {
+      "q": "How does Time Travel work?",
+      "a": "On a versioned WAL backend, each write records the document state. Query a historical view with SELECT * FROM person AT (TIMESTAMP => '2026-08-27T00:00:00Z'). Before using in production, define a retention policy consistent with your update volume and audit needs."
+    },
+    {
+      "q": "How does the cluster work?",
+      "a": "The cluster uses Raft over TCP. Writes must go through the leader and are only confirmed with quorum. A follower returns NOT_LEADER; clients can reconnect to the informed leader address. Use the included Docker Compose as a three-node topology reference."
+    },
+    {
+      "q": "How do I authenticate applications?",
+      "a": "For WebSocket, call signin with user and password, then authenticate with the returned JWT. For HTTP without session, send Authorization: Bearer <token> along with Axon-Ns and Axon-Db headers. Users can be ROOT, NAMESPACE, or DATABASE scope."
+    },
+    {
+      "q": "How does digital certificate login work?",
+      "a": "Register a JKS truststore and a user collection strategy, for example COLLECT USER BY ICPBRASIL. The certificate endpoint validates the chain, extracts CPF or CNPJ when applicable, and issues a temporary credential."
+    },
+    {
+      "q": "Does the JDBC driver use PostgreSQL protocol?",
+      "a": "No. axonbase-jdbc implements JDBC over WebSocket JSON-RPC and uses jdbc:axonbase:ws:// or jdbc:axonbase:wss:// URLs."
+    },
+    {
+      "q": "How do I backup and restore?",
+      "a": "Use GET /export to produce an AxonQL dump and POST /import to restore it in the selected namespace and database. For remote copies, configure an S3-compatible endpoint like MinIO."
+    },
+    {
+      "q": "Does GraphQL support mutations and subscriptions?",
+      "a": "Not in the current implementation. POST /graphql resolves simple table selections and lightweight introspection. For writes, use AxonQL, POST /table/{table}, or JSON-RPC."
+    },
+    {
+      "q": "What should I monitor in production?",
+      "a": "Monitor /health for process availability, /ready for readiness and quorum, /status for Raft role and leadership, and /metrics for Prometheus metrics."
+    }
+  ],
+  "changelog_title": "Changelog",
+  "changelog_intro": "The project is under development as 0.1.0-SNAPSHOT.",
+  "changelog_versions": [
+    {
+      "version": "0.1.0-SNAPSHOT",
+      "date": "Under development",
+      "changes": [
+        "AxonQL, storage engine, transactions, and indexes.",
+        "HTTP server, WebSocket JSON-RPC, and metrics.",
+        "Raft cluster, S3 backup, JDBC, and SDKs."
+      ]
+    },
+    {
+      "version": "0.2.0-SNAPSHOT",
+      "date": "Under development",
+      "changes": [
+        "RocksDbBackend: JNI RocksDB implementation as default persistent backend, LSM-tree with leveled compaction + ZSTD, bloom filters, 243K sustained inserts/s.",
+        "Columnar index: CREATE INDEX ... COLUMNS ... COLUMNAR, sortable value encoding, direct count/sum/avg/min/max aggregation without loading documents.",
+        "Benchmark: 10M records in 41s (243K rec/s), 174 MB on disk with ZSTD for 1M records, 23K random lookups/s."
+      ]
+    }
+  ],
+  "sdk_overview_title": "SDKs",
+  "sdk_overview_intro": "The SDKs use JSON-RPC over WebSocket and negotiate protocol version 1 in the hello handshake.",
+  "sdk_overview_list": [
+    {
+      "name": "Java",
+      "desc": "Reference SDK in the axonbase-sdk-java module.",
+      "install": "mvn dependency:get -Dartifact=com.axondatabase:axonbase-sdk-java:0.2.1"
+    },
+    {
+      "name": "Node.js",
+      "desc": "TypeScript client for Node.js.",
+      "install": "npm install @axonbase/sdk@0.1.1"
+    },
+    {
+      "name": "Python",
+      "desc": "Async Python client.",
+      "install": "python -m pip install axonbase-sdk==0.1.1"
+    },
+    {
+      "name": "Go",
+      "desc": "Go client.",
+      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.1.0"
+    },
+    {
+      "name": ".NET",
+      "desc": "C# client for .NET.",
+      "install": "dotnet add package AxonBase.Sdk --version 0.1.0"
+    },
+    {
+      "name": "Rust",
+      "desc": "Async Rust client.",
+      "install": "cargo add axonbase-sdk@0.1.1"
+    },
+    {
+      "name": "PHP",
+      "desc": "PHP 8.1+ client.",
+      "install": "composer require axonbase/sdk:^0.1"
+    },
+    {
+      "name": "Ruby / Rails",
+      "desc": "Ruby client for Rails.",
+      "install": "gem install axonbase-sdk -v 0.1.0"
+    }
+  ],
+  "sdk_java_title": "Java SDK",
+  "sdk_java_intro": "The Java SDK is the reference client.",
+  "sdk_java_connection_title": "Connection",
+  "sdk_java_connection_desc": "Connect to the WebSocket endpoint and choose the context.",
+  "sdk_java_connection_code": "Axon axon = Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\");\naxon.use(\"test\", \"dev\");",
+  "sdk_java_signin_title": "Login",
+  "sdk_java_signin_desc": "Authenticate the session with the returned token.",
+  "sdk_java_signin_code": "String token = axon.signin(\"root\", \"root\");\naxon.authenticate(token);",
+  "sdk_java_query_title": "Query",
+  "sdk_java_query_desc": "query executes an AxonQL statement.",
+  "sdk_java_query_code": "AxonValue result = axon.query(\"SELECT * FROM person\");",
+  "sdk_java_crud_title": "CRUD",
+  "sdk_java_crud_desc": "Helpers create, read, update, and delete records.",
+  "sdk_java_crud_code": "axon.create(\"person\", AxonValue.object(Map.of(\"name\", AxonValue.str(\"Ana\"))));\naxon.delete(\"person\", \"name = 'Ana'\");",
+  "sdk_java_cert_title": "Certificate",
+  "sdk_java_cert_desc": "The client exposes certificateBegin and certificateComplete.",
+  "sdk_java_cert_code": "Axon.CertificateChallenge challenge = axon.certificateBegin(\"icp_brasil\");",
+  "sdk_java_live_title": "Live Query",
+  "sdk_java_live_desc": "live registers a notification handler.",
+  "sdk_java_live_code": "String id = axon.live(\"person\", notification -> System.out.println(notification));",
+  "sdk_node_title": "Node.js SDK",
+  "sdk_node_intro": "The Node.js package exposes the Axon class with async methods.",
+  "sdk_node_connection_title": "Connection",
+  "sdk_node_connection_desc": "Connect and select namespace and database.",
+  "sdk_node_connection_code": "const axon = await Axon.connect('ws://127.0.0.1:8000/rpc/ws');\nawait axon.use('test', 'dev');",
+  "sdk_node_signin_title": "Login",
+  "sdk_node_signin_desc": "signin returns the session token.",
+  "sdk_node_signin_code": "const token = await axon.signin('root', 'root');\nawait axon.authenticate(token);",
+  "sdk_node_query_title": "Consulta",
+  "sdk_node_query_desc": "query accepts AxonQL and optional variables.",
+  "sdk_node_query_code": "const rows = await axon.query('SELECT * FROM person');",
+  "sdk_node_crud_title": "CRUD",
+  "sdk_node_crud_desc": "Use create, select, update, and delete helpers.",
+  "sdk_node_crud_code": "await axon.create('person', {name: 'Ana'});\nawait axon.delete('person:ana');",
+  "sdk_node_cert_title": "Certificate",
+  "sdk_node_cert_desc": "The client implements the certificate challenge.",
+  "sdk_node_cert_code": "const challenge = await axon.certificateBegin('icp_brasil');",
+  "sdk_node_live_title": "Live Query",
+  "sdk_node_live_desc": "live calls the handler for each notification.",
+  "sdk_node_live_code": "const id = await axon.live('person', notification => console.log(notification));",
+  "sdk_python_title": "Python SDK",
+  "sdk_python_intro": "The Python SDK uses an async API.",
+  "sdk_python_connection_title": "Connection",
+  "sdk_python_connection_desc": "Use await to open the connection and select the context.",
+  "sdk_python_connection_code": "axon = await Axon.connect('ws://127.0.0.1:8000/rpc/ws')\nawait axon.use('test', 'dev')",
+  "sdk_python_signin_title": "Login",
+  "sdk_python_signin_desc": "Authenticate the session with the returned JWT.",
+  "sdk_python_signin_code": "token = await axon.signin('root', 'root')\nawait axon.authenticate(token)",
+  "sdk_python_query_title": "Query",
+  "sdk_python_query_desc": "query executes AxonQL.",
+  "sdk_python_query_code": "rows = await axon.query('SELECT * FROM person')",
+  "sdk_python_crud_title": "CRUD",
+  "sdk_python_crud_desc": "Helpers receive tables, ids, and dictionaries.",
+  "sdk_python_crud_code": "await axon.create('person', {'name': 'Ana'})\nawait axon.delete('person:ana')",
+  "sdk_python_cert_title": "Certificate",
+  "sdk_python_cert_desc": "The client exposes certificate_begin and certificate_complete.",
+  "sdk_python_cert_code": "challenge = await axon.certificate_begin('icp_brasil')",
+  "sdk_python_live_title": "Live Query",
+  "sdk_python_live_desc": "live receives an async or sync notification function.",
+  "sdk_python_live_code": "subscription = await axon.live('person', lambda notification: print(notification))",
+  "sdk_go_title": "Go SDK",
+  "sdk_go_intro": "The Go SDK returns explicit results and errors.",
+  "sdk_go_connection_title": "Connection",
+  "sdk_go_connection_desc": "Connect opens the WebSocket.",
+  "sdk_go_connection_code": "axon, err := axonbase.Connect(\"ws://127.0.0.1:8000/rpc/ws\", nil)\n_, err = axon.Use(\"test\", \"dev\")",
+  "sdk_go_signin_title": "Login",
+  "sdk_go_signin_desc": "Signin and Authenticate update the session.",
+  "sdk_go_signin_code": "token, err := axon.Signin(\"root\", \"root\", nil)\nerr = axon.Authenticate(token)",
+  "sdk_go_query_title": "Query",
+  "sdk_go_query_desc": "Query receives AxonQL and an optional variables map.",
+  "sdk_go_query_code": "rows, err := axon.Query(\"SELECT * FROM person\", nil)",
+  "sdk_go_crud_title": "CRUD",
+  "sdk_go_crud_desc": "Helpers use data maps.",
+  "sdk_go_crud_code": "_, err := axon.Create(\"person\", map[string]interface{}{\"name\": \"Ana\"})\n_, err = axon.Delete(\"person:ana\")",
+  "sdk_go_cert_title": "Certificate",
+  "sdk_go_cert_desc": "CertificateBegin starts the challenge.",
+  "sdk_go_cert_code": "challenge, err := axon.CertificateBegin(\"icp_brasil\")",
+  "sdk_go_live_title": "Live Query",
+  "sdk_go_live_desc": "Live registers a LiveHandler.",
+  "sdk_go_live_code": "id, err := axon.Live(\"person\", func(n axonbase.Notification) {}, false)",
+  "sdk_dotnet_title": ".NET SDK",
+  "sdk_dotnet_intro": "The C# client exposes async methods ending in Async.",
+  "sdk_dotnet_connection_title": "Connection",
+  "sdk_dotnet_connection_desc": "Create the client with the URL and open the connection.",
+  "sdk_dotnet_connection_code": "using var axon = new AxonClient(\"ws://127.0.0.1:8000/rpc/ws\");\nawait axon.OpenAsync();\nawait axon.UseAsync(\"test\", \"dev\");",
+  "sdk_dotnet_signin_title": "Login",
+  "sdk_dotnet_signin_desc": "Authenticate the session with the returned token.",
+  "sdk_dotnet_signin_code": "var token = await axon.SigninAsync(\"root\", \"root\");\nawait axon.AuthenticateAsync(token);",
+  "sdk_dotnet_query_title": "Query",
+  "sdk_dotnet_query_desc": "QueryAsync executes AxonQL.",
+  "sdk_dotnet_query_code": "var rows = await axon.QueryAsync(\"SELECT * FROM person\");",
+  "sdk_dotnet_crud_title": "CRUD",
+  "sdk_dotnet_crud_desc": "Helpers receive Dictionary for data.",
+  "sdk_dotnet_crud_code": "await axon.CreateAsync(\"person\", new Dictionary<string, object?> { [\"name\"] = \"Ana\" });\nawait axon.DeleteAsync(\"person:ana\");",
+  "sdk_dotnet_cert_title": "Certificate",
+  "sdk_dotnet_cert_desc": "CertificateBeginAsync starts the challenge.",
+  "sdk_dotnet_cert_code": "var challenge = await axon.CertificateBeginAsync(\"icp_brasil\");",
+  "sdk_dotnet_live_title": "Live Query",
+  "sdk_dotnet_live_desc": "LiveAsync receives a notification handler.",
+  "sdk_dotnet_live_code": "var id = await axon.LiveAsync(\"person\", notification => { });",
+  "sdk_rust_title": "Rust SDK",
+  "sdk_rust_intro": "The Rust client uses Tokio and returns Result.",
+  "sdk_rust_connection_title": "Connection",
+  "sdk_rust_connection_desc": "Connect with AxonOptions and select the context.",
+  "sdk_rust_connection_code": "let axon = Axon::connect(\"ws://127.0.0.1:8000/rpc/ws\", AxonOptions::default()).await?;\naxon.use_ns(\"test\", \"dev\").await?;",
+  "sdk_rust_signin_title": "Login",
+  "sdk_rust_signin_desc": "signin and authenticate act on the connection.",
+  "sdk_rust_signin_code": "let token = axon.signin(\"root\", \"root\", None).await?;\naxon.authenticate(&token).await?;",
+  "sdk_rust_query_title": "Query",
+  "sdk_rust_query_desc": "query receives the statement and optional variables.",
+  "sdk_rust_query_code": "let rows = axon.query(\"SELECT * FROM person\", None).await?;",
+  "sdk_rust_crud_title": "CRUD",
+  "sdk_rust_crud_desc": "create and delete modify records.",
+  "sdk_rust_crud_code": "axon.create(\"person\", serde_json::json!({\"name\": \"Ana\"})).await?;\naxon.delete(\"person:ana\").await?;",
+  "sdk_rust_cert_title": "Certificate",
+  "sdk_rust_cert_desc": "certificate_begin starts the challenge.",
+  "sdk_rust_cert_code": "let challenge = axon.certificate_begin(\"icp_brasil\").await?;",
+  "sdk_rust_live_title": "Live Query",
+  "sdk_rust_live_desc": "live receives a notification channel.",
+  "sdk_rust_live_code": "let id = axon.live(\"person\", handler, false).await?;",
+  "sdk_php_title": "PHP SDK",
+  "sdk_php_intro": "The PHP SDK is a synchronous PHP 8.1+ WebSocket client. It receives the server hello frame when connecting and sends JSON-RPC protocol version 1 with every request.",
+  "sdk_php_connection_title": "Connect, Select Scope, and Authenticate",
+  "sdk_php_connection_desc": "connect opens the WebSocket connection. use selects its namespace and database, signin returns and stores a token, and authenticate accepts either that token or one obtained elsewhere.",
+  "sdk_php_connection_code": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse AxonBase\\Axon;\n\n$axon = Axon::connect('ws://127.0.0.1:8000/rpc/ws');\n$axon->use('test', 'dev');\n$token = $axon->signin('root', 'root');\n$axon->authenticate($token);",
+  "sdk_php_query_title": "Query with Variables",
+  "sdk_php_query_desc": "query executes AxonQL. Pass an associative array as the optional second argument to bind AxonQL variables by name.",
+  "sdk_php_query_code": "$rows = $axon->query(\n    'SELECT * FROM person WHERE age >= $minAge',\n    ['minAge' => 18],\n);",
+  "sdk_php_crud_title": "Record Helpers",
+  "sdk_php_crud_desc": "The helpers return decoded JSON results. select and delete accept an optional filter as their second argument; create, update, and upsert accept a table or record target, while insert accepts a table.",
+  "sdk_php_crud_code": "$created = $axon->create('person', ['name' => 'Ana', 'age' => 30]);\n$selected = $axon->select('person', 'age >= 18');\n$inserted = $axon->insert('person', ['name' => 'Bia']);\n$updated = $axon->update('person:ana', ['age' => 31]);\n$upserted = $axon->upsert('person:bia', ['name' => 'Bia', 'age' => 28]);\n$deleted = $axon->delete('person', 'age < 18');",
+  "sdk_php_session_title": "Session State and Lifetime",
+  "sdk_php_session_desc": "ping returns a boolean, version returns the server version, namespace and database expose the selected scope, and hello exposes the first server frame. Always close the transport when finished.",
+  "sdk_php_session_code": "$alive = $axon->ping();\n$serverVersion = $axon->version();\n$namespace = $axon->namespace();\n$database = $axon->database();\n$hello = $axon->hello();\n$axon->close();",
+  "sdk_php_errors_title": "Typed Errors",
+  "sdk_php_errors_desc": "All SDK errors extend AxonBase\\Error. RPC error codes are mapped to AuthError, ConflictError, NotLeaderError, NoQuorumError, RateLimitError, and ProtocolMismatchError. NotLeaderError also exposes leader and leaderAddress; ProtocolMismatchError exposes protocol and serverVersion.",
+  "sdk_php_errors_code": "use AxonBase\\{AuthError, NotLeaderError, Error};\n\ntry {\n    $axon->create('person', ['name' => 'Ana']);\n} catch (NotLeaderError $error) {\n    $leader = $error->leaderAddress;\n} catch (AuthError $error) {\n    // Sign in again or provide a valid token.\n} catch (Error $error) {\n    $code = $error->getCode();\n}",
+  "sdk_php_migration_title": "Migrations",
+  "sdk_php_migration_desc": "Migrator loads one .axql file or all .axql files in a directory in lexical order. Migration exposes version, name, path, checksum, and sql. ensureTable creates the _migration tracking table; applied returns its version-to-checksum map; status marks each loaded migration as applied. up runs pending migrations once, records their SHA-256 checksum, and fails when an applied file changes. onBefore and onAfter run around every pending migration.",
+  "sdk_php_migration_code": "use AxonBase\\Migration\\Migrator;\n\n$migrator = new Migrator($axon);\n$migrator->onBefore(function ($migration): void {\n    error_log(\"Applying {$migration->name}\");\n});\n$migrator->onAfter(function ($migration): void {\n    error_log(\"Applied {$migration->name}\");\n});\n\n$migrator->ensureTable();\n$migrations = $migrator->load(__DIR__ . '/migrations');\n$checksums = $migrator->applied();\n$status = $migrator->status(__DIR__ . '/migrations');\n$applied = $migrator->up(__DIR__ . '/migrations');\n$again = $migrator->up(__DIR__ . '/migrations'); // [] when unchanged",
+  "sdk_ruby_title": "Ruby and Rails SDK",
+  "sdk_ruby_intro": "The Ruby SDK is a synchronous Ruby 2.6+ WebSocket client. Rails applications can construct Client with a custom transport that uses their chosen WebSocket stack.",
+  "sdk_ruby_connection_title": "Connect, Select Scope, and Authenticate",
+  "sdk_ruby_connection_desc": "Client.connect opens the WebSocket connection. use selects its namespace and database, signin returns and stores a token, and authenticate accepts either that token or one obtained elsewhere.",
+  "sdk_ruby_connection_code": "require \"axonbase\"\n\naxon = AxonBase::Client.connect(\"ws://127.0.0.1:8000/rpc/ws\")\naxon.use(\"test\", \"dev\")\ntoken = axon.signin(\"root\", \"root\")\naxon.authenticate(token)",
+  "sdk_ruby_query_title": "Query with Variables",
+  "sdk_ruby_query_desc": "query executes AxonQL. Pass a Hash as the optional second argument to bind AxonQL variables by name.",
+  "sdk_ruby_query_code": "rows = axon.query(\n  \"SELECT * FROM person WHERE age >= $minAge\",\n  { \"minAge\" => 18 }\n)",
+  "sdk_ruby_crud_title": "Record Helpers",
+  "sdk_ruby_crud_desc": "The helpers return decoded JSON results. select and delete accept an optional filter as their second argument; create, update, and upsert accept a table or record target, while insert accepts a table.",
+  "sdk_ruby_crud_code": "created = axon.create(\"person\", { \"name\" => \"Ana\", \"age\" => 30 })\nselected = axon.select(\"person\", \"age >= 18\")\ninserted = axon.insert(\"person\", { \"name\" => \"Bia\" })\nupdated = axon.update(\"person:ana\", { \"age\" => 31 })\nupserted = axon.upsert(\"person:bia\", { \"name\" => \"Bia\", \"age\" => 28 })\ndeleted = axon.delete(\"person\", \"age < 18\")",
+  "sdk_ruby_session_title": "Session State and Lifetime",
+  "sdk_ruby_session_desc": "ping returns a decoded result, version returns the server version, and the namespace, database, and hello readers expose connection state. Always close the transport when finished.",
+  "sdk_ruby_session_code": "alive = axon.ping\nserver_version = axon.version\nnamespace = axon.namespace\ndatabase = axon.database\nhello = axon.hello\naxon.close",
+  "sdk_ruby_errors_title": "Typed Errors",
+  "sdk_ruby_errors_desc": "All SDK errors inherit from AxonBase::Error. RPC error codes are mapped to AuthError, ConflictError, NotLeaderError, NoQuorumError, RateLimitError, and ProtocolMismatchError. NotLeaderError exposes leader and leader_address; ProtocolMismatchError exposes protocol and server_version.",
+  "sdk_ruby_errors_code": "begin\n  axon.create(\"person\", { \"name\" => \"Ana\" })\nrescue AxonBase::NotLeaderError => error\n  leader = error.leader_address\nrescue AxonBase::AuthError\n  # Sign in again or provide a valid token.\nrescue AxonBase::Error => error\n  code = error.code\nend",
+  "sdk_ruby_migration_title": "Migrations",
+  "sdk_ruby_migration_desc": "Migrator loads one .axql file or all .axql files in a directory in lexical order. Migration exposes version, name, path, checksum, and sql. ensure_table creates the _migration tracking table; applied returns its version-to-checksum map; status marks each loaded migration as applied. up runs pending migrations once, records their SHA-256 checksum, and fails when an applied file changes. on_before and on_after run around every pending migration.",
+  "sdk_ruby_migration_code": "migrator = AxonBase::Migrator.new(axon)\nmigrator.on_before { |migration| Rails.logger.info(\"Applying #{migration.name}\") }\nmigrator.on_after { |migration| Rails.logger.info(\"Applied #{migration.name}\") }\n\nmigrator.ensure_table\nmigrations = migrator.load(Rails.root.join(\"db/axonbase_migrations\").to_s)\nchecksums = migrator.applied\nstatus = migrator.status(Rails.root.join(\"db/axonbase_migrations\").to_s)\napplied = migrator.up(Rails.root.join(\"db/axonbase_migrations\").to_s)\nagain = migrator.up(Rails.root.join(\"db/axonbase_migrations\").to_s) # [] when unchanged",
+  "getting_started_architecture_title": "Local Architecture",
+  "getting_started_architecture_desc": "A local session has three boundaries: the repository initiator, the server process, and the client transport.",
+  "getting_started_architecture": [
+    {
+      "title": "Docker Image",
+      "desc": "The official axonbase/axonbase:latest image runs the server with RocksDB as the default storage backend. It exposes port 8000 for HTTP and WebSocket."
+    },
+    {
+      "title": "Storage",
+      "desc": "By default, RocksDB persists data in /data inside the container. Mount a volume to preserve data across restarts. Use AXON_PATH=memory for ephemeral testing."
+    },
+    {
+      "title": "Request Scope",
+      "desc": "On HTTP /sql, Axon-Ns and Axon-Db headers select the namespace and database. A WebSocket JSON-RPC connection maintains selected scope, authentication, transactions, and live queries."
+    }
+  ],
+  "getting_started_prerequisites_title": "Prerequisites",
+  "getting_started_prerequisites": [
+    "Docker is required to run the axonbase/axonbase:latest image.",
+    "curl is used below as an HTTP client to interact with the server.",
+    "Use AXON_REQUIRE_AUTH=false only for local development. Keep authentication active on shared or deployed servers."
+  ],
+  "getting_started_session_title": "First Session",
+  "getting_started_session_desc": "Run the commands in order while the server stays active. The two curl calls are independent HTTP requests, so they repeat the namespace and database headers.",
+  "cli_lifecycle_title": "Command Lifecycle",
+  "cli_lifecycle_desc": "The CLI is a WebSocket client, not the server launcher. A command opens /rpc/ws, receives a hello frame, selects scope when needed, executes the operation, prints a result, and closes the connection.",
+  "cli_lifecycle": [
+    "First compile the project with Maven.",
+    "Use a WebSocket URL like ws://127.0.0.1:8000/rpc/ws.",
+    "For sql, pass --ns and --db to send use before the AxonQL statement.",
+    "export and import always select the namespace and database passed as positional arguments."
+  ],
+  "cli_commands_title": "Commands",
+  "cli_commands_desc": "The entry point recognizes sql, repl, export, and import.",
+  "cli_workflows_title": "Common Workflows",
+  "cli_workflows_desc": "Examples use an in-memory server without authentication for local work.",
+  "cli_workflows": [
+    {
+      "title": "Execute a Statement with Scope",
+      "desc": "Pass the statement after the URL and optional scope flags.",
+      "code": "axon sql ws://127.0.0.1:8000/rpc/ws 'CREATE person CONTENT {name: \"Ana\"}' --ns test --db dev\naxon sql ws://127.0.0.1:8000/rpc/ws 'SELECT * FROM person' --ns test --db dev"
+    },
+    {
+      "title": "Explore Interactively",
+      "desc": "Open the REPL, see internal help with ?, select a scope, and type AxonQL.",
+      "code": "axon repl\naxon> use test dev\naxon> SELECT * FROM person\naxon> exit"
+    },
+    {
+      "title": "Export and Restore a Scope",
+      "desc": "export prints the result of SELECT * FROM __export.",
+      "code": "axon export ws://127.0.0.1:8000/rpc/ws test dev > backup.dump\naxon import ws://127.0.0.1:8000/rpc/ws test dev backup.dump"
+    },
+    {
+      "title": "About --vars",
+      "desc": "The sql command accepts --vars JSON and interprets its value.",
+      "code": "# Interpreted but not sent by the current CLI implementation:\naxon sql ws://127.0.0.1:8000/rpc/ws 'RETURN $name' --vars '{\"name\":\"Ana\"}'"
+    }
+  ],
+  "sdk_overview_protocol_title": "Shared Transport",
+  "sdk_overview_protocol_desc": "All eight connectors use JSON-RPC over WebSocket at /rpc/ws. The server sends hello as the first WebSocket frame. PHP and Ruby send the protocol version in every request.",
+  "sdk_overview_parity_title": "Feature Parity",
+  "sdk_overview_parity_desc": "The connectors share the protocol but do not expose exactly the same convenience API. PHP and Ruby now cover the full public API including CRUD, relate, transactions, KV, live queries, certificates, mTLS, migrations, sagas, and typed errors.",
+  "sdk_overview_feature": "Feature",
+  "sdk_overview_parity": [
+    { "feature_key": "parity_connect", "java": "connect, use", "node": "connect, use", "python": "connect, use", "go": "Connect, Use", "dotnet": "ConnectAsync, UseAsync", "rust": "connect, use_ns", "php": "connect, use", "ruby": "connect, use" },
+    { "feature_key": "parity_query_auth", "java": "query, signin, authenticate", "node": "query, signin, signup, authenticate", "python": "query, signin, signup, authenticate", "go": "Query, Signin, Signup, Authenticate", "dotnet": "QueryAsync, SigninAsync, SignupAsync, AuthenticateAsync", "rust": "query, signin, signup, authenticate", "php": "query, signin, authenticate", "ruby": "query, signin, authenticate" },
+    { "feature_key": "parity_crud", "java": "create, select, update, delete", "node": "select, create, insert, update, upsert, delete, relate", "python": "select, create, insert, update, upsert, delete, relate", "go": "Select, Create, Insert, Update, Upsert, Delete, Relate", "dotnet": "SelectAsync, CreateAsync, InsertAsync, UpdateAsync, UpsertAsync, DeleteAsync, RelateAsync", "rust": "select, create, insert, update, upsert, delete, relate", "php": "select, create, insert, update, upsert, delete, relate", "ruby": "select, create, insert, update, upsert, delete, relate" },
+    { "feature_key": "parity_txn_kv", "java": "Use query com AxonQL", "node": "begin, commit, cancel; kvGet, kvSet, kvDel, kvScan", "python": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "go": "Begin, Commit, Cancel; KvGet, KvSet, KvDel, KvScan", "dotnet": "BeginAsync, CommitAsync, CancelAsync; KvGetAsync, KvSetAsync, KvDelAsync, KvScanAsync", "rust": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "php": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "ruby": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan" },
+    { "feature_key": "parity_live", "java": "live, kill", "node": "live, kill", "python": "live, kill", "go": "Live, Kill", "dotnet": "LiveAsync, KillAsync", "rust": "live, kill", "php": "live, kill", "ruby": "live, kill" },
+    { "feature_key": "parity_cert", "java": "certificateBegin, certificateComplete", "node": "certificateBegin, certificateComplete", "python": "certificate_begin, certificate_complete", "go": "CertificateBegin, CertificateComplete", "dotnet": "CertificateBeginAsync, CertificateCompleteAsync", "rust": "certificate_begin, certificate_complete", "php": "certificateBegin, certificateComplete", "ruby": "certificate_begin, certificate_complete" },
+    { "feature_key": "parity_mtls", "java": "identidade PKCS12, truststore JKS", "node": "opções TLS de ws", "python": "ssl.SSLContext", "go": "tls.Config", "dotnet": "certificados de cliente e raízes personalizadas opcionais", "rust": "CA, certificado e chave PEM", "php": "contexto SSL no WebSocket", "ruby": "ssl_params no WebSocket" },
+    { "feature_key": "parity_migrations", "java": "Migrator.up()", "node": "Migrator.up()", "python": "Migrator.up()", "go": "Migrator.Up()", "dotnet": "Migrator.UpAsync()", "rust": "migrator.up()", "php": "Migrator::up()", "ruby": "Migrator#up" },
+    { "feature_key": "parity_dbapi", "java": "JDBC + Hibernate Dialect", "node": "—", "python": "axonbase.dbapi + axonbase.sqlalchemy_dialect", "go": "—", "dotnet": "—", "rust": "—", "php": "—", "ruby": "—" },
+    { "feature_key": "parity_errors", "java": "AxonSdkException", "node": "AxonSdkError", "python": "AxonError", "go": "erros com tipo", "dotnet": "AxonException", "rust": "AxonError", "php": "AuthError, NotLeaderError, etc.", "ruby": "AuthError, NotLeaderError, etc." },
+    { "feature_key": "parity_hello", "java": "—", "node": "valida protocol no hello", "python": "valida protocol no hello", "go": "valida protocol no hello", "dotnet": "valida protocol no hello", "rust": "valida protocol no hello", "php": "valida protocol no hello", "ruby": "valida protocol no hello" },
+    { "feature_key": "parity_sagas", "java": "SagaTransaction, SagaParticipantTransaction", "node": "SagaTransaction, SagaParticipantTransaction", "python": "SagaTransaction, SagaParticipantTransaction", "go": "SagaTransaction, SagaParticipantTransaction", "dotnet": "SagaTransaction, SagaParticipantTransaction", "rust": "SagaTransaction, SagaParticipantTransaction", "php": "SagaTransaction, SagaParticipantTransaction", "ruby": "SagaTransaction, SagaParticipantTransaction" }
+  ],
+  "parity_connect": "Connection and Scope",
+  "parity_query_auth": "Query and Authentication",
+  "parity_crud": "CRUD and Relations",
+  "parity_txn_kv": "Transactions and Key-Value",
+  "parity_live": "Live Queries",
+  "parity_cert": "Certificate Proof",
+  "parity_mtls": "mTLS Configuration",
+  "parity_migrations": "Migrations (.axql)",
+  "parity_dbapi": "DBAPI 2.0 / SQLAlchemy",
+  "parity_errors": "Typed RPC Errors",
+  "parity_hello": "Hello / Protocol Version",
+  "parity_sagas": "Sagas",
+  "sdk_overview_method_groups_title": "Connector Method Groups",
+  "sdk_overview_method_groups_desc": "Names vary by case and async conventions. Except for the Java helpers, language clients reflect these JSON-RPC families.",
+  "sdk_overview_method_groups": [
+    {
+      "name": "Session",
+      "methods": "ping, version, use, let/set, unset",
+      "desc": "Inspects the server, selects namespace and database, and manages WebSocket session variables."
+    },
+    {
+      "name": "Identity",
+      "methods": "signin, signup, authenticate, invalidate",
+      "desc": "Gets or associates a JWT, creates an identity via signup, or clears client session authentication."
+    },
+    {
+      "name": "AxonQL and Records",
+      "methods": "query; select, create, insert, update, upsert, delete, relate",
+      "desc": "Executes AxonQL or uses record helpers. In cluster, mutable helpers are routed to the leader."
+    },
+    {
+      "name": "Transactions",
+      "methods": "begin, commit, cancel",
+      "desc": "Controls the transaction bound to the WebSocket session."
+    },
+    {
+      "name": "Key-Value",
+      "methods": "kv_get, kv_set, kv_del, kv_scan",
+      "desc": "Reads, writes, removes, and scans key-value entries."
+    },
+    {
+      "name": "Live Queries",
+      "methods": "live, kill",
+      "desc": "Registers a table subscription and cancels it. Notifications are unsolicited WebSocket frames."
+    },
+    {
+      "name": "Certificate Proof",
+      "methods": "certificate.begin, certificate.complete",
+      "desc": "Requests a short-lived challenge and sends the signed challenge with the certificate chain."
+    }
+  ],
+  "sdk_overview_jdbc_title": "JDBC Integration",
+  "sdk_overview_jdbc_desc": "axonbase-jdbc is a Java integration adapter over the AxonBase WebSocket JSON-RPC SDK. It implements a JDBC subset via Connection, Statement, PreparedStatement, and ResultSet.",
+  "sdk_overview_jdbc_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev",
+  "sdk_overview_packages_title": "Language Connectors",
+  "sdk_parity_title": "SDK connector parity map",
+  "sdk_parity_desc": "All eight connectors share the same core AxonBase capabilities: connection, query, transactions, live events, KV, certificates, migrations, and sagas.",
+  "sdk_parity_badge": "SDK CONNECTORS / CAPABILITY PARITY",
+  "sdk_parity_connector_label": "CONNECTOR",
+  "sdk_parity_connectors": ["Java", "Node.js", "Python", "Go", ".NET", "Rust", "PHP", "Ruby"],
+  "sdk_parity_capabilities": ["Connect", "Query", "Transact", "KV", "Live", "Cert", "mTLS", "Migrate", "Saga"],
+  "sdk_parity_footer": "ONE API SURFACE, NATIVE ECOSYSTEMS",
+  "search_overview_title": "Five Search Engines, One Database",
+  "search_overview_subtitle": "AxonBase replaces Elasticsearch for BM25 full-text search, Qdrant or Pinecone for HNSW vector search, dedicated geo services like MongoDB Geo or Elastic Geo, graph databases like Neo4j or Dgraph, and analytical column stores like ClickHouse, all within a single database with native SQL.",
+  "search_overview_diagram_alt": "Diagram of AxonBase's five search engines: BM25 full-text, HNSW vector, geo radius, graph traversal, and columnar index",
+  "search_overview_replace_title": "Replace Multiple Specialized Systems",
+  "search_overview_replace_desc": "Most architectures combine Elasticsearch for text search, Qdrant or Pinecone for vector similarity, MongoDB Geo or Elastic Geo for location queries, Neo4j or Dgraph for graph traversal, and ClickHouse for analytical aggregation. AxonBase eliminates all these external dependencies with native SQL engines implementing BM25, HNSW, GEO, graph traversal, and columnar index, reducing infrastructure complexity and operational cost.",
+  "search_overview_ft_title": "Full-Text (BM25)",
+  "search_overview_ft_desc": "Industry-standard BM25 ranking with tokenization, stopword removal, and stemming via DEFINE ANALYZER and DEFINE INDEX SEARCH.",
+  "search_overview_vector_title": "Vector (HNSW)",
+  "search_overview_vector_desc": "Hierarchical Navigable Small World index for approximate nearest neighbor search. Configure DIMENSION and DIST per index.",
+  "search_overview_geo_title": "Geo (R-Tree)",
+  "search_overview_geo_desc": "R-Tree spatial index on GeoJSON points with real-time distance queries and bounding box filtering.",
+  "search_overview_graph_title": "Graph (Adjacency)",
+  "search_overview_graph_desc": "Directed adjacency edges with RELATE and single-line AxonQL traversal for friend-of-friend and path queries.",
+  "search_overview_columnar_title": "Columnar (Analytical)",
+  "search_overview_columnar_desc": "Columnar index with sortable value encoding for direct aggregation of count, sum, avg, min, and max without loading documents from the main KV store. Prefix scan on CI| prefix.",
+  "search_ft_subtitle": "Replace Elasticsearch: native BM25 text search with analysis pipelines, inverted indexes, and ranked results, all in SQL.",
+  "search_ft_scenario_title": "Scenario: CMS Search",
+  "search_ft_scenario_desc": "A content management system stores thousands of articles and needs to search by title and body with relevance ranking. AxonBase replaces a separate Elasticsearch cluster with a native BM25 search engine.",
+  "search_ft_bm25_title": "BM25 Ranking Algorithm",
+  "search_ft_bm25_desc": "BM25 (Best Matching 25) is the industry-standard ranking function used by Elasticsearch and Lucene. It scores documents by term frequency (how many times a term appears in the document), inverse document frequency (how rare the term is in the corpus), and field-length normalization (shorter fields are more significant). AxonBase implements BM25 natively with configurable k1 and b parameters.",
+  "search_ft_index_title": "Creating a Full-Text Index",
+  "search_ft_index_desc": "Define an analyzer with tokenization, stopword filtering, and stemming rules, then create a search index on the relevant columns. The analyzer processes text identically during indexing and querying.",
+  "search_ft_index_code": "DEFINE ANALYZER my_analyzer\n  WITH tokenizer = 'standard',\n       filters  = ['lowercase', 'stopwords', 'stemmer'];\n\nDEFINE INDEX SEARCH articles_idx\n  ON TABLE articles\n  WITH analyzer = my_analyzer,\n       COLUMNS  = (title, body);",
+  "search_ft_query_title": "Querying with BM25",
+  "search_ft_query_desc": "Use the double @@ operator to activate text search. The search::score() function returns the BM25 relevance score, which you can use in ORDER BY and WHERE.",
+  "search_ft_query_code": "SELECT id, title, search::score() AS relevance FROM articles WHERE body @@ 'machine learning' ORDER BY relevance DESC LIMIT 20;",
+  "search_ft_docker_title": "Setup Docker para Busca Textual",
+  "search_ft_docker_desc": "Exemplo completo de Docker Compose com tabela de artigos, analisador, indice de busca e dados de amostra.",
+  "search_ft_docker_code": "version: '3.8'\nservices:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports:\n      - \"5432:5432\"\n    environment:\n      AXONBASE_PASSWORD: mypassword\n\n  setup:\n    image: axonbase/axonbase:latest\n    depends_on: [ axonbase ]\n    entrypoint:\n      - axonbase\n      - -c\n      - |\n        CREATE TABLE artigos (\n          id    SERIAL PRIMARY KEY,\n          titulo TEXT NOT NULL,\n          corpo  TEXT NOT NULL\n        );\n\n        DEFINE ANALYZER meu_analisador\n          WITH tokenizer = 'standard',\n               filters  = ['lowercase', 'stopwords', 'stemmer'];\n\n        DEFINE INDEX SEARCH artigos_idx\n          ON TABLE artigos\n          WITH analyzer = meu_analisador,\n               COLUMNS  = (titulo, corpo);\n\n        INSERT INTO artigos (titulo, corpo) VALUES\n          ('Intro a ML', 'Machine learning esta transformando industrias'),\n          ('Deep Learning', 'Redes neurais e avancos em aprendizado profundo');",
+  "search_vector_subtitle": "Replace Qdrant and Pinecone: native HNSW nearest neighbor search with configurable dimensions and distance functions.",
+  "search_vector_scenario_title": "Scenario: AI Product Embeddings",
+  "search_vector_scenario_desc": "An AI agent built with LangChain embeds product descriptions into 384-dimensional vectors. When a user asks about similar items, the agent needs semantic search across millions of embeddings. AxonBase replaces a dedicated vector database with a native HNSW index.",
+  "search_vector_hnsw_title": "HNSW Algorithm",
+  "search_vector_hnsw_desc": "HNSW (Hierarchical Navigable Small World) builds a multi-layer graph where each layer is a downsampled version of the layer below. Search starts at the top layer and descends to finer granularity, achieving approximate nearest neighbor search in O(log n) time.",
+  "search_vector_index_code": "DEFINE INDEX knowledge_embedding ON TABLE knowledge_chunks COLUMNS embedding HNSW DIMENSION 384 DIST cos;",
+  "search_vector_query_title": "Consultando Similaridade Vetorial",
+  "search_vector_query_desc": "Use vector::similarity::cosine() para calcular a distancia semantica entre uma coluna de embedding e um vetor de consulta. Ordene por pontuacao e limite aos vizinhos mais proximos.",
+  "search_vector_query_code": "SELECT id, content, vector::distance::cosine(embedding, [0.11, 0.44, 0.76, 0.35]) AS distance FROM knowledge_chunks ORDER BY distance ASC LIMIT 5;",
+  "search_vector_hybrid_title": "Hybrid Search: Text + Vector",
+  "search_vector_hybrid_desc": "Combine BM25 filtering with vector similarity ranking in a single query. WHERE filters candidates by full-text, while ORDER BY ranks by vector distance.",
+  "search_vector_hybrid_code": "SELECT id, content, vector::distance::cosine(embedding, [0.11, 0.44, 0.76, 0.35]) AS distance FROM knowledge_chunks WHERE content @@ \"vector search\" ORDER BY distance ASC LIMIT 5;",
+  "search_vector_roadmap_title": "Planejado: pipeline de PDFs do S3 para busca vetorial",
+  "search_vector_roadmap_desc": "Este fluxo e uma proposta futura e nao esta disponivel. O codigo S3 atual do AxonBase executa backup e restauracao de snapshots; ele nao descobre objetos para ingestao nem extrai texto de PDFs.",
+  "search_vector_roadmap_steps": [
+    {
+      "title": "Credenciais e objetos S3 configurados",
+      "desc": "Usar credenciais configuradas para listar os objetos do bucket e selecionar PDFs novos ou alterados."
+    },
+    {
+      "title": "Extracao e fragmentacao deterministica",
+      "desc": "Baixar cada PDF, extrair seu texto e dividi-lo em fragmentos reproduziveis com tamanho e sobreposicao definidos."
+    },
+    {
+      "title": "Embeddings pela aplicacao",
+      "desc": "A aplicacao integrada a LangChain ou Agno enviaria os fragmentos a um provedor de embeddings."
+    },
+    {
+      "title": "Registros e indice HNSW",
+      "desc": "Inserir registros de documento, fragmento e embedding, criar o indice HNSW e recuperar os fragmentos mais proximos."
+    }
+  ],
+  "search_vector_roadmap_python": "# PSEUDOCODIGO ILUSTRATIVO: recurso planejado, nao executavel\n# Nenhuma API de PDF do AxonBase e importada ou existe neste exemplo.\ns3 = configured_s3_client(credentials)\nfor object_ref in s3.discover_objects(bucket, suffix='.pdf'):\n    pdf_bytes = s3.download(object_ref)\n    text = extract_pdf_text(pdf_bytes)\n    chunks = deterministic_chunks(text, size=800, overlap=120)\n    embeddings = embedding_provider.embed_documents(chunks)  # LangChain/Agno na aplicacao\n\n    document_id = insert_document(object_ref, text)\n    for position, (chunk, embedding) in enumerate(zip(chunks, embeddings)):\n        insert_chunk_and_embedding(document_id, position, chunk, embedding)\n\ncreate_hnsw_index()\nresults = retrieve_nearest_chunks(query_embedding)",
+  "search_vector_docker_title": "Docker Compose Example for Vector Search",
+  "search_vector_docker_desc": "Execute AxonBase com busca vetorial para embeddings de IA.",
+  "search_vector_docker_code": "version: \"3\"\nservices:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports: [\"8000:8000\"]\n\n# curl -X POST http://localhost:8000/sql -H \"Axon-Ns: app\" -H \"Axon-Db: main\" --data \"\n#   DEFINE INDEX knowledge_embedding ON TABLE knowledge_chunks COLUMNS embedding HNSW DIMENSION 384 DIST cos;\n#   CREATE knowledge_chunks CONTENT {id: \"doc1\", content: \"Exemplo\", embedding: [0.1, 0.2, ...]};\n#   SELECT id, content, vector::distance::cosine(embedding, [0.15, 0.25, ...]) AS distance FROM knowledge_chunks ORDER BY distance ASC;\n# \"",
+  "search_geo_subtitle": "Replace dedicated geo services: native spatial indexing and distance queries on GeoJSON points for real-time location search.",
+  "search_geo_scenario_title": "Scenario: Delivery App",
+  "search_geo_scenario_desc": "A food delivery app needs to find restaurants within a 5 km radius of the user's location, ordered by distance. AxonBase replaces a dedicated geo service like MongoDB Geo or Elastic Geo with a native R-Tree index.",
+  "search_geo_index_title": "Creating a GEO Index",
+  "search_geo_index_desc": "Define a GEO index on a GeoJSON point field. The index builds an R-Tree structure for efficient bounding box and radius queries.",
+  "search_geo_index_code": "DEFINE INDEX restaurant_location ON TABLE restaurant COLUMNS location GEO;\nCREATE restaurant CONTENT {name: \"Pizza Place\", location: geometry::point(-23.5505, -46.6333)};",
+  "search_geo_query_title": "Querying Geographic Distance",
+  "search_geo_query_desc": "Use geo::distance() to filter points within a radius and order by proximity. The function accepts two GeoJSON points and returns the distance in meters.",
+  "search_geo_query_code": "LET $user_location = geometry::point(-23.5610, -46.6560);\nSELECT name, geo::distance(location, $user_location) AS distance FROM restaurant WHERE geo::distance(location, $user_location) < 5000 ORDER BY distance;",
+  "search_geo_docker_title": "Docker Setup for Geospatial Search",
+  "search_geo_docker_desc": "Exemplo completo de Docker Compose com tabela de restaurantes, indice GEO e consulta de distancia.",
+  "search_geo_docker_code": "version: \"3\"\nservices:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports: [\"8000:8000\"]\n\n# curl -X POST http://localhost:8000/sql -H \"Axon-Ns: app\" -H \"Axon-Db: main\" --data \"\n#   DEFINE INDEX restaurant_location ON TABLE restaurant COLUMNS location GEO;\n#   CREATE restaurant CONTENT {name: \"Pizza Place\", location: geometry::point(-23.5505, -46.6333)};\n#   SELECT name, geo::distance(location, geometry::point(-23.5610, -46.6560)) AS dist FROM restaurant;\n# \"",
+  "search_graph_subtitle": "Replace Neo4j and Dgraph: native directed adjacency edges with single-line AxonQL traversal, no JOINs.",
+  "search_graph_scenario_title": "Scenario: Friend-of-Friend in Social Network",
+  "search_graph_scenario_desc": "A social network needs to find friends of friends for a recommendation engine. In a traditional relational database, this requires 4 JOINs. AxonBase replaces a dedicated graph database with native adjacency edges and concise traversal language.",
+  "search_graph_model_title": "Graph Data Model",
+  "search_graph_model_desc": "Use RELATE to create directed edges between records. Each edge has a source, destination, and label, creating a persistent adjacency structure that AxonBase traverses without JOINs.",
+  "search_graph_model_code": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD name ON TABLE person TYPE string;\n\nCREATE person:1 CONTENT {name: \"Alice\"};\nCREATE person:2 CONTENT {name: \"Bob\"};\n\nRELATE person:1->knows->person:2;\nSELECT VALUE ->knows->person FROM person:1;\n-- Result: [\"person:2\"]",
+  "search_graph_traditional_title": "SQL Tradicional: Consulta com 4 JOINs",
+  "search_graph_traditional_desc": "Em um modelo relacional padrao, encontrar amigos de amigos requer quatro JOINs entre as tabelas de usuarios e amizades. A consulta se torna cada vez mais complexa para travessias mais profundas.",
+  "search_graph_traditional_sql": "SELECT u3.name\nFROM users u1\nJOIN friendships f1 ON u1.id = f1.user_id\nJOIN friendships f2 ON f1.friend_id = f2.user_id\nJOIN users u3 ON f2.friend_id = u3.id\nWHERE u1.id = 1;",
+  "search_graph_axonql_title": "AxonBase: AxonQL em 1 Linha",
+  "search_graph_axonql_desc": "O AxonQL percorre arestas com o operador de seta ->rotulo->. A mesma consulta de amigos de amigos se torna uma linha unica, sem JOINs, sem tabelas intermediarias, sem complexidade de ORM.",
+  "search_graph_axonql_code": "-- Setup\nDEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD name ON TABLE person TYPE string;\n\nCREATE person:1 CONTENT {name: \"Alice\"};\nCREATE person:2 CONTENT {name: \"Bob\"};\nCREATE person:3 CONTENT {name: \"Charlie\"};\nCREATE person:4 CONTENT {name: \"Diana\"};\n\nRELATE person:1->knows->person:2;\nRELATE person:2->knows->person:3;\nRELATE person:3->knows->person:4;\n\n-- Alice knows Diana? (3 hops)\nRETURN graph::connected(person:1, person:4, \"knows\", 10);\n-- Result: true\n\n-- Path from Alice to Diana\nRETURN graph::path(person:1, person:4, \"knows\", 10);\n-- Result: [\"person:1\", \"person:2\", \"person:3\", \"person:4\"]\n\n-- Limited depth (1 hop is not enough)\nRETURN graph::connected(person:1, person:4, \"knows\", 1);\n-- Result: false",
+  "search_graph_docker_title": "Setup Docker para Grafo",
+  "search_graph_docker_desc": "Exemplo completo de Docker Compose com tabela de usuarios, arestas de amizade via RELATE e consulta de travessia.",
+  "search_graph_docker_code": "version: \"3\"\nservices:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports: [\"8000:8000\"]\n\n# curl -X POST http://localhost:8000/sql -H \"Axon-Ns: app\" -H \"Axon-Db: main\" --data \"\n#   DEFINE TABLE user SCHEMAFULL;\n#   DEFINE FIELD name ON TABLE user TYPE string;\n#   CREATE user:1 CONTENT {name: \"Alice\"};\n#   CREATE user:2 CONTENT {name: \"Bob\"};\n#   RELATE user:1->friend->user:2;\n#   SELECT VALUE ->friend->user FROM user:1;\n# \"",
+  "nav_search_ft": "Full-Text Search",
+  "nav_search_vector": "Vector Search",
+  "nav_search_geo": "Geo Search",
+  "nav_search_graph": "Graph Traversal",
+  "nav_search_columnar": "Columnar Index",
+  "search_ft_diagram_alt": "Diagrama de busca textual BM25",
+  "search_geo_diagram_alt": "Diagrama de busca geoespacial",
+  "search_overview_ft_code": "DEFINE ANALYZER my_analyzer LOWERCASE STEMMING STOPWORDS \"the\";\nDEFINE INDEX body_idx ON TABLE article COLUMNS body SEARCH ANALYZER my_analyzer;",
+  "search_overview_vector_code": "DEFINE INDEX article_vec ON TABLE article COLUMNS embedding HNSW DIMENSION 384 DIST cos;",
+  "search_overview_geo_code": "DEFINE INDEX restaurant_loc ON TABLE restaurant COLUMNS location GEO;",
+  "search_overview_graph_code": "SELECT ->friend->friend.* FROM user:1;",
+  "search_overview_columnar_code": "DEFINE INDEX age_idx ON TABLE users COLUMNS age COLUMNAR;\nSELECT count(), sum(age), avg(age) FROM users;",
+  "search_columnar_title": "Columnar Index",
+  "search_columnar_subtitle": "The columnar index accelerates analytical queries (count, sum, avg, min, max) without loading documents from the main KV store. Replaces dedicated column stores like ClickHouse for aggregation within AxonBase.",
+  "search_columnar_what_title": "What It Is",
+  "search_columnar_what_desc": "The columnar index stores each column separately with sortable value encoding (null, bool, long, double, string, array, object). The key follows the format CI|{ns}|{db}|{table}|{index}|{column}|{typeByte}{encodedData}{rowKey}. This allows scanning column values without deserializing entire documents.",
+  "search_columnar_advantages_title": "Advantages",
+  "search_columnar_advantages_list": [
+    "COUNT, SUM, AVG, MIN, MAX without loading documents: aggregation reads only the indexed column",
+    "Less memory and CPU: values stored in sortable binary format, no JSON",
+    "Efficient linear scan: CI| prefix is contiguous in RocksDB, no random seeks",
+    "ZSTD compression in RocksDB drastically reduces repetitive columnar data size",
+    "Automatic maintenance on CREATE, UPDATE, and DELETE with no intervention",
+    "EXPLAIN shows COLUMNAR strategy when planner detects equality or eligible aggregation"
+  ],
+  "search_columnar_create_title": "Creating a Columnar Index",
+  "search_columnar_create_desc": "Use DEFINE INDEX with the COLUMNAR keyword. The index accepts one or more table columns.",
+  "search_columnar_create_code": "DEFINE INDEX age_idx ON TABLE users COLUMNS age COLUMNAR;\nDEFINE INDEX city_idx ON TABLE users COLUMNS city COLUMNAR;",
+  "search_columnar_agg_title": "Direct Aggregation",
+  "search_columnar_agg_desc": "The planner automatically detects aggregation functions with arguments on indexed columns and uses the columnar index instead of loading documents. The result is computed by scanning only the column bytes.",
+  "search_columnar_agg_code": "SELECT count(), sum(age), avg(age) AS media, min(age), max(age) FROM users;",
+  "search_columnar_eq_title": "Equality Search",
+  "search_columnar_eq_desc": "The columnar index also accelerates WHERE column = value queries. The sortable encoder produces an exact key, enabling direct seek on the CI| prefix without scanning the table.",
+  "search_columnar_eq_code": "SELECT * FROM users WHERE age = 25;\n-- EXPLAIN shows: strategy: COLUMNAR, indexName: age_idx",
+  "search_columnar_when_title": "When to Use",
+  "search_columnar_when_desc": "Use columnar indexes on tables with many rows (100K+) when you frequently run aggregations like dashboards, reports, or count/sum/avg/min/max queries. The gain is larger when indexed columns have numeric types or short strings with high repetition. Does not replace UNIQUE indexes for exact equality lookup in OLTP tables — use the appropriate index type for each query pattern. Unlike SEARCH, GEO, and HNSW indexes, the columnar index does not use approximate search or ranking: it is deterministic and serves pure analytical aggregation.",
+  "search_vector_diagram_alt": "Diagrama de busca vetorial HNSW",
+  "search_vector_index_title": "Creating the Vector Index",
+  "search_vector_index_desc": "Create an HNSW index with the correct dimensions and distance metric.",
+  "search_overview_desc": "Advanced search and graph capabilities",
+  "search_ft_code": "SELECT titulo, search::score() AS score FROM artigo WHERE corpo @@ \"termos\" ORDER BY score DESC;",
+  "search_vector_code": "SELECT id, vector::similarity::cosine(embedding, $consulta) AS score FROM itens ORDER BY score DESC LIMIT 10;",
+  "search_geo_distance_title": "Distance Queries",
+  "search_geo_distance_desc": "Encontre locais em um raio usando geo::distance().",
+  "search_geo_code": "SELECT name, geo::distance(location, geometry::point(-23.5610, -46.6560)) AS dist FROM restaurant WHERE geo::distance(location, geometry::point(-23.5610, -46.6560)) < 5000 ORDER BY dist;",
+  "search_graph_join_title": "Graph Traversal vs JOIN",
+  "search_graph_join_desc": "Compare traditional SQL JOINs with AxonQL graph traversal.",
+  "search_graph_sql": "SELECT u2.name FROM users u1 JOIN friendships f1 ON u1.id = f1.user_id JOIN friendships f2 ON f1.friend_id = f2.user_id JOIN users u2 ON f2.friend_id = u2.id WHERE u1.id = 1;",
+  "search_vector_python_sdk_title": "Python SDK Integration",
+  "search_vector_python_sdk_desc": "The axonbase Python SDK provides AxonBaseVectorStore for async vector operations.",
+  "search_vector_python_sdk_code": "from axonbase import Axon\nfrom axonbase.vectorstore import AxonBaseVectorStore, VectorRecord\n\nasync def main():\n    axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\")\n    await axon.use(\"app\", \"main\")\n\n    store = AxonBaseVectorStore(\n        axon=axon,\n        collection=\"knowledge_chunks\",\n        dimensions=384,\n        distance=\"cosine\",\n    )\n    await store.ensure_schema()\n\n    record = VectorRecord(\n        id=\"doc1_chunk1\",\n        content=\"AxonBase suporta indices HNSW para busca vetorial ANN\",\n        embedding=[0.12, 0.45, 0.78, 0.33],\n        metadata={\"fonte\": \"s3://docs/manual.pdf\", \"pagina\": 12},\n        source_uri=\"s3://docs/manual.pdf\",\n        chunk_index=0,\n    )\n    await store.upsert([record])\n\n    results = await store.similarity_search_by_vector(\n        vector=[0.11, 0.44, 0.76, 0.35],\n        limit=5,\n    )\n    for r in results:\n        print(f\"{r.id}: {r.content} (score: {r.score:.3f})\")\n\n    await axon.close()",
+  "search_vector_openai_title": "OpenAI Embeddings Integration",
+  "search_vector_openai_desc": "Use the OpenAIEmbedder to convert text into vectors before storing and searching. It wraps the OpenAI API for async embedding generation.",
+  "search_vector_openai_code": "import os\nfrom axonbase import Axon\nfrom axonbase.vectorstore import AxonBaseVectorStore\nfrom axonbase.openai_embeddings import OpenAIEmbedder\n\nasync def main():\n    axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\")\n    await axon.use(\"app\", \"main\")\n    embedder = OpenAIEmbedder(model=\"text-embedding-3-small\")\n\n    embeddings = await embedder.embed_documents([\n        \"Guia de busca vetorial AxonBase\",\n        \"Como construir pipelines RAG\",\n    ])\n\n    store = AxonBaseVectorStore(\n        axon=axon,\n        collection=\"knowledge\",\n        dimensions=len(embeddings[0]),\n    )\n    await store.ensure_schema()\n\n    records = [\n        VectorRecord(f\"doc_{i}\", text, emb, {})\n        for i, (text, emb) in enumerate(zip(\n            [\"Guia de busca vetorial AxonBase\", \"Como construir pipelines RAG\"],\n            embeddings,\n        ))\n    ]\n    await store.upsert(records)\n\n    query_vec = await embedder.embed_query(\"busca vetorial\")\n    results = await store.similarity_search_by_vector(query_vec, limit=5)\n    await axon.close()",
+  "search_vector_langchain_title": "Adaptador LangChain",
+  "search_vector_langchain_desc": "O adaptador opcional LangChain envolve AxonBaseVectorStore como um VectorStore do LangChain. Instale com: pip install langchain-core",
+  "search_vector_langchain_code": "from langchain_core.documents import Document\nfrom langchain_core.embeddings import Embeddings\nfrom axonbase import Axon\nfrom axonbase.vectorstore import AxonBaseVectorStore\nfrom axonbase.integrations.langchain import AxonBaseLangChainVectorStore\n\nclass MyEmbeddings(Embeddings):\n    def embed_documents(self, texts):\n        return [[1.0, 0.0] if \"axon\" in t.lower() else [0.0, 1.0] for t in texts]\n    def embed_query(self, text):\n        return [1.0, 0.0] if \"axon\" in text.lower() else [0.0, 1.0]\n\nasync def main():\n    axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\")\n    await axon.use(\"app\", \"main\")\n    store = AxonBaseVectorStore(axon, \"docs\", dimensions=2)\n    await store.ensure_schema()\n\n    lc_store = AxonBaseLangChainVectorStore(store, MyEmbeddings())\n    ids = await lc_store.aadd_documents([\n        Document(page_content=\"Recuperacao vetorial AxonBase\", metadata={\"topico\": \"ia\"}),\n    ])\n\n    results = await lc_store.asimilarity_search(\"busca AxonBase\", k=5)\n    for doc in results:\n        print(doc.page_content, doc.metadata)\n    await axon.close()",
+  "search_vector_agno_title": "Adaptador Agno",
+  "search_vector_agno_desc": "O adaptador opcional Agno envolve AxonBaseVectorStore como um VectorDb do Agno. Instale com: pip install agno",
+  "search_vector_agno_code": "from agno.knowledge.document import Document as AgnoDocument\nfrom axonbase import Axon\nfrom axonbase.vectorstore import AxonBaseVectorStore\nfrom axonbase.integrations.agno import AxonBaseAgnoVectorDb\n\nasync def main():\n    axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\")\n    await axon.use(\"app\", \"main\")\n    store = AxonBaseVectorStore(axon, \"knowledge\", dimensions=2)\n    await store.ensure_schema()\n\n    agno_db = AxonBaseAgnoVectorDb(store, embedder=None)\n    await agno_db.async_create()\n\n    doc = AgnoDocument(\n        name=\"axon_guide\",\n        content=\"Recuperacao de conhecimento AxonBase e pipelines RAG\",\n        meta_data={\"framework\": \"agno\"},\n    )\n    doc.embedding = [1.0, 0.0]\n    await agno_db.async_insert(content_hash=\"h1\", documents=[doc])\n\n    results = await agno_db.async_search(\"conhecimento AxonBase\", limit=5)\n    for r in results:\n        print(r.content, r.meta_data)\n    await axon.close()",
+  "jdbc_translate_title": "SQL Translation (sql.translate=true)",
+  "jdbc_translate_desc": "The JDBC driver can translate standard SQL to AxonQL automatically. Enable with sql.translate=true in the JDBC URL.",
+  "jdbc_translate_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true",
+  "jdbc_translate_java": "Class.forName(\"com.axonbase.jdbc.AxonDriver\");\nString url = \"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true\";",
+  "jdbc_hibernate_title": "Dialeto Hibernate",
+  "jdbc_hibernate_desc": "The AxonBaseDialect allows Hibernate ORM (version 6.5+) to persist and query entities through the AxonBase JDBC driver.",
+  "jdbc_hibernate_url": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true",
+  "jdbc_hibernate_maven": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>\n<dependency>\n  <groupId>org.hibernate.orm</groupId>\n  <artifactId>hibernate-core</artifactId>\n  <version>6.5.3.Final</version>\n  <scope>provided</scope>\n</dependency>",
+  "jdbc_hibernate_props": "# Hibernate Configuration\nhibernate.connection.driver_class = com.axonbase.jdbc.AxonDriver",
+  "jdbc_hibernate_entity": "@Entity\n@Table(name = \"person\")\npublic class Person {\n    @Id\n    public Long id;\n    @Column(name = \"name\")\n    public String name;\n    @Column(name = \"age\")\n    public Integer age;\n}",
+  "jdbc_hibernate_crud": "SessionFactory sf = new Configuration()\n    .setProperty(\"hibernate.connection.driver_class\", \"com.axonbase.jdbc.AxonDriver\")\n    .setProperty(\"hibernate.connection.url\",\n        \"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true\")\n    .setProperty(\"hibernate.dialect\", \"com.axonbase.jdbc.hibernate.AxonBaseDialect\")\n    .setProperty(\"hibernate.hbm2ddl.auto\", \"create\")\n    .addAnnotatedClass(Person.class)\n    .buildSessionFactory();\n\ntry (Session s = sf.openSession()) {\n    s.beginTransaction();\n    Person p = new Person();\n    p.id = System.nanoTime();\n    p.name = \"Alice\";\n    p.age = 30;\n    s.persist(p);\n    s.getTransaction().commit();\n}\n\n// HQL\nList<Person> results = sf.createSession()\n    .createQuery(\"from Person where age > :min\", Person.class)\n    .setParameter(\"min\", 25)\n    .list();\n\nsf.close();",
+  "sdk_java_migration_title": "Migrations",
+  "sdk_java_migration_desc": "The Java SDK includes a programmatic Migrator that applies .axql files with idempotent execution.",
+  "sdk_java_migration_code": "// In the axonbase-sdk-java module\nAxon axon = Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\");\nMigrator.up(axon, \"migrations/\");",
+  "sdk_python_migration_title": "Migrations",
+  "sdk_python_migration_desc": "The Python SDK includes an async Migrator that applies .axql files with idempotent execution.",
+  "sdk_python_migration_code": "from axonbase import Axon\nfrom axonbase.migration import Migrator\n\nasync def migrate():\n    axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\")\n    await axon.use(\"test\", \"dev\")\n\n    migrator = Migrator(axon)\n    applied = await migrator.up(\"migrations/\")\n    for m in applied:\n        print(f\"Aplicada {m.name}\")\n\n    # Idempotente\n    await migrator.up(\"migrations/\")  # → []\n\n    # Status\n    status = await migrator.status(\"migrations/\")\n    for migration, is_applied in status:\n        print(f\"{'✅' if is_applied else '⬜'} {migration.name}\")",
+  "sdk_python_dbapi_title": "DBAPI 2.0 (Python Database API)",
+  "sdk_python_dbapi_desc": "The Python SDK includes a DBAPI 2.0 driver compatible with PEP-249 in the axonbase.dbapi module.",
+  "sdk_python_dbapi_code": "from axonbase.dbapi import connect\n\nconn = connect(url=\"ws://127.0.0.1:8000/rpc/ws\", ns=\"test\", db=\"dev\")\ncursor = conn.cursor()\ncursor.execute(\"SELECT * FROM person\")\nrows = cursor.fetchall()",
+  "sdk_python_sqlalchemy_title": "Dialeto SQLAlchemy",
+  "sdk_python_sqlalchemy_desc": "The Python SDK includes a SQLAlchemy dialect registered as 'axonbase'.",
+  "sdk_python_sqlalchemy_code": "from sqlalchemy import create_engine, text\n\n# Importe para registrar o dialeto\nimport axonbase.sqlalchemy_dialect  # noqa: F401\n\nengine = create_engine(\n    \"axonbase://test:dev@127.0.0.1:8000\",\n    connect_args={\"sql_translate\": True}\n)\n\n# Uso Core\nwith engine.connect() as conn:\n    result = conn.execute(\n        text(\"SELECT name FROM person WHERE age > :min\"),\n        {\"min\": 25}\n    )\n    for row in result:\n        print(row._mapping[\"name\"])\n\n# Uso ORM\nfrom sqlalchemy.orm import declarative_base, Session, Mapped, mapped_column\n\nBase = declarative_base()\n\nclass Item(Base):\n    __tablename__ = \"items\"\n    id: Mapped[str] = mapped_column(primary_key=True)\n    value: Mapped[str] = mapped_column()\n\nBase.metadata.create_all(engine)\n\nwith Session(engine) as session:\n    session.add(Item(id=\"x1\", value=\"hello\"))\n    session.commit()\n\nwith Session(engine) as session:\n    items = session.query(Item).filter_by(value=\"hello\").all()\n    print(items[0].id, items[0].value)",
+  "sdk_node_migration_title": "Migrations",
+  "sdk_node_migration_desc": "The Node.js SDK includes a Migrator that applies .axql files with idempotent execution.",
+  "sdk_node_migration_code": "import { Axon } from \"@axonbase/sdk\";\nimport { Migrator } from \"@axonbase/sdk/migration\";\n\nconst axon = await Axon.connect(\"ws://127.0.0.1:8000/rpc/ws\");\nawait axon.use(\"test\", \"dev\");\n\nconst migrator = new Migrator(axon);\nawait migrator.ensureTable();\n\nconst applied = await migrator.up(\"./migrations\");\nconsole.log(`Applied ${applied.length} migrations`);\n\n// Idempotente\nawait migrator.up(\"./migrations\");  // → []\n\nconst { pending, applied: records } =\n    await migrator.status(\"./migrations\");\nconsole.log(`Pending: ${pending.length}, Applied: ${records.length}`);",
+  "sdk_go_migration_title": "Migrations",
+  "sdk_go_migration_desc": "The Go SDK includes a Migrator that applies .axql files with idempotent execution.",
+  "sdk_go_migration_code": "import (\n    \"fmt\"\n    \"github.com/alvaro-brito-products/axonbase/axonbase-sdk-go/axonbase\"\n    \"github.com/alvaro-brito-products/axonbase/axonbase-sdk-go/axonbase/migration\"\n)\n\nax, _ := axonbase.Connect(\"ws://127.0.0.1:8000/rpc/ws\", nil)\nax.Use(\"test\", \"dev\")\n\nmig := migration.NewMigrator(ax, nil)\nmig.EnsureTable()\n\napplied, _ := mig.Up(\"./migrations\")\nfmt.Printf(\"Applied %d migrations\\n\", len(applied))\n\n// Idempotente\nmig.Up(\"./migrations\")  // → 0\n\npending, records, _ := mig.Status(\"./migrations\")\nfmt.Printf(\"Pending: %d, Applied: %d\\n\", len(pending), len(records))",
+  "sdk_dotnet_migration_title": "Migrations",
+  "sdk_dotnet_migration_desc": "The .NET SDK includes a Migrator that applies .axql files with idempotent execution.",
+  "sdk_dotnet_migration_code": "using AxonBaseSdk;\nusing AxonBaseSdk.Migration;\n\nvar axon = await AxonClient.ConnectAsync(\"ws://127.0.0.1:8000/rpc/ws\");\nawait axon.UseAsync(\"test\", \"dev\");\n\nvar migrator = new Migrator(axon);\nawait migrator.EnsureTableAsync();\n\nvar applied = await migrator.UpAsync(\"./migrations\");\nConsole.WriteLine($\"Applied {applied.Count} migrations\");\n\n// Idempotente\nawait migrator.UpAsync(\"./migrations\");  // → []\n\nvar (pending, records) = await migrator.StatusAsync(\"./migrations\");\nConsole.WriteLine($\"Pending: {pending.Count}, Applied: {records.Count}\");",
+  "sdk_rust_migration_title": "Migrations",
+  "sdk_rust_migration_desc": "The Rust SDK includes a Migrator that applies .axql files with idempotent execution.",
+  "sdk_rust_migration_code": "use std::path::Path;\nuse axonbase_sdk::client::Axon;\nuse axonbase_sdk::migration::Migrator;\n\nlet axon = Axon::connect(\"ws://127.0.0.1:8000/rpc/ws\", Default::default()).await?;\naxon.use_ns(\"test\", \"dev\").await?;\n\nlet migrator = Migrator::new(axon, None);\nmigrator.ensure_table().await?;\n\nlet applied = migrator.up(Path::new(\"./migrations\")).await?;\nprintln!(\"Applied {} migrations\", applied.len());\n\n// Idempotente\nmigrator.up(Path::new(\"./migrations\")).await?;  // → []\n\nlet (pending, records) = migrator.status(Path::new(\"./migrations\")).await?;\nprintln!(\"Pending: {}, Applied: {}\", pending.len(), records.len());",
+  "nav_jdbc_translate": "SQL Translate",
+  "nav_jdbc_hibernate": "Hibernate Dialect",
+  "spring_title": "Spring Data AxonBase",
+  "spring_intro": "The spring-data-axonbase module offers a Spring Data repository and template for AxonBase using the WebSocket JSON-RPC SDK.",
+  "spring_dep_title": "Maven Dependency",
+  "spring_dep_desc": "Add the spring-data-axonbase module to the classpath. It depends on the axonbase-sdk-java module.",
+  "spring_dep_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>spring-data-axonbase</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>",
+  "spring_repo_title": "Repository (CRUD)",
+  "spring_repo_desc": "SimpleAxonBaseRepository<T, ID> implements Repository, CrudRepository, and PagingAndSortingRepository.",
+  "spring_template_title": "AxonTemplate",
+  "spring_template_desc": "AxonTemplate fornece acesso direto a query, graphTraversal, graphConnected, graphPath, relate, vectorSearch, geoSearch, fullTextSearch, timeTravelAsOf, liveQuery, kvGet/kvSet e begin/commit/cancel.",
+  "spring_annotations_title": "Mapping Annotations",
+  "spring_annotations_desc": "@AxonTable(\"table\") defines the table, @AxonId marks the primary key, @AxonColumn(\"field\") maps a field.",
+  "spring_entity_code": "@AxonTable(\"person\")\npublic class Person {\n    @AxonId\n    private String id;\n    @AxonField\n    private String name;\n    @AxonField\n    private Integer age;\n}",
+  "spring_repo_code": "@Repository\npublic interface PersonRepository extends AxonBaseRepository<Person, String> {}\n\nPerson alice = new Person();\nalice.setName(\"Alice\");\nalice.setAge(30);\nrepo.save(alice);\nOptional<Person> found = repo.findById(alice.getId());\nList<Person> all = repo.findAll();\nPage<Person> page = repo.findAll(PageRequest.of(0, 10));",
+  "spring_template_code": "AxonTemplate template = new AxonTemplate(axon);\ntemplate.relate(\"person:1\", \"knows\", \"person:2\");\nboolean conn = template.graphConnected(\"person:1\", \"person:2\", \"knows\", 5);\nList<AxonValue> nearby = template.geoSearch(\"restaurants\", \"location\", -43.19, -22.90, 5000);\nList<AxonValue> docs = template.fullTextSearch(\"articles\", \"body\", \"database\");\nString liveId = template.liveQuery(\"person\", r -> System.out.println(r));\ntemplate.begin();\ntemplate.query(\"CREATE person CONTENT {name: 'Alice'}\");\ntemplate.commit();",
+  "spring_edge_code": "@AxonTable(\"person\")\npublic class Person {\n    @AxonId\n    private String id;\n    @AxonField\n    private String name;\n    @AxonEdge(\"knows\")\n    private List<Person> friends;\n}",
+  "nav_spring": "Spring Data",
+  "dblink_title": "DATABASE LINK",
+  "dblink_intro": "DATABASE LINK connects to remote AxonBase servers and makes their tables accessible as if they were local. Use the syntax \"link_name\".\"table_name\" in SELECT, JOIN, and subqueries. Tables without a prefix always resolve to the local database — existing queries work unchanged.",
+  "dblink_create_title": "Creating a DATABASE LINK",
+  "dblink_create_desc": "Use DEFINE DATABASE LINK to register a remote server. Provide the WebSocket URL, namespace, database, and optional credentials. The link is stored in the catalog and replicated via Raft like any other DDL.",
+  "dblink_create_code": "DEFINE DATABASE LINK \"europe\"\n  CONNECT BY \"ws://10.0.0.2:8000/rpc/ws\"\n  WITH ns = \"prod\" db = \"main\" user = \"svc\" password = \"...\";\n\nDEFINE DATABASE LINK \"asia\"\n  CONNECT BY \"ws://10.0.0.3:8000/rpc/ws\"\n  WITH ns = \"prod\" db = \"main\";",
+  "dblink_query_title": "Querying through a link",
+  "dblink_query_desc": "Prefix the table name with the link name and a dot: \"link_name\".\"table_name\". All SELECT operations work: WHERE, ORDER BY, LIMIT, GROUP BY, functions, graph traversals, and full-text/vector/geo search are pushed down to the remote server.",
+  "dblink_query_code": "-- Query remote table\nSELECT name, email FROM \"europe\".\"users\" WHERE age > 25 ORDER BY name LIMIT 20;\n\n-- Graph traversal via link\nSELECT VALUE ->knows->person FROM \"europe\".\"person\":1;\n\n-- Full-text search via link\nSELECT * FROM \"europe\".\"articles\" WHERE body @@ \"database optimization\";\n\n-- Qualified local database (no link, same namespace)\nSELECT * FROM \"analytics\".\"events\" WHERE created_at > d'2026-01-01';",
+  "dblink_join_title": "JOIN across databases",
+  "dblink_join_desc": "JOIN any combination of local tables, link tables, and local qualified tables. When both sides of a JOIN are on the same link, the join is executed remotely (pushdown). When sides are on different links, results are fetched in parallel and joined locally.",
+  "dblink_join_code": "-- Local + remote JOIN\nSELECT u.name, o.total\nFROM users u\nJOIN \"europe\".\"orders\" o ON u.id = o.user_id\nWHERE u.age > 25;\n\n-- JOIN between two remote databases\nSELECT e.name, a.name\nFROM \"europe\".\"customers\" e\nJOIN \"asia\".\"customers\" a ON e.email = a.email;\n\n-- Two tables from the same link (pushdown)\nSELECT u.name, o.total\nFROM \"europe\".\"users\" u\nJOIN \"europe\".\"orders\" o ON u.id = o.user_id\nWHERE u.age > 25;",
+  "dblink_drop_title": "Removing a link",
+  "dblink_drop_desc": "Use DROP DATABASE LINK to remove a registered link. Connections to the remote server are closed. Queries referencing the link name will fail until the link is recreated.",
+  "dblink_drop_code": "DROP DATABASE LINK \"europe\";",
+  "dblink_performance_title": "Performance",
+  "dblink_performance_desc": "DATABASE LINK uses HTTP POST to the remote server's /sql endpoint. Connections are pooled and reused. The query is sent as-is with the remote namespace and database headers — the remote server executes it natively. Pushdown optimizations (WHERE, LIMIT, ORDER BY, JOIN, GROUP BY) are applied automatically: if all referenced columns belong to the same link, the entire filtered query is sent remotely, minimizing data transfer. For JOINs across different links, results are fetched in parallel and processed locally.",
+  "dblink_notes_title": "Limitations",
+  "dblink_notes_desc": "DATABASE LINK accepts SELECT, CREATE, UPDATE, DELETE, and RELATE. The link name is defined with DEFINE DATABASE LINK.",
+  "nav_dblink": "DATABASE LINK",
+  "nav_saga": "Distributed SAGA",
+  "saga_title": "Distributed SAGA",
+  "saga_intro": "A SAGA coordinates changes across independent AxonBase databases. The orchestrator sends operations to participants and issues CANCEL SAGA when any step fails, triggering local compensation.",
+  "saga_architecture_title": "Topologia",
+  "saga_architecture_desc": "BEGIN SAGA, COMMIT SAGA, and CANCEL SAGA always go to the orchestrator. Each participant database runs its own local transaction.",
+  "saga_architecture_code": "cliente\n  | X-Correlation-Id\n  v\norquestrador:8000 (ledger system.saga)\n  | DATABASE LINK\n  +--> bank1:8011\n  +--> bank2:8012\n  +--> bank3:8013\n  +--> bank4:8014\n\nCANCEL SAGA: bank4 <- bank3 <- bank2 <- bank1",
+  "saga_setup_title": "Criar os links e a SAGA",
+  "saga_setup_desc": "Crie um DATABASE LINK para cada participante no namespace do orquestrador. Depois, declare a SAGA com os nomes desses links.",
+  "saga_setup_code": "DEFINE DATABASE LINK \"bank1\" CONNECT BY \"ws://127.0.0.1:8011/rpc/ws\" WITH ns=\"test\" db=\"bank1\" user=\"\" password=\"\";\nDEFINE DATABASE LINK \"bank2\" CONNECT BY \"ws://127.0.0.1:8012/rpc/ws\" WITH ns=\"test\" db=\"bank2\" user=\"\" password=\"\";\nDEFINE DATABASE LINK \"bank3\" CONNECT BY \"ws://127.0.0.1:8013/rpc/ws\" WITH ns=\"test\" db=\"bank3\" user=\"\" password=\"\";\nDEFINE DATABASE LINK \"bank4\" CONNECT BY \"ws://127.0.0.1:8014/rpc/ws\" WITH ns=\"test\" db=\"bank4\" user=\"\" password=\"\";\n\nCREATE SAGA transfer WITH DATABASES 'bank1', 'bank2', 'bank3', 'bank4';\nBEGIN SAGA transfer WITH CORRELATION 'four_bank_rollback_001';",
+  "saga_correlation_title": "Send Correlated Operations",
+  "saga_correlation_desc": "On the HTTP /sql endpoint, X-Correlation-Id sends operations to the active SAGA.",
+  "saga_correlation_code": "from urllib.request import Request, urlopen\n\ndef saga_update(bank):\n    request = Request(\n        \"http://127.0.0.1:8000/sql\",\n        data=f'UPDATE \\\"{bank}\\\".\\\"account\\\":main SET balance = 75'.encode(),\n        headers={\n            \"Content-Type\": \"text/plain\",\n            \"Axon-Ns\": \"test\",\n            \"Axon-Db\": \"orchestrator\",\n            \"X-Correlation-Id\": \"four_bank_rollback_001\",\n        },\n        method=\"POST\",\n    )\n    with urlopen(request) as response:\n        return response.read().decode()\n\nfor bank in (\"bank1\", \"bank2\", \"bank3\", \"bank4\"):\n    saga_update(bank)",
+  "saga_finish_title": "Confirmar ou compensar",
+  "saga_finish_desc": "COMMIT SAGA closes the distributed transaction and keeps the changes. CANCEL SAGA rolls back every participant.",
+  "saga_finish_code": "-- Keeps changes\nCOMMIT SAGA transfer WITH CORRELATION 'four_banks';\n-- Rolls back across all participants\nCANCEL SAGA transfer WITH CORRELATION 'four_banks';",
+  "saga_rules_title": "Regras do fluxo",
+  "saga_rules_desc": "Do not send CANCEL SAGA to a participant: only the orchestrator knows the full context.",
+  "saga_demo_title": "Exemplo FastAPI com SQLAlchemy",
+  "saga_demo_desc": "Follow the tabs in order: start the four databases and three services, create the transfer SAGA, and run the happy path or failure scenario.",
+  "saga_demo_tab_start": "Iniciar",
+  "saga_demo_tab_setup": "Bancos e SAGA",
+  "saga_demo_tab_payment": "Pagamento",
+  "saga_demo_tab_invoice": "Nota fiscal",
+  "saga_demo_tab_stock": "Estoque",
+  "saga_demo_start_code": "bash examples/saga-microservices/start_sqlalchemy_demo.sh",
+  "saga_demo_setup_code": "-- payments :8011\nDEFINE TABLE payment SCHEMAFULL;\n\n-- invoices :8012\nDEFINE TABLE invoice SCHEMAFULL;\n\n-- stock :8013\nDEFINE TABLE stock SCHEMAFULL;\nCREATE stock:main CONTENT {quantity: 10};\n\n-- orchestrator :8000\nDEFINE DATABASE LINK \"payments\" CONNECT BY \"ws://127.0.0.1:8011/rpc/ws\" WITH ns=\"test\" db=\"payments\" user=\"\" password=\"\";\nDEFINE DATABASE LINK \"invoices\" CONNECT BY \"ws://127.0.0.1:8012/rpc/ws\" WITH ns=\"test\" db=\"invoices\" user=\"\" password=\"\";\nDEFINE DATABASE LINK \"stock\" CONNECT BY \"ws://127.0.0.1:8013/rpc/ws\" WITH ns=\"test\" db=\"stock\" user=\"\" password=\"\";\n\nCREATE SAGA pedido WITH DATABASES 'payments', 'invoices', 'stock';",
+  "saga_demo_payment_code": "import uuid\nfrom urllib.request import Request, urlopen\n\nimport uvicorn\nfrom fastapi import FastAPI, Header\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nfrom axonbase.sqlalchemy import SagaExecuteTransaction\nfrom sqlalchemy_common import engine\n\nclass Base(DeclarativeBase): pass\n\nclass Payment(Base):\n    __tablename__ = \"payment\"\n    id: Mapped[str] = mapped_column(primary_key=True)\n    status: Mapped[str]\n\napp = FastAPI(title=\"payment-service\")\nPAYMENTS = engine(8011, \"payments\")\nORCHESTRATOR = engine(8000, \"orchestrator\")\n\n@app.post(\"/orders\")\ndef create_order(order_id: str, x_correlation_id: str | None = Header(default=None)):\n    correlation_id = x_correlation_id or f\"order_{uuid.uuid4().hex}\"\n    with SagaExecuteTransaction(ORCHESTRATOR, PAYMENTS, \"pedido\") as transaction:\n        transaction.begin(correlation_id)\n        transaction.add(Payment(id=order_id, status=\"PAID\"))\n        request = Request(f\"http://127.0.0.1:9102/invoices?order_id={order_id}\", headers={\"X-Correlation-Id\": correlation_id}, method=\"POST\")\n        with urlopen(request, timeout=10) as response:\n            response.read()\n        transaction.commit()\n    return {\"status\": \"COMMITTED\"}\n\nif __name__ == \"__main__\":\n    uvicorn.run(app, host=\"127.0.0.1\", port=9101)",
+  "saga_demo_invoice_code": "from urllib.request import Request, urlopen\n\nimport uvicorn\nfrom fastapi import FastAPI, Header\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nfrom axonbase.sqlalchemy import SagaExecuteTransaction\nfrom sqlalchemy_common import engine\n\nclass Base(DeclarativeBase): pass\n\nclass Invoice(Base):\n    __tablename__ = \"invoice\"\n    id: Mapped[str] = mapped_column(primary_key=True)\n    status: Mapped[str]\n\nINVOICES = engine(8012, \"invoices\")\n\n@app.post(\"/invoices\")\ndef create_invoice(order_id: str, x_correlation_id: str = Header()):\n    with SagaExecuteTransaction(INVOICES, \"pedido\") as transaction:\n        transaction.begin(x_correlation_id)\n        transaction.add(Invoice(id=order_id, status=\"ISSUED\"))\n        request = Request(f\"http://127.0.0.1:9103/reservations?order_id={order_id}\", headers={\"X-Correlation-Id\": x_correlation_id}, method=\"POST\")\n        with urlopen(request, timeout=10) as response:\n            response.read()\n        transaction.commit()\n    return {\"status\": \"ISSUED\"}",
+  "saga_demo_stock_code": "from fastapi import FastAPI, Header\nfrom sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\nfrom axonbase.sqlalchemy import SagaExecuteTransaction\nfrom sqlalchemy_common import engine\n\nclass Base(DeclarativeBase): pass\n\nclass StockReservation(Base):\n    __tablename__ = \"stock_reservation\"\n    id: Mapped[str] = mapped_column(primary_key=True)\n    status: Mapped[str]\n\nSTOCK = engine(8013, \"stock\")\n\n@app.post(\"/reservations\")\ndef reserve_stock(order_id: str, x_correlation_id: str = Header()):\n    with SagaExecuteTransaction(STOCK, \"pedido\") as transaction:\n        transaction.begin(x_correlation_id)\n        transaction.add(StockReservation(id=order_id, status=\"RESERVED\"))\n        transaction.commit()\n    return {\"status\": \"RESERVED\"}",
+  "saga_demo_success_code": "curl -i -X POST 'http://127.0.0.1:9101/orders?order_id=success_001'",
+  "saga_demo_failure_code": "# Fails after recording the note and compensates payment and note\ncurl -i -X POST",
+  "saga_success_title": "Caminho de sucesso",
+  "saga_success_desc": "The payment service confirms the SAGA in the orchestrator after successful responses.",
+  "saga_failure_title": "Failure Path and Compensation",
+  "saga_failure_desc": "Failure returns to the payment service. It sends CANCEL SAGA to the orchestrator, which issues CANCEL to each participant.",
+  "saga_diagram_client": "Cliente",
+  "saga_diagram_payment": "Pagamento :9101",
+  "saga_diagram_invoice": "Nota fiscal :9102",
+  "saga_diagram_stock": "Estoque :9103",
+  "saga_diagram_orchestrator": "Orquestrador :8000",
+  "saga_diagram_compensation": "CANCEL SAGA and local compensation",
+  "saga_success_alt": "Diagram of the success path: payment service starts the SAGA, orchestrator coordinates, all participants commit.",
+  "nav_data_rules": "Data Rules",
+  "data_rules_title": "Data Rules",
+  "data_rules_intro": "Data Rules are row-level and column-level security policies applied transparently to queries based on the authenticated user.",
+  "data_rules_how_title": "Como funciona",
+  "data_rules_how_desc": "When a user executes a query, the system injects the data rule predicate into the WHERE clause.",
+  "data_rules_how_code": "-- User alice executes:\nSELECT * FROM orders;\n-- AxonBase transforms to:\nSELECT * FROM orders WHERE user_id = $token.id;",
+  "data_rules_create_title": "Criar uma Data Rule",
+  "data_rules_create_desc": "Use CREATE DATA RULE to define a predicate. The predicate can reference $token fields from the authenticated JWT.",
+  "data_rules_create_code": "CREATE DATA RULE region_sp\n  APPLY sales_rep_id = 165;",
+  "data_rules_apply_title": "Assign to a User",
+  "data_rules_apply_desc": "Use DEFINE USER with APPLY DATA RULE to assign one or more rules to a user.",
+  "data_rules_apply_code": "DEFINE USER alice ON ROOT\n  PASSWORD 'secret'\n  ROLES editor\n  APPLY DATA RULE region_sp, sales_usa;",
+  "data_rules_mask_title": "Mask Sensitive Fields",
+  "data_rules_mask_desc": "The optional MASK FIELDS WITH clause hides field values matching the patterns for users who have that rule assigned.",
+  "data_rules_mask_code": "CREATE DATA RULE lgpd\n  APPLY sales_rep_id = $auth.id\n  MASK FIELDS WITH '%cpf%', '%credit%card%';",
+  "data_rules_drop_title": "Remover uma Data Rule",
+  "data_rules_drop_desc": "Use DROP DATA RULE para remover uma regra. As consultas voltam ao acesso sem filtro.",
+  "data_rules_drop_code": "DROP DATA RULE region_sp;",
+  "data_rules_show_title": "Listar Data Rules",
+  "data_rules_show_desc": "Use SHOW DATA RULES para ver todas as regras definidas e seus predicados.",
+  "data_rules_show_code": "SHOW DATA RULES;",
+  "data_rules_diagram_alt": "Data Rules diagram: a user with an assigned rule sends a query, AxonBase injects the predicate and masks fields.",
+  "data_rules_demo_title": "Exemplo real",
+  "data_rules_demo_desc": "The following commands create two orders, define a rule, assign it to a user, and demonstrate the effect.",
+  "data_rules_demo_setup": "# Creates table and inserts data\ncurl -s --data 'DEFINE TABLE orders SCHEMALESS'",
+  "data_rules_demo_filter": "# Autentica como alice\nTOKEN=$(curl -s -X POST -d '{\"user\":\"alice\",\"pass\":\"secret\"}' http://127.0.0.1:8000/signin | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('token',''))\")\n\n# SELECT retorna apenas order 100 (sales_rep_id=165)\ncurl -s --data 'SELECT * FROM orders' \\\n  -H \"Authorization: Bearer $TOKEN\" http://127.0.0.1:8000/sql\n# Resultado: [{\"sales_rep_id\":165,\"cpf\":\"***\",\"credit_card\":\"***\",\"product\":\"Laptop\",\"id\":\"orders:100\"}]",
+  "data_rules_demo_mask": "# UPDATE affects only order 100\ncurl -s --data 'UPDATE orders SET total'",
+  "data_rules_demo_drop": "# Remove a regra\ncurl -s --data 'DROP DATA RULE region_sp' \\\n  -H 'Authorization: Bearer root' http://127.0.0.1:8000/sql",
+  "config_docker_title": "Docker: pass configuration via environment variables",
+  "config_docker_desc": "Every option has an AXON_* environment variable. Pass them with -e on docker run or in the environment section of docker-compose.yml. This is the recommended way to configure containers, since it keeps secrets out of the image and lets each node differ.",
+  "config_docker_code": "docker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_REQUIRE_AUTH=false \\\n  -e AXON_S3_ENDPOINT=http://minio:9000 \\\n  -e AXON_S3_BUCKET=my-backups \\\n  -e AXON_S3_ACCESS=minioadmin \\\n  -e AXON_S3_SECRET=minioadmin \\\n  -e AXON_S3_INTERVAL=60000 \\\n  -e AXON_S3_RETENTION=10 \\\n  axonbase/axonbase:latest",
+  "config_file_title": "Docker: mount an axonbase.conf file",
+  "config_file_desc": "Alternatively, mount a full axonbase.conf file into the container. The server reads it on startup before applying environment variables. Use this when you have a long, static configuration or want to version it.",
+  "config_file_code": "# Local file axonbase.conf\npath = data\nbind = 0.0.0.0\nport = 8000\nrequire_auth = false\ns3_endpoint = http://minio:9000\ns3_bucket = my-backups\ns3_access = minioadmin\ns3_secret = minioadmin\ns3_interval = 60000\n\n# Mount it into the container\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v $PWD/axonbase.conf:/app/axonbase.conf \\\n  -v axonbase-data:/data \\\n  axonbase/axonbase:latest",
+  "config_example_title": "Complete Example: Path + Database Credentials",
+  "config_example_desc": "This example starts AxonBase with RocksDB storage on a named volume, enables authentication, and sets the root user and password. Data persists across restarts on the axonbase-data volume.",
+  "config_example_code": "docker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_USER=root \\\n  -e AXON_PASS=secure-root-password \\\n  -e AXON_SECRET=change-me-signing-secret \\\n  axonbase/axonbase:latest",
+  "config_example_signin_title": "Authenticate after startup",
+  "config_example_signin_desc": "With authentication enabled, sign in over HTTP to obtain a JWT, then use it in subsequent requests.",
+  "config_example_signin_code": "curl -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"secure-root-password\"}'",
+  "config_cert_title": "Example: Interact with Digital Certificate (mTLS)",
+  "config_cert_desc": "Configure TLS with a PKCS12 keystore and a JKS truststore for mutual TLS (mTLS). The CA in the truststore must issue the client certificates that will authenticate.",
+  "config_cert_code": "docker run -d --name axonbase -p 8443:8000 \\\n  -v axonbase-data:/data \\\n  -v $PWD/certs:/etc/axonbase/certs:ro \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_TLS_CERT=/etc/axonbase/certs/server.p12 \\\n  -e AXON_TLS_KEY=changeit \\\n  -e AXON_TLS_CA=/etc/axonbase/certs/icpbrasil.jks \\\n  axonbase/axonbase:latest",
+  "config_cert_login_title": "Certificate login (mTLS) and temporary credential",
+  "config_cert_login_desc": "Present the client certificate in the TLS handshake. The endpoint validates the chain against the truststore, extracts CPF or CNPJ when configured with ICPBRASIL, and returns an axontc_ temporary credential. Use that credential as the password in signin to obtain a JWT.",
+  "config_cert_login_code": "curl -k https://127.0.0.1:8443/certificate/login/icp_brasil?ns=test\\&db=dev \\\n  --cert client.pem --key client.key\n# Returns an axontc_ temporary credential, e.g.:\n# {\"credential\":\"axontc_...\", \"user\":\"12345678901\", \"expiresIn\":60}\n\n# Use the credential as password in signin:\ncurl -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"12345678901\",\"pass\":\"axontc_...\"}'",
+  "config_cert_rpc_title": "Certificate login via JSON-RPC challenge",
+  "config_cert_rpc_desc": "For applications that cannot present a certificate in a TLS handshake, use the certificate.begin and certificate.complete RPC flow. begin returns a 32-byte Base64URL challenge; sign the exact ASCII bytes with the client private key and send the DER Base64 certificate chain to complete.",
+  "config_cert_rpc_code": "curl -X POST http://127.0.0.1:8000/rpc \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"id\":1,\"method\":\"certificate.begin\",\"params\":[{\"store\":\"icp_brasil\"}]}'\n# -> {\"id\":\"...\",\"challenge\":\"<base64url>\",\"expiresAt\":\"...\"}\n\ncurl -X POST http://127.0.0.1:8000/rpc \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"id\":2,\"method\":\"certificate.complete\",\"params\":[{\"id\":\"...\",\"challenge\":\"<same base64url>\",\"store\":\"icp_brasil\",\"user\":\"12345678901\",\"chain\":[\"<DER base64>\"],\"signature\":\"<base64>\"}]}'\n# -> { \"credential\": \"axontc_...\", \"user\": \"12345678901\" }",
+  "config_precedence_title": "Precedence",
+  "config_precedence_desc": "Values are applied in this order, each overriding the previous: default (1) < axonbase.conf file (2) < AXON_* environment variables (3) < CLI flags (4).",
+  "config_example_flow_title": "Complete Flow: Start, Sign In, and Query",
+  "config_example_flow_desc": "Start AxonBase with authentication enabled, sign in to obtain a JWT token, and use it in subsequent SQL queries. The token is sent via the Authorization: Bearer header.",
+  "config_example_flow_code": "# 1. Start server with auth enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_USER=root \\\n  -e AXON_PASS=root \\\n  axonbase/axonbase:latest\n\n# 2. Sign in and capture the JWT token\nTOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"root\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\necho \"Token: $TOKEN\"\n\n# 3. Create data using the token\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\n\n# 4. Query data\ncurl -s -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'"
+  ,"nav_ai_audit": "AI Audit"
+  ,"ai_audit_kicker": "Policy-guided security"
+  ,"ai_audit_title": "AI Audit"
+  ,"ai_audit_intro": "AI Audit turns a natural-language policy into local audit rules. The AI is called only while creating the audit. Every later command is classified inside AxonBase, without sending production SQL to the provider."
+  ,"ai_audit_diagram_alt": "AI Audit workflow illustration: a policy moves through rule generation, an inspection gateway, and three paths for safe execution, review, and blocking."
+  ,"ai_audit_diagram_caption": "Image generated with fal.ai. Labels and decisions remain in the local AxonBase engine."
+  ,"ai_audit_flow_title": "The decision cycle"
+  ,"ai_audit_flow_intro": "Creation materializes the rules. Later execution uses only those rules and records decisions that need human intervention."
+  ,"ai_audit_flow": [{"label":"Define the policy","text":"Describe what deserves review and what must be blocked."},{"label":"Generate rules","text":"CREATE AI AUDIT calls the provider once and saves the resulting rules in the catalog."},{"label":"Classify locally","text":"SAFE continues immediately. WARNING opens a pending case. DANGER blocks the user."},{"label":"Resolve the case","text":"An operator records the reason and authorizes or denies the original operation."}]
+  ,"ai_audit_create_title": "Create a policy"
+  ,"ai_audit_create_desc": "The two prompts separate operations that need approval from prohibited operations. Prefer objective criteria and mention the AxonQL syntax used by the team."
+  ,"ai_audit_create_code": "CREATE AI AUDIT protect_production\n  SET WARNING WHEN 'Require approval for UPDATE or DELETE without WHERE.'\n  SET DANGER WHEN 'Block DROP TABLE and TRUNCATE.';"
+  ,"ai_audit_config_title": "Configure the provider"
+  ,"ai_audit_config_desc": "Configure the provider and model on the server. ai_base_url supports Ollama or an organization-hosted compatible endpoint."
+  ,"ai_audit_tab_env": "Environment variables"
+  ,"ai_audit_tab_file": "axonbase.conf"
+  ,"ai_audit_config_env": "AXON_AI_PROVIDER=openai\nAXON_AI_MODEL=gpt-4o-mini\nAXON_AI_API_KEY=$OPENAI_API_KEY\n\n# Ollama or a compatible endpoint\nAXON_AI_PROVIDER=ollama\nAXON_AI_MODEL=qwen3-coder:latest\nAXON_AI_API_KEY=ollama\nAXON_AI_BASE_URL=http://ollama.internal:11434"
+  ,"ai_audit_config_file": "ai_provider = openai\nai_model = gpt-4o-mini\nai_api_key = ${OPENAI_API_KEY}\n\n# Ollama or a compatible endpoint\nai_provider = ollama\nai_model = qwen3-coder:latest\nai_api_key = ollama\nai_base_url = http://ollama.internal:11434"
+  ,"ai_audit_assign_title": "Assign it to a user"
+  ,"ai_audit_assign_desc": "The AUDITED BY clause attaches the user to an audit. Only that user's commands pass through the materialized rules."
+  ,"ai_audit_assign_code": "DEFINE USER alice ON DATABASE\n  PASSWORD 'secret'\n  ROLES editor\n  AUDITED BY protect_production;"
+  ,"ai_audit_outcomes_title": "Three possible outcomes"
+  ,"ai_audit_safe_title": "SAFE"
+  ,"ai_audit_safe_desc": "The command does not match a rule and runs normally."
+  ,"ai_audit_warning_title": "WARNING"
+  ,"ai_audit_warning_desc": "The command remains pending until someone records an explicit decision."
+  ,"ai_audit_danger_title": "DANGER"
+  ,"ai_audit_danger_desc": "The operation is rejected and the user stays blocked until authorization."
+  ,"ai_audit_resolve_title": "Justify and authorize"
+  ,"ai_audit_resolve_desc": "Authorization executes the original SQL exactly once with an audit bypass, avoiding a second case for the same operation."
+  ,"ai_audit_resolve_code": "SET REASON AUDIT CASE 'a8d4...' 'Cleanup approved for the maintenance window';\nSET AUDIT CASE 'a8d4...' AUTHORIZED REASON 'Change registered in ticket OPS-218';"
+  ,"ai_audit_cases_title": "Inspect the audit trail"
+  ,"ai_audit_cases_desc": "AUDIT_CASES is a virtual table with the original SQL, classification, user, reason, resolution, and case events."
+  ,"ai_audit_cases_code": "SELECT hash, user, sql, classification, status, reason, resolved_by, resolved_at\nFROM AUDIT_CASES\nORDER BY created_at DESC;"
+  ,"ai_audit_diagram_title": "AI Audit operational flow"
+  ,"ai_audit_diagram_policy": "AI Audit policy"
+  ,"ai_audit_diagram_prompt": "desired rules"
+  ,"ai_audit_diagram_create": "CREATE AI AUDIT"
+  ,"ai_audit_diagram_provider": "AI provider"
+  ,"ai_audit_diagram_once": "creation only"
+  ,"ai_audit_diagram_rules": "structured rules"
+  ,"ai_audit_diagram_engine": "AxonBase engine"
+  ,"ai_audit_diagram_catalog": "Audit catalog"
+  ,"ai_audit_diagram_local_rules": "materialized rules"
+  ,"ai_audit_diagram_no_sql": "no production SQL sent"
+  ,"ai_audit_diagram_gateway": "Audit gateway"
+  ,"ai_audit_diagram_classifies": "inspects and classifies"
+  ,"ai_audit_diagram_execution": "local decision"
+  ,"ai_audit_diagram_user": "User"
+  ,"ai_audit_diagram_assigned": "audit assigned"
+  ,"ai_audit_diagram_command": "SQL command"
+  ,"ai_audit_diagram_safe": "runs"
+  ,"ai_audit_diagram_warning": "opens a case"
+  ,"ai_audit_diagram_danger": "blocks"
+  ,"ai_audit_diagram_footer": "AI creates the rules. AxonBase makes every runtime decision."
+  ,"nav_sdk_php": "PHP"
+  ,"nav_sdk_ruby": "Ruby on Rails"
+  ,"sdk_php_title": "PHP SDK"
+  ,"sdk_php_intro": "WebSocket JSON-RPC client for PHP 8.1 and later."
+  ,"sdk_ruby_title": "Ruby on Rails SDK"
+  ,"sdk_ruby_intro": "WebSocket JSON-RPC client for Ruby and Rails applications."
+  ,"sdk_installation": "Installation"
+  ,"sdk_authentication": "Authentication"
+  ,"sdk_query": "Query and CRUD"
+  ,"sdk_php_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication."
+  ,"sdk_ruby_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication."
+  ,"use_cases_eyebrow": "AXONBASE / APPLICATIONS"
+  ,"use_cases_title": "Use Cases"
+  ,"use_cases_intro": "From financial services to healthcare, AxonBase replaces multiple specialized systems with a single engine, reducing infrastructure complexity, operational cost, and security risk."
+  ,"use_cases_positioning_badge": "POSITIONING"
+  ,"use_cases_positioning_text": "AxonBase is the database for microservices and AI agents that need distributed transactions, AI governance, and multi-model search, all in a single SQL engine."
+  ,"use_cases_positioning": {
+    "title": "What Makes AxonBase Different",
+    "subtitle": "Three capabilities that no other database combines in a single engine:",
+    "features": [
+      "Distributed transactions via native sagas: BEGIN SAGA, COMMIT SAGA, CANCEL SAGA with correlation, compensation, and remote rollback",
+      "AI governance with AI Audit: LLM-generated rules classify every query as SAFE, WARNING, or DANGER before execution, without sending production data to the AI provider",
+      "Multi-model search in one engine: BM25 full-text, HNSW vectors, GeoJSON spatial, graph traversal, and columnar aggregation, all in a single AxonQL statement"
+    ]
+  }
+  ,"use_cases_sectors_title": "Industry Applications"
+  ,"use_cases_sectors_intro": "Each sector benefits from a different combination of AxonBase capabilities. The engine adapts to the data shape, not the other way around."
+  ,"use_cases_pain": "The challenge:"
+  ,"use_cases_sectors": [
+    {"id": "banking", "title": "Banking and Financial Services", "pain": "Banks need ACID transactions, audit trails, and role-based access across millions of accounts, with real-time fraud detection and strict regulatory compliance.", "capabilities": ["Sagas for distributed ledger transactions across core banking systems, with automatic compensation on failure", "Data Rules with field masking to protect PII (CPF, account numbers, credit cards) without modifying application code", "AI Audit to classify every query as SAFE, WARNING, or DANGER before execution, meeting Bacen and LGPD requirements", "mTLS and certificate-based authentication (ICP-Brasil compatible) for secure inter-bank communication", "Columnar indexes for real-time aggregation of balances, transaction counts, and risk metrics without ETL"], "cta": "Explore Security", "path": "/security"},
+    {"id": "fintech", "title": "Fintech and Payments", "pain": "Fintechs move fast but cannot compromise on compliance. They need a database that supports rapid iteration, auditability, and multi-tenant isolation from day one.", "capabilities": ["Multi-tenant by design: namespaces and databases isolate each client or product line with zero configuration", "Graph relations for payment flows, wallet hierarchies, and recommendation networks in a single query", "Live queries for real-time balance updates, transaction notifications, and fraud alerts over WebSocket", "JDBC driver for existing BI tools, plus GraphQL and REST for mobile and web backends", "Scalable from startup MVP to millions of users with the same RocksDB-backed engine"], "cta": "Explore Getting Started", "path": "/getting-started"},
+    {"id": "government", "title": "Government and Public Sector", "pain": "Governments require data sovereignty, auditability, and ICP-Brasil certificate support. They cannot afford vendor lock-in or cloud-only solutions.", "capabilities": ["Certificate-based authentication with ICP-Brasil trust store for digital signatures and identity verification", "AI Audit for automated compliance verification of every data access and modification", "Data Rules with field masking to protect citizen PII across all queries without application changes", "Self-hosted deployment with no cloud dependency: RocksDB persistence, S3 backup, and Raft cluster", "Full audit trail via S3 backup encryption (AES-256-GCM) and export/import for data portability"], "cta": "Explore Certificate", "path": "/certificate"},
+    {"id": "healthtech", "title": "Healthtech and Healthcare", "pain": "Healthcare applications handle sensitive patient data, require strict access control, and need to query structured records, clinical notes, and medical images in a compliant way.", "capabilities": ["Data Rules with field masking to protect patient PII (name, CPF, diagnosis) without touching application code", "AI Audit to classify every query and block unauthorized access to patient records", "BM25 full-text search over clinical notes, prescriptions, and medical reports with relevance ranking", "HNSW vector search for semantic similarity over medical embeddings and imaging metadata", "Sagas for distributed healthcare workflows: appointment scheduling, lab results, and billing across systems"], "cta": "Explore Data Rules", "path": "/data-rules"},
+    {"id": "ecommerce", "title": "E-Commerce and Marketplace", "pain": "E-commerce platforms need real-time product search, personalized recommendations, inventory management, and order processing, all with high availability.", "capabilities": ["BM25 full-text search for product catalogs with relevance ranking and highlighting", "HNSW vector search for semantic product recommendations and visual similarity", "Graph traversal for recommendation networks: customers who bought X also bought Y", "Geo search for local inventory, store locators, and delivery radius queries", "Live queries for real-time inventory updates, order status changes, and price alerts via WebSocket"], "cta": "Explore Search", "path": "/search"},
+    {"id": "iot", "title": "IoT and Telemetry", "pain": "IoT systems ingest millions of data points per second, need time-series aggregation, geospatial queries, and real-time alerting with minimal operational overhead.", "capabilities": ["Columnar indexes for real-time aggregation of count, sum, avg, min, max over sensor data without loading raw documents", "Geo search for location-based queries: devices within a radius, fleet tracking, geofence alerts", "Live queries for real-time telemetry streaming and threshold alerts over WebSocket", "Raft cluster for high availability and automatic failover in distributed sensor networks", "RocksDB storage for high-ingestion throughput (243K inserts/s in batch)"], "cta": "Explore Columnar Index", "path": "/search/columnar"},
+    {"id": "legal", "title": "Legal and Compliance", "pain": "Legal departments manage contracts, litigation documents, and regulatory filings that require full-text search, version history, and strict access control.", "capabilities": ["BM25 full-text search over legal documents with configurable analyzers, stopwords, and stemming", "Data Rules to enforce attorney-client privilege and document-level access control", "AI Audit to classify queries and prevent unauthorized access to sensitive legal content", "Sagas for distributed contract lifecycle management: drafting, review, approval, and signing", "Export/import for data portability and archival compliance"], "cta": "Explore Full-Text Search", "path": "/search/fulltext"}
+  ]
+  ,"use_cases_comparison_title": "Before and After AxonBase"
+  ,"use_cases_comparison_intro": "Organizations today stitch together multiple systems to solve one problem. AxonBase replaces them with a single engine."
+  ,"use_cases_comparison_need": "What You Need"
+  ,"use_cases_comparison_traditional": "Traditional Architecture"
+  ,"use_cases_comparison_axonbase": "With AxonBase"
+  ,"use_cases_comparison": [
+    {"need": "Full-text search", "traditional": "Elasticsearch cluster", "axonbase": "DEFINE INDEX ... SEARCH ANALYZER ... BM25 native"},
+    {"need": "Vector similarity", "traditional": "Qdrant, Pinecone, or Weaviate", "axonbase": "DEFINE INDEX ... HNSW DIMENSION ... DIST ..."},
+    {"need": "Geospatial queries", "traditional": "MongoDB Geo or Elastic Geo", "axonbase": "geometry::point, geo::distance, DEFINE INDEX ... GEO"},
+    {"need": "Graph traversal", "traditional": "Neo4j or Dgraph", "axonbase": "RELATE ... -> ... -> ... SELECT ->friend->person"},
+    {"need": "Distributed transactions", "traditional": "Kafka + outbox + manual compensation", "axonbase": "BEGIN SAGA, COMMIT SAGA, CANCEL SAGA nativo"},
+    {"need": "AI governance", "traditional": "Custom middleware + LLM proxy", "axonbase": "CREATE AI AUDIT ... PROMPT ... SAFE/WARNING/DANGER"},
+    {"need": "Row-level security", "traditional": "Custom middleware + application code", "axonbase": "DEFINE DATA RULE ... PERMISSIONS FOR ... field masking"},
+    {"need": "Analytical aggregation", "traditional": "ClickHouse or Redshift", "axonbase": "DEFINE INDEX ... COLUMNAR; count(), sum(), avg()"},
+    {"need": "Client SDKs", "traditional": "Custom per-language clients", "axonbase": "8 SDKs with parity: Java, Node, Python, Go, Rust, .NET, PHP, Ruby"}
+  ]
+  ,"use_cases_cta_title": "Ready to Try AxonBase?"
+  ,"use_cases_cta_desc": "Run the server in Docker, send your first query in 60 seconds, and explore what a unified engine can do for your architecture."
+  ,"use_cases_cta_sdk": "View SDKs"
+}
