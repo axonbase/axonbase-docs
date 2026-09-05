@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 const sections = [
   { label: "nav_intro", links: [
     { to: "/docs", label: "nav_home" },
+    { to: "/about", label: "nav_about" },
     { to: "/use-cases", label: "nav_use_cases" },
     { to: "/getting-started", label: "nav_getting_started" },
     { to: "/installation", label: "nav_installation" },

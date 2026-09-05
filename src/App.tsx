@@ -22,6 +22,7 @@ import Observability from "./pages/Observability";
 import UseCases from "./pages/UseCases";
 import FAQ from "./pages/FAQ";
 import Changelog from "./pages/Changelog";
+import About from "./pages/About";
 import SQLOverview from "./pages/SQL/Overview";
 import SQLDDL from "./pages/SQL/DDL";
 import SQLDML from "./pages/SQL/DML";
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/use-cases" element={<UseCases />} />
         <Route path="/changelog" element={<Changelog />} />
+        <Route path="/about" element={<About />} />
         <Route path="/sql" element={<SQLOverview />} />
         <Route path="/sql/ddl" element={<SQLDDL />} />
         <Route path="/sql/dml" element={<SQLDML />} />
