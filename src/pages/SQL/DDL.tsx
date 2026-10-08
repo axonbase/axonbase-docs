@@ -15,6 +15,11 @@ export default function DDL() {
         <SchemaDesignDiagram />
         <CodeTabs tabs={[{ label: "SQL", code: t("sql_ddl_schema_code"), language: "sql" }]} />
       </section>
+      <section>
+        <h2>{t("sql_ddl_describe_title")}</h2>
+        <p>{t("sql_ddl_describe_desc")}</p>
+        <CodeTabs tabs={[{ label: "SQL", code: t("sql_ddl_describe_code"), language: "sql" }]} />
+      </section>
       {statements.map((s, i) => (
         <section key={i}>
           <h2>{s.name}</h2>

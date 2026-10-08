@@ -54,8 +54,6 @@ export default function Landing() {
   -e AXON_PATH=/data \\
   -e AXON_BIND=0.0.0.0 \\
   -e AXON_REQUIRE_AUTH=true \\
-  -e AXON_USER=root \\
-  -e AXON_PASS=root \\
   axonbase/axonbase:latest`}</code></pre></section>
     <section className="landing-section landing-modal"><p className="landing-index">01 / MULTI-MODEL</p><h2>{copy.modalTitle}</h2><p className="landing-modal-lead">{copy.modalLead}</p><div className="landing-model-grid">{copy.modal.map(([title, text], index) => <article key={title}><FeatureGlyph group="model" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
     <section className="landing-section landing-features"><p className="landing-index">02 / PLATFORM</p><div className="landing-section-head"><h2>{copy.platform}</h2></div><div className="landing-feature-list landing-feature-list-six">{copy.features.map(([title, text], index) => <article key={title}><FeatureGlyph group="feature" index={index} /><span>0{index + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>

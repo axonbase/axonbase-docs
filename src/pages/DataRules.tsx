@@ -35,6 +35,12 @@ export default function DataRules() {
       </section>
 
       <section>
+        <h2>{t("data_rules_inject_title")}</h2>
+        <p>{t("data_rules_inject_desc")}</p>
+        <CodeTabs tabs={[{ label: "AxonQL", code: t("data_rules_inject_code"), language: "sql" }]} />
+      </section>
+
+      <section>
         <h2>{t("data_rules_mask_title")}</h2>
         <p>{t("data_rules_mask_desc")}</p>
         <CodeTabs tabs={[{ label: "AxonQL", code: t("data_rules_mask_code"), language: "sql" }]} />
@@ -47,6 +53,7 @@ export default function DataRules() {
           { label: "Setup", code: t("data_rules_demo_setup"), language: "bash" },
           { label: "Filter", code: t("data_rules_demo_filter"), language: "bash" },
           { label: "Mask", code: t("data_rules_demo_mask"), language: "bash" },
+          { label: "Inject", code: t("data_rules_demo_inject"), language: "bash" },
           { label: "Drop", code: t("data_rules_demo_drop"), language: "bash" },
         ]} />
       </section>

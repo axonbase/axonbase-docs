@@ -38,6 +38,7 @@
   "nav_certificate": "Digital Certificate",
   "nav_ops": "Administration",
   "nav_security": "Security",
+  "nav_op_audit": "Operation Audit",
   "nav_observability": "Observability",
   "nav_faq": "FAQ",
   "nav_changelog": "Changelog",
@@ -248,7 +249,7 @@
   "installation_compose_desc": "The provided docker-compose.cluster.yml starts a three-node Raft cluster with the published image. Each node has its own RocksDB volume and Raft binding on port 7000. Ports 18001-18003 expose HTTP for each node.",
   "installation_compose_code": "x-cluster-env: &cluster_env\n  AXON_PATH: /data\n  AXON_BIND: 0.0.0.0\n  AXON_PORT: 8000\n  AXON_REQUIRE_AUTH: \"false\"\n  AXON_CLUSTER_ID: axonbase-cluster\n\nservices:\n  n1:\n    image: axonbase/axonbase:latest\n    hostname: n1\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n1\n      AXON_RAFT_BIND: n1:7000\n      AXON_RAFT_PEERS: n2:7000,n3:7000\n    volumes: [n1-data:/data]\n    ports: [\"18001:8000\"]\n  n2:\n    image: axonbase/axonbase:latest\n    hostname: n2\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n2\n      AXON_RAFT_BIND: n2:7000\n      AXON_RAFT_PEERS: n1:7000,n3:7000\n    volumes: [n2-data:/data]\n    ports: [\"18002:8000\"]\n  n3:\n    image: axonbase/axonbase:latest\n    hostname: n3\n    environment:\n      <<: *cluster_env\n      AXON_NODE_ID: n3\n      AXON_RAFT_BIND: n3:7000\n      AXON_RAFT_PEERS: n1:7000,n2:7000\n    volumes: [n3-data:/data]\n    ports: [\"18003:8000\"]\n\nvolumes:\n  n1-data:\n  n2-data:\n  n3-data:",
   "config_title": "Configuration",
-  "config_intro": "AxonBase reads configuration from three sources in order: the axonbase.conf INI file, AXON_* environment variables, and CLI flags. In Docker the recommended approach is environment variables via -e; for many options you can also mount an axonbase.conf file.",
+  "config_intro": "AxonBase reads configuration from three sources in order: the axonbase.conf INI file, AXON_* environment variables, and CLI flags. In Docker the recommended approach is environment variables via -e; for many options you can also mount an axonbase.conf file. The default credentials are user root and password root. To change the password, authenticate as root and run DEFINE USER root ON ROOT PASSWORD \"new-password\". After restart, only the new password is accepted.",
   "config_options": [
     {
       "key": "path",
@@ -263,20 +264,6 @@
       "type": "string",
       "default": "axonbase-dev-secret",
       "desc": "Secret used to sign JWT tokens. Never commit a production value."
-    },
-    {
-      "key": "user",
-      "env": "AXON_USER",
-      "type": "string",
-      "default": "root",
-      "desc": "Root user name for authentication."
-    },
-    {
-      "key": "pass",
-      "env": "AXON_PASS",
-      "type": "string",
-      "default": "root",
-      "desc": "Root user password. Never commit a production value."
     },
     {
       "key": "bind",
@@ -466,6 +453,34 @@
       "type": "int",
       "default": "10",
       "desc": "Number of recent backups to keep on S3."
+    },
+    {
+      "key": "audit_enabled",
+      "env": "AXON_AUDIT_ENABLED",
+      "type": "bool",
+      "default": "false",
+      "desc": "Enable operation audit logging. Logs user, timestamp, and before/after state for CREATE, UPDATE, DELETE, and SELECT."
+    },
+    {
+      "key": "audit_user_from",
+      "env": "AXON_AUDIT_USER_FROM",
+      "type": "string",
+      "default": "auth",
+      "desc": "Source of the user identity in audit logs: auth (from JWT) or session_var:<name> (from a session variable)."
+    },
+    {
+      "key": "audit_select",
+      "env": "AXON_AUDIT_SELECT",
+      "type": "bool",
+      "default": "false",
+      "desc": "Enable audit of SELECT operations. High-volume environments should keep this false."
+    },
+    {
+      "key": "audit_max_body",
+      "env": "AXON_AUDIT_MAX_BODY",
+      "type": "int",
+      "default": "65536",
+      "desc": "Maximum size in bytes for the before/after payload in each audit entry. Larger payloads are truncated."
     }
   ],
   "cli_title": "Command Line",
@@ -620,7 +635,15 @@
   "sql_ddl_schema_title": "Schema and Validation",
   "sql_ddl_schema_desc": "SCHEMAFULL is stored as table metadata; the current implementation does not use it to reject undefined fields. Defined fields can apply DEFAULT, type coercion, ASSERT, and REFERENCES.",
   "sql_ddl_schema_code": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD age ON TABLE person TYPE int DEFAULT 18 ASSERT $value >= 0;\nDEFINE FIELD manager ON TABLE person REFERENCES person;",
+  "sql_ddl_describe_title": "Inspect a Table",
+  "sql_ddl_describe_desc": "DESCRIBE <table> returns one row per field with the table name, schema mode, and field metadata. For SCHEMAFULL tables, it returns fields declared with DEFINE FIELD. For SCHEMALESS tables, it also identifies fields stored in documents. An explicit definition takes precedence over an inferred type.",
+  "sql_ddl_describe_code": "DESCRIBE person;\n\n-- name    schema      field         type\n-- person  SCHEMALESS  age           int\n-- person  SCHEMALESS  id            string\n-- person  SCHEMALESS  municipio_id  string\n-- person  SCHEMALESS  name          string",
   "sql_ddl_statements": [
+    {
+      "name": "CREATE TABLE (SQL-First)",
+      "desc": "Creates a complete table using standard SQL with columns, types, PRIMARY KEY, NOT NULL, DEFAULT, CHECK constraints, and schema mode.",
+      "example": "CREATE TABLE person (\n    id VARCHAR(64) PRIMARY KEY,\n    name VARCHAR(255) NOT NULL,\n    age INT DEFAULT 18 CHECK (age >= 0),\n    location GEOMETRY(POINT),\n    embedding VECTOR(1536),\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n) WITH (SCHEMA = 'FULL');"
+    },
     {
       "name": "DEFINE TABLE",
       "desc": "Creates a SCHEMALESS or SCHEMAFULL table.",
@@ -660,8 +683,8 @@
     },
     {
       "name": "INSERT",
-      "desc": "Inserts an object or each object in an array into the specified table.",
-      "example": "INSERT INTO person [{name: \"Ana\", age: 30}, {name: \"Bob\", age: 25}];"
+      "desc": "Inserts records using standard SQL value tuples or an array of objects.",
+      "example": "INSERT INTO person (id, name, age) VALUES ('u_1', 'Ana', 30), ('u_2', 'Bob', 25);"
     },
     {
       "name": "UPDATE and UPSERT",
@@ -1086,18 +1109,26 @@
   "cert_icp_desc": "COLLECT USER BY ICPBRASIL selects the built-in CPF or CNPJ collection at the certificate login endpoint.",
   "cert_user_title": "6. Link Certificate to User",
   "cert_user_desc": "DEFINE USER associates the identity with the registered store name via CERTIFICATE.",
-  "cert_user_code": "DEFINE USER 12345678901 ON DATABASE CERTIFICATE icp_brasil ROLES writer;",
+  "cert_user_code": "DEFINE USER \"12345678901\" ON DATABASE CERTIFICATE icp_brasil ROLES writer;",
   "cert_mtls_title": "7. mTLS Transport",
   "cert_mtls_desc": "tls_cert and tls_key configure the server's PKCS12 keystore.",
-  "cert_mtls_code": "tls_cert = /etc/axonbase/certs/server.p12\ntls_key = changeit\ntls_ca = /etc/axonbase/truststores/icpbrasil.jks",
-  "cert_proof_title": "8. certificate.begin and certificate.complete Proof",
+  "cert_mtls_code": "tls_cert = /etc/axonbase/certs/server/server.p12\ntls_key = changeit\ntls_ca = /etc/axonbase/certs/truststores/icpbrasil.jks",
+  "cert_browser_title": "8. Prepare the Browser for mTLS",
+  "cert_browser_desc": "The ICP-Brasil JKS configures server trust for client certificates, but it does not install anything in the browser. To open HTTPS without a warning, trust the authority that issued the server certificate in the operating system. To offer a certificate during mTLS, import the client's PKCS#12 into the user's certificate store. The commands below use this project's development artifacts. In production, install the corporate or public CA that issued the server certificate and import the user's real ICP-Brasil certificate.",
+  "cert_browser_macos_code": "# Trust the CA that issued the server HTTPS certificate.\nsudo security add-trusted-cert -d -r trustRoot \\\n  -k /Library/Keychains/System.keychain \\\n  certs/ca/dev-ca.crt\n\n# Import the client identity into the login keychain.\n# Restart Chrome after importing it.\nsecurity import certs/client-demo/client-demo.p12 \\\n  -k ~/Library/Keychains/login.keychain-db \\\n  -P changeit \\\n  -T /Applications/Google\\ Chrome.app",
+  "cert_browser_linux_code": "# Debian/Ubuntu: trust the server CA.\nsudo install -D -m 0644 certs/ca/dev-ca.crt \\\n  /usr/local/share/ca-certificates/axonbase-dev-ca.crt\nsudo update-ca-certificates\n\n# Chrome/Chromium: import the client certificate into the NSS database.\nsudo apt-get install -y libnss3-tools\nmkdir -p ~/.pki/nssdb\ncertutil -d sql:$HOME/.pki/nssdb -N --empty-password\npk12util -d sql:$HOME/.pki/nssdb \\\n  -i certs/client-demo/client-demo.p12 \\\n  -W changeit",
+  "cert_browser_windows_code": "# Run in PowerShell as Administrator to trust the server CA.\nImport-Certificate -FilePath .\\certs\\ca\\dev-ca.crt \\\n  -CertStoreLocation Cert:\\LocalMachine\\Root\n\n# Import the client certificate for the current user.\nImport-PfxCertificate -FilePath .\\certs\\client-demo\\client-demo.p12 \\\n  -CertStoreLocation Cert:\\CurrentUser\\My \\\n  -Password (ConvertTo-SecureString \"changeit\" -AsPlainText -Force)",
+  "cert_proof_title": "9. certificate.begin and certificate.complete Proof",
   "cert_proof_desc": "certificate.begin returns an id, a 32-byte Base64URL challenge, and expires_at, 30 seconds ahead.",
   "cert_proof_code": "{\"id\":1,\"method\":\"certificate.begin\",\"params\":[{\"store\":\"icp_brasil\"}]}",
-  "cert_credential_title": "9. Temporary Credential and DataGrip Session",
-  "cert_credential_desc": "After validating the chain, signature, and DEFINE USER binding, certificate.complete or mTLS login issues an axontc_ opaque credential.",
+  "cert_credential_title": "10. Temporary Credential and DataGrip Session",
+  "cert_credential_desc": "After validating the chain, signature, and DEFINE USER binding, certificate.complete or mTLS login issues an axontc_ opaque credential. The credential expires in 60 seconds and is bound to the user, certificate store, and validated fingerprint. After issuing one credential, the server enforces a 10-minute cooldown before another can be generated for the same user and store. Use the credential as password with the same user in signin to obtain a JWT; with that JWT, call authenticate. The JWT is cached for the credential during its validity, allowing DataGrip reconnections. Do not share the credential between simultaneous clients, do not use it with another user or certificate binding, and generate a new one after expiry. For JDBC tools, generate the credential immediately before opening the connection and use it as the password.",
   "cert_temp_flow_title": "Recommended Flow: Temporary Credential",
   "cert_temp_flow_desc": "Complete mTLS login or certificate.complete, use the axontc_ credential with the same user in signin, and authenticate the session with the returned JWT.",
-  "cert_credential_code": "https://127.0.0.1:8000/certificate/login/icp_brasil?ns=test&db=dev",
+  "cert_credential_code": "https://127.0.0.1:8443/certificate/login/icp_brasil?ns=test&db=dev",
+  "cert_datagrip_title": "11. Configure DataGrip with JDBC and mTLS",
+  "cert_datagrip_desc": "Use the already distributed axonbase-jdbc-0.2.1.jar artifact and the com.axonbase.jdbc.AxonDriver class. For local development, use ws:// on port 8080: there is no TLS, certificate, or truststore to configure. Generate an axontc_ credential immediately before Test Connection and use it as the password. For WSS on port 8443, the DataGrip JVM must trust the server CA, so provide the truststore using an absolute path. Use WSS where the connection needs TLS.",
+  "cert_datagrip_code": "# DataGrip > Driver\nDriver file: /absolute/path/to/axonbase-jdbc-0.2.1.jar\nDriver class: com.axonbase.jdbc.AxonDriver\n\n# Local development: DataGrip > General\nURL=jdbc:axonbase:ws://127.0.0.1:8080/rpc/ws?ns=test&db=dev\nUser=11111111111\nPassword=newly_generated_axontc_\n\n# WSS: create a persistent truststore for the server certificate.\nmkdir -p \"$HOME/.axonbase\"\nkeytool -importcert -noprompt -alias axonbase-dev-ca \\\n  -file /absolute/path/to/axonbase/certs/ca/dev-ca.crt \\\n  -keystore \"$HOME/.axonbase/server-truststore.jks\" \\\n  -storepass changeit\n\n# DataGrip > General\nURL=jdbc:axonbase:wss://127.0.0.1:8443/rpc/ws?ns=test&db=dev\nUser=11111111111\nPassword=newly_generated_axontc_\n\n# DataGrip > Options or Advanced\ntruststore=/Users/your-user/.axonbase/server-truststore.jks\ntruststorePassword=changeit",
   "jdbc_title": "JDBC Driver",
   "jdbc_intro": "JDBC (Java Database Connectivity) connects Java applications and SQL tools to the AxonBase WebSocket JSON-RPC.",
   "jdbc_url_title": "URL JDBC",
@@ -1105,7 +1136,7 @@
   "jdbc_url_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev",
   "jdbc_driver_title": "Dependency",
   "jdbc_driver_desc": "Add the axonbase-jdbc module to the application classpath.",
-  "jdbc_driver_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>",
+  "jdbc_driver_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.1</version>\n</dependency>",
   "jdbc_datagrip_title": "DataGrip e DBeaver",
   "jdbc_datagrip_desc": "Use the com.axonbase.jdbc.AxonDriver class and the AxonBase JDBC URL.",
   "jdbc_examples_title": "Query",
@@ -1126,6 +1157,27 @@
   "security_jwt_title": "JWT",
   "security_jwt_desc": "With authentication active, the server validates signature, expiry, and token scope.",
   "security_jwt_code": "curl -X POST http://127.0.0.1:8000/sql -H 'Authorization: Bearer TOKEN' -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'SELECT * FROM person'",
+  "audit_op_title": "Operation Audit",
+  "audit_op_intro": "Operation Audit records every CREATE, UPDATE, DELETE, and optionally SELECT with the authenticated user, timestamp, and the before/after state of each record. It is disabled by default. Enable it in the server configuration when you need an immutable trail of data changes.",
+  "audit_op_how_title": "How it works",
+  "audit_op_how_desc": "When enabled, the server logs each data operation to a reserved key space in the same KV backend (RocksDB or memory). Each entry stores: user identity, action, table, record ID, Unix timestamp, and the before/after payload. Entries use the prefix !audit_op|ns|db| and are numbered sequentially per database.",
+  "audit_op_how_code": "!audit_op|test|dev|0000000001\n!audit_op|test|dev|0000000002\n!audit_op|test|dev|0000000003\n...",
+  "audit_op_enable_title": "Enable audit",
+  "audit_op_enable_desc": "Set AXON_AUDIT_ENABLED=true. The server starts logging all CREATE, UPDATE, and DELETE operations immediately. Audit entries are written inline with each operation; if the write fails, the operation itself is not affected.",
+  "audit_op_enable_env": "AXON_AUDIT_ENABLED=true",
+  "audit_op_enable_file": "audit_enabled = true",
+  "audit_op_config_title": "Configuration options",
+  "audit_op_config_desc": "Customize the audit behavior through the server configuration file or AXON_* environment variables.",
+  "audit_op_config_table": "AXON_AUDIT_ENABLED   (bool)   Enable audit logging. Default: false\nAXON_AUDIT_USER_FROM (string) Source of user identity: auth (from JWT) or session_var:<name>. Default: auth\nAXON_AUDIT_SELECT    (bool)   Enable SELECT audit. High volume environments should keep it false. Default: false\nAXON_AUDIT_MAX_BODY  (int)    Max bytes for before/after payload. Larger payloads are truncated. Default: 65536",
+  "audit_op_example_title": "Practical example",
+  "audit_op_example_desc": "Start the server with audit enabled, authenticate, and perform operations. Each operation produces an audit entry automatically.",
+  "audit_op_example_code": "# Start server with audit enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -e AXON_AUDIT_ENABLED=true \\\n  -e AXON_REQUIRE_AUTH=false \\\n  axonbase/axonbase:latest\n\n# Create, update, and delete records.\ncurl -X POST http://127.0.0.1:8000/sql \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\ncurl -X POST http://127.0.0.1:8000/sql \\\n  --data 'UPDATE person SET age = 31 WHERE name = \"Ana\"'\ncurl -X POST http://127.0.0.1:8000/sql \\\n  --data 'DELETE person WHERE name = \"Ana\"'",
+  "audit_op_inspect_title": "Query audit entries",
+  "audit_op_inspect_desc": "You can query audit entries directly with SELECT on the AUDIT_LOG virtual table. It supports WHERE filters, ORDER BY, LIMIT, START, and projection. Entries are returned newest first by default.",
+  "audit_op_inspect_code": "-- List all audit entries (newest first)\nSELECT * FROM AUDIT_LOG;\n\n-- Filter by action\nSELECT * FROM AUDIT_LOG WHERE action = \"CREATE\";\n\n-- Paginate and order\nSELECT id, user, action, ts FROM AUDIT_LOG\nORDER BY id ASC LIMIT 10;\n\n-- Each entry contains full before/after payload\n-- {\n--   \"id\": \"0000000001\",\n--   \"ns\": \"test\",\n--   \"db\": \"dev\",\n--   \"user\": \"root\",\n--   \"action\": \"CREATE\",\n--   \"table\": \"person\",\n--   \"rid\": \"person:1\",\n--   \"ts\": 1743196800000,\n--   \"before\": null,\n--   \"after\": {\"name\": \"Ana\", \"age\": 30}\n-- }",
+  "audit_op_user_title": "User identity source",
+  "audit_op_user_desc": "By default, the user is taken from the authenticated JWT (auth mode). You can change it to read from a session variable with audit_user_from = session_var:<name>. This is useful when the database user is different from the system user and you want to log the application-level identity.",
+  "audit_op_user_code": "# Log the application user via a session variable.\n# Server config:\naudit_user_from = session_var:app_user\n\n# Application sets the variable before operations.\ncurl -X POST http://127.0.0.1:8000/rpc \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\"id\":1,\"method\":\"set\",\"params\":[\"app_user\", \"alice@example.com\"]}'\n\n# Subsequent operations will log \"alice@example.com\" in audit entries.",
   "observability_title": "Observability",
   "observability_intro": "The server exposes Prometheus metrics on GET /metrics, health check on /health, readiness on /ready, and status on /status.",
   "observability_metrics_title": "Prometheus Metrics",
@@ -1822,6 +1874,12 @@
   "saga_diagram_orchestrator": "Orquestrador :8000",
   "saga_diagram_compensation": "CANCEL SAGA and local compensation",
   "saga_success_alt": "Diagram of the success path: payment service starts the SAGA, orchestrator coordinates, all participants commit.",
+  "saga_join_leave_title": "JOIN SAGA / LEAVE SAGA",
+  "saga_join_leave_desc": "JOIN SAGA binds an active saga to the current session, ensuring all subsequent writes are recorded as saga steps. LEAVE SAGA unbinds the session without affecting the saga lifecycle. These commands are the secure alternative to setting $saga_corr directly.",
+  "saga_join_code": "JOIN SAGA transfer WITH CORRELATION 'four_bank_rollback_001';",
+  "saga_leave_code": "LEAVE SAGA;",
+  "saga_join_desc": "Validates that the saga is RUNNING in the ledger, then binds (sagaName, correlationId) to the session. The validation and binding are atomic on the server, so a concurrent request cannot hijack the correlation.",
+  "saga_leave_desc": "Clears the saga binding from the session. Idempotent: calling LEAVE SAGA on a session that is not in a saga is a no-op.",
   "nav_data_rules": "Data Rules",
   "data_rules_title": "Data Rules",
   "data_rules_intro": "Data Rules are row-level and column-level security policies applied transparently to queries based on the authenticated user.",
@@ -1834,6 +1892,9 @@
   "data_rules_apply_title": "Assign to a User",
   "data_rules_apply_desc": "Use DEFINE USER with APPLY DATA RULE to assign one or more rules to a user.",
   "data_rules_apply_code": "DEFINE USER alice ON ROOT\n  PASSWORD 'secret'\n  ROLES editor\n  APPLY DATA RULE region_sp, sales_usa;",
+  "data_rules_inject_title": "Auto-fill on CREATE",
+  "data_rules_inject_desc": "When the Data Rule predicate has the form field = value (field = $auth.field or field = literal), AxonBase automatically fills that field in INSERT and CREATE, overwriting any value sent by the user. In SELECT, UPDATE, and DELETE, the field is used only as a filter and is never changed.",
+  "data_rules_inject_code": "-- Data Rule with fixed value: publisher_id will always be 42 on CREATE.\nCREATE DATA RULE publisher_only\n  APPLY publisher_id = 42;\n\n-- Data Rule with token value: tenant_id will be the authenticated user's id.\nCREATE DATA RULE tenant_only\n  APPLY tenant_id = $auth.id;\n\n-- User with data rule creates without sending the field:\nCREATE article CONTENT { title: \"New\" };\n-- Saved record: { id: article:xxx, title: \"New\", publisher_id: 42 }\n\n-- User-supplied value is overwritten:\nCREATE article CONTENT { title: \"Bypass\", publisher_id: 99 };\n-- Saved record: publisher_id = 42\n\n-- SELECT, UPDATE, DELETE only filter by rule fields:\nSELECT * FROM article;   -- WHERE publisher_id = 42\nDELETE article;          -- removes only records with publisher_id = 42",
   "data_rules_mask_title": "Mask Sensitive Fields",
   "data_rules_mask_desc": "The optional MASK FIELDS WITH clause hides field values matching the patterns for users who have that rule assigned.",
   "data_rules_mask_code": "CREATE DATA RULE lgpd\n  APPLY sales_rep_id = $auth.id\n  MASK FIELDS WITH '%cpf%', '%credit%card%';",
@@ -1849,6 +1910,7 @@
   "data_rules_demo_setup": "# Creates table and inserts data\ncurl -s --data 'DEFINE TABLE orders SCHEMALESS'",
   "data_rules_demo_filter": "# Autentica como alice\nTOKEN=$(curl -s -X POST -d '{\"user\":\"alice\",\"pass\":\"secret\"}' http://127.0.0.1:8000/signin | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('token',''))\")\n\n# SELECT retorna apenas order 100 (sales_rep_id=165)\ncurl -s --data 'SELECT * FROM orders' \\\n  -H \"Authorization: Bearer $TOKEN\" http://127.0.0.1:8000/sql\n# Resultado: [{\"sales_rep_id\":165,\"cpf\":\"***\",\"credit_card\":\"***\",\"product\":\"Laptop\",\"id\":\"orders:100\"}]",
   "data_rules_demo_mask": "# UPDATE affects only order 100\ncurl -s --data 'UPDATE orders SET total'",
+  "data_rules_demo_inject": "# Create Data Rule with automatic injection.\ncurl -s --data \"CREATE DATA RULE publisher_only APPLY publisher_id = 42\" \\\n  -H 'Authorization: Bearer root' http://127.0.0.1:8000/sql\n\n# Create user with the rule.\ncurl -s --data \"DEFINE USER bob ON ROOT PASSWORD 'bob' ROLES editor APPLY DATA RULE publisher_only\" \\\n  -H 'Authorization: Bearer root' http://127.0.0.1:8000/sql\n\n# Bob creates an article without publisher_id - 42 is injected.\nTOKEN_BOB=$(curl -s -X POST -d '{\"user\":\"bob\",\"pass\":\"bob\"}' http://127.0.0.1:8000/signin | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('token',''))\")\ncurl -s --data 'CREATE article CONTENT { title: \"Bob's post\" }' \\\n  -H \"Authorization: Bearer $TOKEN_BOB\" http://127.0.0.1:8000/sql\n\n# Bob tries to bypass with another publisher_id - it is overwritten to 42.\ncurl -s --data 'CREATE article CONTENT { title: \"Attempt\", publisher_id: 99 }' \\\n  -H \"Authorization: Bearer $TOKEN_BOB\" http://127.0.0.1:8000/sql\n\n# Verify: all of Bob's articles have publisher_id = 42.\ncurl -s --data 'SELECT * FROM article' \\\n  -H \"Authorization: Bearer $TOKEN_BOB\" http://127.0.0.1:8000/sql\n# Result: all with publisher_id=42",
   "data_rules_demo_drop": "# Remove a regra\ncurl -s --data 'DROP DATA RULE region_sp' \\\n  -H 'Authorization: Bearer root' http://127.0.0.1:8000/sql",
   "config_docker_title": "Docker: pass configuration via environment variables",
   "config_docker_desc": "Every option has an AXON_* environment variable. Pass them with -e on docker run or in the environment section of docker-compose.yml. This is the recommended way to configure containers, since it keeps secrets out of the image and lets each node differ.",
@@ -1858,13 +1920,13 @@
   "config_file_code": "# Local file axonbase.conf\npath = data\nbind = 0.0.0.0\nport = 8000\nrequire_auth = false\ns3_endpoint = http://minio:9000\ns3_bucket = my-backups\ns3_access = minioadmin\ns3_secret = minioadmin\ns3_interval = 60000\n\n# Mount it into the container\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v $PWD/axonbase.conf:/app/axonbase.conf \\\n  -v axonbase-data:/data \\\n  axonbase/axonbase:latest",
   "config_example_title": "Complete Example: Path + Database Credentials",
   "config_example_desc": "This example starts AxonBase with RocksDB storage on a named volume, enables authentication, and sets the root user and password. Data persists across restarts on the axonbase-data volume.",
-  "config_example_code": "docker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_USER=root \\\n  -e AXON_PASS=secure-root-password \\\n  -e AXON_SECRET=change-me-signing-secret \\\n  axonbase/axonbase:latest",
+  "config_example_code": "docker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_SECRET=change-me-signing-secret \\\n  axonbase/axonbase:latest",
   "config_example_signin_title": "Authenticate after startup",
   "config_example_signin_desc": "With authentication enabled, sign in over HTTP to obtain a JWT, then use it in subsequent requests.",
   "config_example_signin_code": "curl -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"secure-root-password\"}'",
   "config_cert_title": "Example: Interact with Digital Certificate (mTLS)",
   "config_cert_desc": "Configure TLS with a PKCS12 keystore and a JKS truststore for mutual TLS (mTLS). The CA in the truststore must issue the client certificates that will authenticate.",
-  "config_cert_code": "docker run -d --name axonbase -p 8443:8000 \\\n  -v axonbase-data:/data \\\n  -v $PWD/certs:/etc/axonbase/certs:ro \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_TLS_CERT=/etc/axonbase/certs/server.p12 \\\n  -e AXON_TLS_KEY=changeit \\\n  -e AXON_TLS_CA=/etc/axonbase/certs/icpbrasil.jks \\\n  axonbase/axonbase:latest",
+  "config_cert_code": "docker run -d --name axonbase -p 8443:8000 \\\n  -v axonbase-data:/data \\\n  -v $PWD/certs:/etc/axonbase/certs:ro \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_TLS_CERT=/etc/axonbase/certs/server/server.p12 \\\n  -e AXON_TLS_KEY=changeit \\\n  -e AXON_TLS_CA=/etc/axonbase/certs/truststores/icpbrasil.jks \\\n  axonbase/axonbase:latest",
   "config_cert_login_title": "Certificate login (mTLS) and temporary credential",
   "config_cert_login_desc": "Present the client certificate in the TLS handshake. The endpoint validates the chain against the truststore, extracts CPF or CNPJ when configured with ICPBRASIL, and returns an axontc_ temporary credential. Use that credential as the password in signin to obtain a JWT.",
   "config_cert_login_code": "curl -k https://127.0.0.1:8443/certificate/login/icp_brasil?ns=test\\&db=dev \\\n  --cert client.pem --key client.key\n# Returns an axontc_ temporary credential, e.g.:\n# {\"credential\":\"axontc_...\", \"user\":\"12345678901\", \"expiresIn\":60}\n\n# Use the credential as password in signin:\ncurl -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"12345678901\",\"pass\":\"axontc_...\"}'",
@@ -1875,7 +1937,7 @@
   "config_precedence_desc": "Values are applied in this order, each overriding the previous: default (1) < axonbase.conf file (2) < AXON_* environment variables (3) < CLI flags (4).",
   "config_example_flow_title": "Complete Flow: Start, Sign In, and Query",
   "config_example_flow_desc": "Start AxonBase with authentication enabled, sign in to obtain a JWT token, and use it in subsequent SQL queries. The token is sent via the Authorization: Bearer header.",
-  "config_example_flow_code": "# 1. Start server with auth enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_USER=root \\\n  -e AXON_PASS=root \\\n  axonbase/axonbase:latest\n\n# 2. Sign in and capture the JWT token\nTOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"root\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\necho \"Token: $TOKEN\"\n\n# 3. Create data using the token\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\n\n# 4. Query data\ncurl -s -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'"
+  "config_example_flow_code": "# 1. Start server with auth enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e axonbase/axonbase:latest\n\n# 2. Sign in and capture the JWT token\nTOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"root\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\necho \"Token: $TOKEN\"\n\n# 3. Create data using the token\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\n\n# 4. Query data\ncurl -s -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'"
   ,"nav_ai_audit": "AI Audit"
   ,"ai_audit_kicker": "Policy-guided security"
   ,"ai_audit_title": "AI Audit"

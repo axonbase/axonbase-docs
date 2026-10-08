@@ -65,6 +65,7 @@ const sections = [
   ]},
   { label: "nav_ops", links: [
     { to: "/security", label: "nav_security" },
+    { to: "/operation-audit", label: "nav_op_audit" },
     { to: "/observability", label: "nav_observability" },
     { to: "/faq", label: "nav_faq" },
     { to: "/changelog", label: "nav_changelog" },

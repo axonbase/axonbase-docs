@@ -35,6 +35,17 @@ export default function Saga() {
       </section>
 
       <section>
+        <h2>{t("saga_join_leave_title")}</h2>
+        <p>{t("saga_join_leave_desc")}</p>
+        <CodeTabs tabs={[
+          { label: "JOIN SAGA", code: t("saga_join_code"), language: "sql" },
+          { label: "LEAVE SAGA", code: t("saga_leave_code"), language: "sql" },
+        ]} />
+        <p>{t("saga_join_desc")}</p>
+        <p>{t("saga_leave_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("saga_rules_title")}</h2>
         <p>{t("saga_rules_desc")}</p>
       </section>

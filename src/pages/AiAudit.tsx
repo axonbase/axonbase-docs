@@ -30,18 +30,18 @@ export default function AiAudit() {
       </section>
 
       <section>
-        <h2>{t("ai_audit_create_title")}</h2>
-        <p>{t("ai_audit_create_desc")}</p>
-        <CodeTabs tabs={[{ label: "AxonQL", code: t("ai_audit_create_code"), language: "sql" }]} />
-      </section>
-
-      <section>
         <h2>{t("ai_audit_config_title")}</h2>
         <p>{t("ai_audit_config_desc")}</p>
         <CodeTabs tabs={[
           { label: t("ai_audit_tab_env"), code: t("ai_audit_config_env"), language: "bash" },
           { label: t("ai_audit_tab_file"), code: t("ai_audit_config_file"), language: "ini" },
         ]} />
+      </section>
+
+      <section>
+        <h2>{t("ai_audit_create_title")}</h2>
+        <p>{t("ai_audit_create_desc")}</p>
+        <CodeTabs tabs={[{ label: "AxonQL", code: t("ai_audit_create_code"), language: "sql" }]} />
       </section>
 
       <section>

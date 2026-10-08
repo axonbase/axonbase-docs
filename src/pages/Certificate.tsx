@@ -63,6 +63,16 @@ export default function Certificate() {
       </section>
 
       <section>
+        <h2>{t("cert_browser_title")}</h2>
+        <p>{t("cert_browser_desc")}</p>
+        <CodeTabs tabs={[
+          { label: "macOS", code: t("cert_browser_macos_code"), language: "bash" },
+          { label: "Linux", code: t("cert_browser_linux_code"), language: "bash" },
+          { label: "Windows", code: t("cert_browser_windows_code"), language: "powershell" },
+        ]} />
+      </section>
+
+      <section>
         <h2>{t("cert_proof_title")}</h2>
         <CertificateChallengeDiagram />
         <p>{t("cert_proof_desc")}</p>
@@ -79,6 +89,12 @@ export default function Certificate() {
         <h2>{t("cert_credential_title")}</h2>
         <p>{t("cert_credential_desc")}</p>
         <CodeTabs tabs={[{ label: "URL", code: t("cert_credential_code"), language: "text" }]} />
+      </section>
+
+      <section>
+        <h2>{t("cert_datagrip_title")}</h2>
+        <p>{t("cert_datagrip_desc")}</p>
+        <CodeTabs tabs={[{ label: "DataGrip", code: t("cert_datagrip_code"), language: "properties" }]} />
       </section>
     </div>
   );
