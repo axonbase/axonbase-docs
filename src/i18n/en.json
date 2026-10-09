@@ -619,9 +619,9 @@
   "sql_overview_lifecycle_title": "Query Execution",
   "sql_overview_lifecycle_desc": "The parser transforms each statement into a syntax tree and the executor evaluates it in the session context. SELECT obtains a source, applies WHERE and permissions, sorts, limits, and projects the result. Writes update indexes, notify live queries, and can trigger table events.",
   "sql_overview_ddl_title": "DDL",
-  "sql_overview_ddl_desc": "DEFINE creates catalog objects such as tables, fields, indexes, and users.",
-  "sql_overview_ddl_example": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD name ON TABLE person TYPE string;",
-  "sql_overview_ddl_java": "axon.query(\"DEFINE TABLE person;\");",
+  "sql_overview_ddl_desc": "SQL-standard DDL: CREATE, ALTER, and DROP manage tables, columns, indexes, events, analyzers, users, database links, and access methods.",
+  "sql_overview_ddl_example": "CREATE TABLE person (\n    id VARCHAR(64) PRIMARY KEY,\n    name VARCHAR(255) NOT NULL,\n    age INT DEFAULT 18\n) WITH (SCHEMA = 'FULL');\n\nALTER TABLE person ADD COLUMN email VARCHAR(255) NOT NULL;\n\nCREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;",
+  "sql_overview_ddl_java": "axon.query(\"CREATE TABLE person (\",\n    \"  id VARCHAR(64) PRIMARY KEY,\",\n    \"  name VARCHAR(255) NOT NULL\",\n    \") WITH (SCHEMA = 'FULL');\");",
   "sql_overview_dml_title": "DML",
   "sql_overview_dml_desc": "CREATE, INSERT, UPDATE, UPSERT, DELETE, and RELATE modify records.",
   "sql_overview_dml_example": "CREATE person:ana CONTENT {name: \"Ana\", age: 30};\nUPDATE person:ana SET age = 31;",
@@ -631,10 +631,10 @@
   "sql_overview_dql_example": "SELECT name FROM person WHERE age >= 18 ORDER BY name LIMIT 10;",
   "sql_overview_dql_node": "await axon.query('SELECT * FROM person');",
   "sql_ddl_title": "Data Definition",
-  "sql_ddl_intro": "DEFINE statements create and configure catalog objects. Tables, fields, analyzers, indexes, events, users, and access methods belong to the selected database catalog.",
+  "sql_ddl_intro": "Standard SQL DDL: CREATE, ALTER, DROP, and GRANT/REVOKE manage catalog objects. The older DEFINE/REMOVE syntax continues to work for backward compatibility.",
   "sql_ddl_schema_title": "Schema and Validation",
-  "sql_ddl_schema_desc": "SCHEMAFULL is stored as table metadata; the current implementation does not use it to reject undefined fields. Defined fields can apply DEFAULT, type coercion, ASSERT, and REFERENCES.",
-  "sql_ddl_schema_code": "DEFINE TABLE person SCHEMAFULL;\nDEFINE FIELD age ON TABLE person TYPE int DEFAULT 18 ASSERT $value >= 0;\nDEFINE FIELD manager ON TABLE person REFERENCES person;",
+  "sql_ddl_schema_desc": "SCHEMAFULL is stored as table metadata; the current implementation does not use it to reject undefined fields. Fields added via CREATE TABLE column definitions or ALTER TABLE ADD COLUMN can apply DEFAULT, type coercion, CHECK constraints, and REFERENCES.",
+  "sql_ddl_schema_code": "CREATE TABLE person (\n    id VARCHAR(64) PRIMARY KEY,\n    name VARCHAR(255) NOT NULL,\n    age INT DEFAULT 18\n) WITH (SCHEMA = 'FULL');\n\nALTER TABLE person ADD COLUMN email VARCHAR(255);\n\nCREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;",
   "sql_ddl_describe_title": "Inspect a Table",
   "sql_ddl_describe_desc": "DESCRIBE <table> returns one row per field with the table name, schema mode, and field metadata. For SCHEMAFULL tables, it returns fields declared with DEFINE FIELD. For SCHEMALESS tables, it also identifies fields stored in documents. An explicit definition takes precedence over an inferred type.",
   "sql_ddl_describe_code": "DESCRIBE person;\n\n-- name    schema      field         type\n-- person  SCHEMALESS  age           int\n-- person  SCHEMALESS  id            string\n-- person  SCHEMALESS  municipio_id  string\n-- person  SCHEMALESS  name          string",
@@ -645,29 +645,79 @@
       "example": "CREATE TABLE person (\n    id VARCHAR(64) PRIMARY KEY,\n    name VARCHAR(255) NOT NULL,\n    age INT DEFAULT 18 CHECK (age >= 0),\n    location GEOMETRY(POINT),\n    embedding VECTOR(1536),\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n) WITH (SCHEMA = 'FULL');"
     },
     {
-      "name": "DEFINE TABLE",
-      "desc": "Creates a SCHEMALESS or SCHEMAFULL table.",
-      "example": "DEFINE TABLE person SCHEMAFULL;"
+      "name": "DROP TABLE",
+      "desc": "Removes a table and all its records.",
+      "example": "DROP TABLE person;"
     },
     {
-      "name": "DEFINE FIELD",
-      "desc": "Defines type, default, and validation for a field.",
-      "example": "DEFINE FIELD age ON TABLE person TYPE number ASSERT $value >= 0;"
+      "name": "ALTER TABLE",
+      "desc": "Adds, drops, or modifies columns on an existing table. Multiple operations in one statement are separated by commas.",
+      "example": "ALTER TABLE person ADD COLUMN email VARCHAR(255) NOT NULL;\nALTER TABLE person DROP COLUMN email;\nALTER TABLE person MODIFY COLUMN name STRING;\nALTER TABLE person ADD COLUMN age INT DEFAULT 18, DROP COLUMN email;"
     },
     {
-      "name": "DEFINE INDEX",
-      "desc": "Creates a UNIQUE, COUNT, SEARCH, GEO, or HNSW index. SEARCH uses a previously defined analyzer.",
-      "example": "DEFINE INDEX email ON TABLE person COLUMNS email UNIQUE;"
+      "name": "CREATE INDEX",
+      "desc": "Creates a UNIQUE, COUNT, SEARCH, GEO, COLUMNAR, or HNSW (vector) index. SEARCH requires a previously defined analyzer.",
+      "example": "CREATE INDEX email ON TABLE person COLUMNS email UNIQUE;\nCREATE INDEX body_search ON TABLE article COLUMNS body SEARCH ANALYZER plain;\nCREATE INDEX point_geo ON TABLE place COLUMNS point GEO;\nCREATE INDEX embedding_hnsw ON TABLE item COLUMNS embedding HNSW DIMENSION 128 DIST euclidean M 16;"
     },
     {
-      "name": "DEFINE ANALYZER",
+      "name": "DROP INDEX",
+      "desc": "Removes an index by name.",
+      "example": "DROP INDEX email;"
+    },
+    {
+      "name": "DROP EVENT",
+      "desc": "Removes a stored event by name.",
+      "example": "DROP EVENT audit;"
+    },
+    {
+      "name": "CREATE ANALYZER",
       "desc": "Configures normalization for a SEARCH index, with optional LOWERCASE, STOPWORDS, and STEMMING.",
-      "example": "DEFINE ANALYZER plain LOWERCASE;\nDEFINE INDEX body_search ON TABLE article COLUMNS body SEARCH ANALYZER plain;"
+      "example": "CREATE ANALYZER plain LOWERCASE;\nCREATE INDEX body_search ON TABLE article COLUMNS body SEARCH ANALYZER plain;"
     },
     {
-      "name": "DEFINE USER",
-      "desc": "Creates an identity at ROOT, NAMESPACE, or DATABASE scope.",
-      "example": "DEFINE USER app ON DATABASE PASSWORD \"password\" ROLES writer;"
+      "name": "DROP ANALYZER",
+      "desc": "Removes an analyzer by name.",
+      "example": "DROP ANALYZER plain;"
+    },
+    {
+      "name": "CREATE USER",
+      "desc": "Creates an identity at ROOT, NAMESPACE, or DATABASE scope with password, passhash, or certificate authentication.",
+      "example": "CREATE USER app ON DATABASE PASSWORD \"password\" ROLES writer;\nCREATE USER alice ON ROOT CERTIFICATE clients ROLES editor;\nCREATE USER bob ON NAMESPACE app PASSHASH \"a1b2:c3d4\" ROLES admin;"
+    },
+    {
+      "name": "DROP USER",
+      "desc": "Removes a user identity.",
+      "example": "DROP USER alice;"
+    },
+    {
+      "name": "GRANT ACCESS",
+      "desc": "Defines an access method at ROOT, NAMESPACE, or DATABASE scope.",
+      "example": "GRANT ACCESS app_login ON NAMESPACE app;"
+    },
+    {
+      "name": "REVOKE ACCESS",
+      "desc": "Removes an access method.",
+      "example": "REVOKE ACCESS app_login;"
+    },
+    {
+      "name": "CREATE DATABASE LINK",
+      "desc": "Registers a remote database endpoint. Queries can JOIN across linked databases or target them directly with a qualified namespace prefix.",
+      "example": "CREATE DATABASE LINK \"bank1\" CONNECT BY \"ws://127.0.0.1:8011/rpc/ws\" WITH ns = \"test\" db = \"bank1\" user = \"\" password = \"\";"
+    },
+    {
+      "name": "ALTER DATABASE LINK",
+      "desc": "Updates a registered database link's connection details.",
+      "example": "ALTER DATABASE LINK \"bank1\" CONNECT BY \"ws://127.0.0.1:8011/rpc/ws\" WITH ns = \"test\" db = \"bank2\" user = \"\" password = \"\";"
+    },
+    {
+      "name": "DROP DATABASE LINK",
+      "desc": "Removes a registered database link.",
+      "example": "DROP DATABASE LINK \"bank1\";"
+    },
+    {
+      "name": "DROP SAGA",
+      "desc": "Removes a SAGA definition from the ledger.",
+      "example": "DROP SAGA transfer;"
     }
   ],
   "sql_dml_title": "Data Manipulation",
