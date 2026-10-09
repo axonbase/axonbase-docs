@@ -10,11 +10,11 @@ export default function SearchDockerCompose() {
 
   # Full-text BM25 search against a SEARCH index
   # CREATE person CONTENT {name: "Alice", bio: "Loves hiking and databases"};
-  # DEFINE INDEX person_bio ON TABLE person COLUMNS body SEARCH ANALYZER plain;
+  # CREATE INDEX person_bio ON TABLE person COLUMNS body SEARCH ANALYZER plain;
   # SELECT * FROM person WHERE bio @@ "hiking";
 
   # Vector HNSW search against a vector index
-  # DEFINE INDEX person_vec ON TABLE person COLUMNS embedding HNSW;
+  # CREATE INDEX person_vec ON TABLE person COLUMNS embedding HNSW;
   # SELECT * FROM person ORDER BY vector::distance::cosine(embedding, [0.12, -0.34, 0.56]);
 
   # Geo search with geo::distance

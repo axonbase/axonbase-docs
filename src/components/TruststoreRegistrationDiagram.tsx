@@ -49,7 +49,7 @@ export default function TruststoreRegistrationDiagram() {
       <g transform="translate(739 99)">
         <rect fill="#f0edff" height="116" rx="15" stroke="#b9b4ff" strokeWidth="2" width="121" />
         <circle cx="42" cy="42" fill="#635bff" r="17" /><path d="M42 35a6 6 0 1 0 0 12 6 6 0 0 0 0-12ZM31 57c3-8 19-8 22 0" fill="none" stroke="white" strokeLinecap="round" strokeWidth="2.5" />
-        <text fill="#393285" fontFamily="ui-sans-serif, system-ui" fontSize="12" fontWeight="800" textAnchor="middle" x="61" y="89">DEFINE USER</text>
+        <text fill="#393285" fontFamily="ui-sans-serif, system-ui" fontSize="12" fontWeight="800" textAnchor="middle" x="61" y="89">CREATE USER</text>
         <text fill="#635bff" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="9" fontWeight="700" textAnchor="middle" x="61" y="105">IDENTITY BINDING</text>
       </g>
       <path d="M87 254v16c0 12 12 19 25 19h684c13 0 25-7 25-19v-16" fill="none" stroke="#94a3b8" strokeDasharray="5 7" strokeWidth="2" />

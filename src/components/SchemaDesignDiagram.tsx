@@ -9,7 +9,7 @@ export default function SchemaDesignDiagram() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <title id="schema-design-title">Flexible and enforced schema design</title>
-      <desc id="schema-design-description">A SCHEMALESS table accepts evolving documents, while a SCHEMAFULL table validates each document against fields defined with DEFINE FIELD.</desc>
+      <desc id="schema-design-description">A SCHEMALESS table accepts evolving documents, while a SCHEMAFULL table validates each document against fields added with ALTER TABLE ... ADD COLUMN.</desc>
       <defs>
         <linearGradient id="schema-surface" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#f8fafc" /><stop offset="1" stopColor="#f0fdf4" /></linearGradient>
         <marker id="schema-arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0 0L8 4L0 8Z" fill="#64748b" /></marker>
@@ -25,7 +25,7 @@ export default function SchemaDesignDiagram() {
       <rect fill="#f0f9ff" height="34" rx="7" width="238" x="82" y="213" /><text fill="#075985" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="12" x="98" y="235">interests: ["graph"]</text>
       <rect fill="#f0f9ff" height="34" rx="7" width="238" x="82" y="256" /><text fill="#075985" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="12" x="98" y="278">profile: {"{ timezone: \"BRT\" }"}</text>
       <path d="M412 160h46" fill="none" markerEnd="url(#schema-arrow)" stroke="#64748b" strokeWidth="2.5" />
-      <rect fill="#ecfdf5" height="62" rx="12" stroke="#6ee7b7" strokeWidth="2" width="234" x="466" y="128" /><text fill="#047857" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11" fontWeight="700" x="486" y="153">DEFINE FIELD email</text><text fill="#047857" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11" x="486" y="174">TYPE string ASSERT $value</text>
+      <rect fill="#ecfdf5" height="62" rx="12" stroke="#6ee7b7" strokeWidth="2" width="234" x="466" y="128" /><text fill="#047857" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11" fontWeight="700" x="486" y="153">ALTER TABLE ... ADD COLUMN email</text><text fill="#047857" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="11" x="486" y="174">TYPE string ASSERT $value</text>
       <path d="M583 197v27" fill="none" markerEnd="url(#schema-arrow)" stroke="#64748b" strokeWidth="2.5" />
       <rect fill="#fff" height="78" rx="12" stroke="#86efac" strokeWidth="2" width="234" x="466" y="230" /><path d="M490 257l10 10 20-23" fill="none" stroke="#16a34a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" /><text fill="#166534" fontFamily="ui-sans-serif, system-ui" fontSize="14" fontWeight="700" x="530" y="265">Validated document</text><text fill="#4d7c0f" fontFamily="ui-monospace, SFMono-Regular, monospace" fontSize="10" x="530" y="285">email: string</text>
       <rect fill="#e0f2fe" height="30" rx="15" width="206" x="98" y="326" /><text fill="#0369a1" fontFamily="ui-sans-serif, system-ui" fontSize="12" fontWeight="700" textAnchor="middle" x="201" y="346">Evolve records freely</text>
