@@ -63,6 +63,12 @@ export default function Configuration() {
         <p>{t("config_precedence_desc")}</p>
       </section>
 
+      <section>
+        <h2>{t("config_conf_title")}</h2>
+        <p>{t("config_conf_desc")}</p>
+        <CodeTabs tabs={[{ label: "INI", code: t("config_conf_code"), language: "ini" }]} />
+      </section>
+
       <ConfigTable configs={configs} />
     </div>
   );

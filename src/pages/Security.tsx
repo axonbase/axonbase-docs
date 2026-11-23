@@ -20,6 +20,16 @@ export default function Security() {
       </section>
 
       <section>
+        <h2>{t("security_saga_title")}</h2>
+        <p>{t("security_saga_desc")}</p>
+      </section>
+
+      <section>
+        <h2>{t("security_truststore_title")}</h2>
+        <p>{t("security_truststore_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("security_root_title")}</h2>
         <p>{t("security_root_desc")}</p>
         <CodeTabs tabs={[{ label: "Bash", code: t("security_root_code"), language: "bash" }]} />
