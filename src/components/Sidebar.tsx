@@ -69,6 +69,7 @@ const sections = [
     { to: "/observability", label: "nav_observability" },
     { to: "/events", label: "nav_events" },
     { to: "/admin-api", label: "nav_admin_api" },
+    { to: "/activity", label: "nav_activity" },
     { to: "/performance", label: "nav_performance" },
     { to: "/faq", label: "nav_faq" },
     { to: "/changelog", label: "nav_changelog" },

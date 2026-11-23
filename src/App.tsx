@@ -21,6 +21,7 @@ import SpringData from "./pages/SpringData";
 import Observability from "./pages/Observability";
 import AdminApi from "./pages/AdminApi";
 import Events from "./pages/Events";
+import Activity from "./pages/Activity";
 import Performance from "./pages/Performance";
 import OperationAudit from "./pages/OperationAudit";
 import UseCases from "./pages/UseCases";
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/observability" element={<Observability />} />
         <Route path="/admin-api" element={<AdminApi />} />
         <Route path="/events" element={<Events />} />
+        <Route path="/activity" element={<Activity />} />
         <Route path="/performance" element={<Performance />} />
         <Route path="/operation-audit" element={<OperationAudit />} />
         <Route path="/faq" element={<FAQ />} />

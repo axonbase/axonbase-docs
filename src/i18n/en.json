@@ -1430,6 +1430,13 @@
         "A blank root password is refused at startup.",
         "Webhook: X-Axon-Timestamp and X-Axon-Signature-V2 (HMAC of timestamp.body) for replay protection; X-Axon-Signature stays; without a secret the server logs webhook_unsigned."
       ]
+    },
+    {
+      "version": "0.4.0",
+      "date": "2026-11-23",
+      "changes": [
+        "Activity API: running and slow statements, per-fingerprint stats, sessions, open transactions, version conflicts, and cancel, roll back and end-session actions under /admin/v1/activity. The executor now stops cancelled and timed-out statements for real. New metrics axe_queries_running, axe_queries_cancelled_total, axe_sessions_open, axe_txn_open, axe_txn_conflicts_total and axe_slow_query_threshold_seconds; AXON_SLOW_QUERY_MS, AXON_ACTIVITY_SLOW_BUFFER and AXON_ACTIVITY_CAPTURE_SQL."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
@@ -1597,7 +1604,7 @@
   "sdk_rust_live_desc": "live receives a notification channel.",
   "sdk_rust_live_code": "let id = axon.live(\"person\", handler, false).await?;",
   "sdk_php_title": "PHP SDK",
-  "sdk_php_intro": "The PHP SDK is a synchronous PHP 8.1+ WebSocket client. It receives the server hello frame when connecting and sends JSON-RPC protocol version 1 with every request.",
+  "sdk_php_intro": "WebSocket JSON-RPC client for PHP 8.1 and later.",
   "sdk_php_connection_title": "Connect, Select Scope, and Authenticate",
   "sdk_php_connection_desc": "connect opens the WebSocket connection. use selects its namespace and database, signin returns and stores a token, and authenticate accepts either that token or one obtained elsewhere.",
   "sdk_php_connection_code": "<?php\n\nrequire 'vendor/autoload.php';\n\nuse AxonBase\\Axon;\n\n$axon = Axon::connect('ws://127.0.0.1:8000/rpc/ws');\n$axon->use('test', 'dev');\n$token = $axon->signin('root', 'root');\n$axon->authenticate($token);",
@@ -1616,8 +1623,8 @@
   "sdk_php_migration_title": "Migrations",
   "sdk_php_migration_desc": "Migrator loads one .axql file or all .axql files in a directory in lexical order. Migration exposes version, name, path, checksum, and sql. ensureTable creates the _migration tracking table; applied returns its version-to-checksum map; status marks each loaded migration as applied. up runs pending migrations once, records their SHA-256 checksum, and fails when an applied file changes. onBefore and onAfter run around every pending migration.",
   "sdk_php_migration_code": "use AxonBase\\Migration\\Migrator;\n\n$migrator = new Migrator($axon);\n$migrator->onBefore(function ($migration): void {\n    error_log(\"Applying {$migration->name}\");\n});\n$migrator->onAfter(function ($migration): void {\n    error_log(\"Applied {$migration->name}\");\n});\n\n$migrator->ensureTable();\n$migrations = $migrator->load(__DIR__ . '/migrations');\n$checksums = $migrator->applied();\n$status = $migrator->status(__DIR__ . '/migrations');\n$applied = $migrator->up(__DIR__ . '/migrations');\n$again = $migrator->up(__DIR__ . '/migrations'); // [] when unchanged",
-  "sdk_ruby_title": "Ruby and Rails SDK",
-  "sdk_ruby_intro": "The Ruby SDK is a synchronous Ruby 2.6+ WebSocket client. Rails applications can construct Client with a custom transport that uses their chosen WebSocket stack.",
+  "sdk_ruby_title": "Ruby on Rails SDK",
+  "sdk_ruby_intro": "WebSocket JSON-RPC client for Ruby and Rails applications.",
   "sdk_ruby_connection_title": "Connect, Select Scope, and Authenticate",
   "sdk_ruby_connection_desc": "Client.connect opens the WebSocket connection. use selects its namespace and database, signin returns and stores a token, and authenticate accepts either that token or one obtained elsewhere.",
   "sdk_ruby_connection_code": "require \"axonbase\"\n\naxon = AxonBase::Client.connect(\"ws://127.0.0.1:8000/rpc/ws\")\naxon.use(\"test\", \"dev\")\ntoken = axon.signin(\"root\", \"root\")\naxon.authenticate(token)",
@@ -1700,18 +1707,138 @@
   "sdk_overview_parity_desc": "The connectors share the protocol but do not expose exactly the same convenience API. PHP and Ruby now cover the full public API including CRUD, relate, transactions, KV, live queries, certificates, mTLS, migrations, sagas, and typed errors.",
   "sdk_overview_feature": "Feature",
   "sdk_overview_parity": [
-    { "feature_key": "parity_connect", "java": "connect, use", "node": "connect, use", "python": "connect, use", "go": "Connect, Use", "dotnet": "ConnectAsync, UseAsync", "rust": "connect, use_ns", "php": "connect, use", "ruby": "connect, use" },
-    { "feature_key": "parity_query_auth", "java": "query, signin, authenticate", "node": "query, signin, signup, authenticate", "python": "query, signin, signup, authenticate", "go": "Query, Signin, Signup, Authenticate", "dotnet": "QueryAsync, SigninAsync, SignupAsync, AuthenticateAsync", "rust": "query, signin, signup, authenticate", "php": "query, signin, authenticate", "ruby": "query, signin, authenticate" },
-    { "feature_key": "parity_crud", "java": "create, select, update, delete", "node": "select, create, insert, update, upsert, delete, relate", "python": "select, create, insert, update, upsert, delete, relate", "go": "Select, Create, Insert, Update, Upsert, Delete, Relate", "dotnet": "SelectAsync, CreateAsync, InsertAsync, UpdateAsync, UpsertAsync, DeleteAsync, RelateAsync", "rust": "select, create, insert, update, upsert, delete, relate", "php": "select, create, insert, update, upsert, delete, relate", "ruby": "select, create, insert, update, upsert, delete, relate" },
-    { "feature_key": "parity_txn_kv", "java": "Use query com AxonQL", "node": "begin, commit, cancel; kvGet, kvSet, kvDel, kvScan", "python": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "go": "Begin, Commit, Cancel; KvGet, KvSet, KvDel, KvScan", "dotnet": "BeginAsync, CommitAsync, CancelAsync; KvGetAsync, KvSetAsync, KvDelAsync, KvScanAsync", "rust": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "php": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan", "ruby": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan" },
-    { "feature_key": "parity_live", "java": "live, kill", "node": "live, kill", "python": "live, kill", "go": "Live, Kill", "dotnet": "LiveAsync, KillAsync", "rust": "live, kill", "php": "live, kill", "ruby": "live, kill" },
-    { "feature_key": "parity_cert", "java": "certificateBegin, certificateComplete", "node": "certificateBegin, certificateComplete", "python": "certificate_begin, certificate_complete", "go": "CertificateBegin, CertificateComplete", "dotnet": "CertificateBeginAsync, CertificateCompleteAsync", "rust": "certificate_begin, certificate_complete", "php": "certificateBegin, certificateComplete", "ruby": "certificate_begin, certificate_complete" },
-    { "feature_key": "parity_mtls", "java": "identidade PKCS12, truststore JKS", "node": "opções TLS de ws", "python": "ssl.SSLContext", "go": "tls.Config", "dotnet": "certificados de cliente e raízes personalizadas opcionais", "rust": "CA, certificado e chave PEM", "php": "contexto SSL no WebSocket", "ruby": "ssl_params no WebSocket" },
-    { "feature_key": "parity_migrations", "java": "Migrator.up()", "node": "Migrator.up()", "python": "Migrator.up()", "go": "Migrator.Up()", "dotnet": "Migrator.UpAsync()", "rust": "migrator.up()", "php": "Migrator::up()", "ruby": "Migrator#up" },
-    { "feature_key": "parity_dbapi", "java": "JDBC + Hibernate Dialect", "node": "—", "python": "axonbase.dbapi + axonbase.sqlalchemy_dialect", "go": "—", "dotnet": "—", "rust": "—", "php": "—", "ruby": "—" },
-    { "feature_key": "parity_errors", "java": "AxonSdkException", "node": "AxonSdkError", "python": "AxonError", "go": "erros com tipo", "dotnet": "AxonException", "rust": "AxonError", "php": "AuthError, NotLeaderError, etc.", "ruby": "AuthError, NotLeaderError, etc." },
-    { "feature_key": "parity_hello", "java": "—", "node": "valida protocol no hello", "python": "valida protocol no hello", "go": "valida protocol no hello", "dotnet": "valida protocol no hello", "rust": "valida protocol no hello", "php": "valida protocol no hello", "ruby": "valida protocol no hello" },
-    { "feature_key": "parity_sagas", "java": "SagaTransaction, SagaParticipantTransaction", "node": "SagaTransaction, SagaParticipantTransaction", "python": "SagaTransaction, SagaParticipantTransaction", "go": "SagaTransaction, SagaParticipantTransaction", "dotnet": "SagaTransaction, SagaParticipantTransaction", "rust": "SagaTransaction, SagaParticipantTransaction", "php": "SagaTransaction, SagaParticipantTransaction", "ruby": "SagaTransaction, SagaParticipantTransaction" }
+    {
+      "feature_key": "parity_connect",
+      "java": "connect, use",
+      "node": "connect, use",
+      "python": "connect, use",
+      "go": "Connect, Use",
+      "dotnet": "ConnectAsync, UseAsync",
+      "rust": "connect, use_ns",
+      "php": "connect, use",
+      "ruby": "connect, use"
+    },
+    {
+      "feature_key": "parity_query_auth",
+      "java": "query, signin, authenticate",
+      "node": "query, signin, signup, authenticate",
+      "python": "query, signin, signup, authenticate",
+      "go": "Query, Signin, Signup, Authenticate",
+      "dotnet": "QueryAsync, SigninAsync, SignupAsync, AuthenticateAsync",
+      "rust": "query, signin, signup, authenticate",
+      "php": "query, signin, authenticate",
+      "ruby": "query, signin, authenticate"
+    },
+    {
+      "feature_key": "parity_crud",
+      "java": "create, select, update, delete",
+      "node": "select, create, insert, update, upsert, delete, relate",
+      "python": "select, create, insert, update, upsert, delete, relate",
+      "go": "Select, Create, Insert, Update, Upsert, Delete, Relate",
+      "dotnet": "SelectAsync, CreateAsync, InsertAsync, UpdateAsync, UpsertAsync, DeleteAsync, RelateAsync",
+      "rust": "select, create, insert, update, upsert, delete, relate",
+      "php": "select, create, insert, update, upsert, delete, relate",
+      "ruby": "select, create, insert, update, upsert, delete, relate"
+    },
+    {
+      "feature_key": "parity_txn_kv",
+      "java": "Use query com AxonQL",
+      "node": "begin, commit, cancel; kvGet, kvSet, kvDel, kvScan",
+      "python": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan",
+      "go": "Begin, Commit, Cancel; KvGet, KvSet, KvDel, KvScan",
+      "dotnet": "BeginAsync, CommitAsync, CancelAsync; KvGetAsync, KvSetAsync, KvDelAsync, KvScanAsync",
+      "rust": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan",
+      "php": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan",
+      "ruby": "begin, commit, cancel; kv_get, kv_set, kv_del, kv_scan"
+    },
+    {
+      "feature_key": "parity_live",
+      "java": "live, kill",
+      "node": "live, kill",
+      "python": "live, kill",
+      "go": "Live, Kill",
+      "dotnet": "LiveAsync, KillAsync",
+      "rust": "live, kill",
+      "php": "live, kill",
+      "ruby": "live, kill"
+    },
+    {
+      "feature_key": "parity_cert",
+      "java": "certificateBegin, certificateComplete",
+      "node": "certificateBegin, certificateComplete",
+      "python": "certificate_begin, certificate_complete",
+      "go": "CertificateBegin, CertificateComplete",
+      "dotnet": "CertificateBeginAsync, CertificateCompleteAsync",
+      "rust": "certificate_begin, certificate_complete",
+      "php": "certificateBegin, certificateComplete",
+      "ruby": "certificate_begin, certificate_complete"
+    },
+    {
+      "feature_key": "parity_mtls",
+      "java": "identidade PKCS12, truststore JKS",
+      "node": "opções TLS de ws",
+      "python": "ssl.SSLContext",
+      "go": "tls.Config",
+      "dotnet": "certificados de cliente e raízes personalizadas opcionais",
+      "rust": "CA, certificado e chave PEM",
+      "php": "contexto SSL no WebSocket",
+      "ruby": "ssl_params no WebSocket"
+    },
+    {
+      "feature_key": "parity_migrations",
+      "java": "Migrator.up()",
+      "node": "Migrator.up()",
+      "python": "Migrator.up()",
+      "go": "Migrator.Up()",
+      "dotnet": "Migrator.UpAsync()",
+      "rust": "migrator.up()",
+      "php": "Migrator::up()",
+      "ruby": "Migrator#up"
+    },
+    {
+      "feature_key": "parity_dbapi",
+      "java": "JDBC + Hibernate Dialect",
+      "node": "—",
+      "python": "axonbase.dbapi + axonbase.sqlalchemy_dialect",
+      "go": "—",
+      "dotnet": "—",
+      "rust": "—",
+      "php": "—",
+      "ruby": "—"
+    },
+    {
+      "feature_key": "parity_errors",
+      "java": "AxonSdkException",
+      "node": "AxonSdkError",
+      "python": "AxonError",
+      "go": "erros com tipo",
+      "dotnet": "AxonException",
+      "rust": "AxonError",
+      "php": "AuthError, NotLeaderError, etc.",
+      "ruby": "AuthError, NotLeaderError, etc."
+    },
+    {
+      "feature_key": "parity_hello",
+      "java": "—",
+      "node": "valida protocol no hello",
+      "python": "valida protocol no hello",
+      "go": "valida protocol no hello",
+      "dotnet": "valida protocol no hello",
+      "rust": "valida protocol no hello",
+      "php": "valida protocol no hello",
+      "ruby": "valida protocol no hello"
+    },
+    {
+      "feature_key": "parity_sagas",
+      "java": "SagaTransaction, SagaParticipantTransaction",
+      "node": "SagaTransaction, SagaParticipantTransaction",
+      "python": "SagaTransaction, SagaParticipantTransaction",
+      "go": "SagaTransaction, SagaParticipantTransaction",
+      "dotnet": "SagaTransaction, SagaParticipantTransaction",
+      "rust": "SagaTransaction, SagaParticipantTransaction",
+      "php": "SagaTransaction, SagaParticipantTransaction",
+      "ruby": "SagaTransaction, SagaParticipantTransaction"
+    }
   ],
   "parity_connect": "Connection and Scope",
   "parity_query_auth": "Query and Authentication",
@@ -1772,8 +1899,27 @@
   "sdk_parity_desc": "All eight connectors share the same core AxonBase capabilities: connection, query, transactions, live events, KV, certificates, migrations, and sagas.",
   "sdk_parity_badge": "SDK CONNECTORS / CAPABILITY PARITY",
   "sdk_parity_connector_label": "CONNECTOR",
-  "sdk_parity_connectors": ["Java", "Node.js", "Python", "Go", ".NET", "Rust", "PHP", "Ruby"],
-  "sdk_parity_capabilities": ["Connect", "Query", "Transact", "KV", "Live", "Cert", "mTLS", "Migrate", "Saga"],
+  "sdk_parity_connectors": [
+    "Java",
+    "Node.js",
+    "Python",
+    "Go",
+    ".NET",
+    "Rust",
+    "PHP",
+    "Ruby"
+  ],
+  "sdk_parity_capabilities": [
+    "Connect",
+    "Query",
+    "Transact",
+    "KV",
+    "Live",
+    "Cert",
+    "mTLS",
+    "Migrate",
+    "Saga"
+  ],
   "sdk_parity_footer": "ONE API SURFACE, NATIVE ECOSYSTEMS",
   "search_overview_title": "Five Search Engines, One Database",
   "search_overview_subtitle": "AxonBase replaces Elasticsearch for BM25 full-text search, Qdrant or Pinecone for HNSW vector search, dedicated geo services like MongoDB Geo or Elastic Geo, graph databases like Neo4j or Dgraph, and analytical column stores like ClickHouse, all within a single database with native SQL.",
@@ -2104,79 +2250,92 @@
   "config_precedence_desc": "Values are applied in this order, each overriding the previous: default (1) < axonbase.conf file (2) < AXON_* environment variables (3) < CLI flags (4).",
   "config_example_flow_title": "Complete Flow: Start, Sign In, and Query",
   "config_example_flow_desc": "Start AxonBase with authentication enabled, sign in to obtain a JWT token, and use it in subsequent SQL queries. The token is sent via the Authorization: Bearer header.",
-  "config_example_flow_code": "# 1. Start server with auth enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_SECRET=change-me-signing-secret \\\n  -e AXON_ROOT_PASSWORD=change-me-root-password \\\n  axonbase/axonbase:latest\n\n# 2. Sign in and capture the JWT token\nTOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"change-me-root-password\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\necho \"Token: $TOKEN\"\n\n# 3. Create data using the token\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\n\n# 4. Query data\ncurl -s -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'"
-  ,"nav_ai_audit": "AI Audit"
-  ,"ai_audit_kicker": "Policy-guided security"
-  ,"ai_audit_title": "AI Audit"
-  ,"ai_audit_intro": "AI Audit turns a natural-language policy into local audit rules. The AI is called only while creating the audit. Every later command is classified inside AxonBase, without sending production SQL to the provider."
-  ,"ai_audit_diagram_alt": "AI Audit workflow illustration: a policy moves through rule generation, an inspection gateway, and three paths for safe execution, review, and blocking."
-  ,"ai_audit_diagram_caption": "Image generated with fal.ai. Labels and decisions remain in the local AxonBase engine."
-  ,"ai_audit_flow_title": "The decision cycle"
-  ,"ai_audit_flow_intro": "Creation materializes the rules. Later execution uses only those rules and records decisions that need human intervention."
-  ,"ai_audit_flow": [{"label":"Define the policy","text":"Describe what deserves review and what must be blocked."},{"label":"Generate rules","text":"CREATE AI AUDIT calls the provider once and saves the resulting rules in the catalog."},{"label":"Classify locally","text":"SAFE continues immediately. WARNING opens a pending case. DANGER blocks the user."},{"label":"Resolve the case","text":"An operator records the reason and authorizes or denies the original operation."}]
-  ,"ai_audit_create_title": "Create a policy"
-  ,"ai_audit_create_desc": "The two prompts separate operations that need approval from prohibited operations. Prefer objective criteria and mention the AxonQL syntax used by the team."
-  ,"ai_audit_create_code": "CREATE AI AUDIT protect_production\n  SET WARNING WHEN 'Require approval for UPDATE or DELETE without WHERE.'\n  SET DANGER WHEN 'Block DROP TABLE and TRUNCATE.';"
-  ,"ai_audit_config_title": "Configure the provider"
-  ,"ai_audit_config_desc": "Configure the provider and model on the server. ai_base_url supports Ollama or an organization-hosted compatible endpoint."
-  ,"ai_audit_tab_env": "Environment variables"
-  ,"ai_audit_tab_file": "axonbase.conf"
-  ,"ai_audit_config_env": "AXON_AI_PROVIDER=openai\nAXON_AI_MODEL=gpt-4o-mini\nAXON_AI_API_KEY=$OPENAI_API_KEY\n\n# Ollama or a compatible endpoint\nAXON_AI_PROVIDER=ollama\nAXON_AI_MODEL=qwen3-coder:latest\nAXON_AI_API_KEY=ollama\nAXON_AI_BASE_URL=http://ollama.internal:11434"
-  ,"ai_audit_config_file": "ai_provider = openai\nai_model = gpt-4o-mini\nai_api_key = ${OPENAI_API_KEY}\n\n# Ollama or a compatible endpoint\nai_provider = ollama\nai_model = qwen3-coder:latest\nai_api_key = ollama\nai_base_url = http://ollama.internal:11434"
-  ,"ai_audit_assign_title": "Assign it to a user"
-  ,"ai_audit_assign_desc": "The AUDITED BY clause attaches the user to an audit. Only that user's commands pass through the materialized rules."
-  ,"ai_audit_assign_code": "CREATE USER alice ON DATABASE\n  PASSWORD 'secret'\n  ROLES editor\n  AUDITED BY protect_production;"
-  ,"ai_audit_outcomes_title": "Three possible outcomes"
-  ,"ai_audit_safe_title": "SAFE"
-  ,"ai_audit_safe_desc": "The command does not match a rule and runs normally."
-  ,"ai_audit_warning_title": "WARNING"
-  ,"ai_audit_warning_desc": "The command remains pending until someone records an explicit decision."
-  ,"ai_audit_danger_title": "DANGER"
-  ,"ai_audit_danger_desc": "The operation is rejected and the user stays blocked until authorization."
-  ,"ai_audit_resolve_title": "Justify and authorize"
-  ,"ai_audit_resolve_desc": "Authorization executes the original SQL exactly once with an audit bypass, avoiding a second case for the same operation."
-  ,"ai_audit_resolve_code": "SET REASON AUDIT CASE 'a8d4...' 'Cleanup approved for the maintenance window';\nSET AUDIT CASE 'a8d4...' AUTHORIZED REASON 'Change registered in ticket OPS-218';"
-  ,"ai_audit_cases_title": "Inspect the audit trail"
-  ,"ai_audit_cases_desc": "AUDIT_CASES is a virtual table with the original SQL, classification, user, reason, resolution, and case events."
-  ,"ai_audit_cases_code": "SELECT hash, user, sql, classification, status, reason, resolved_by, resolved_at\nFROM AUDIT_CASES\nORDER BY created_at DESC;"
-  ,"ai_audit_diagram_title": "AI Audit operational flow"
-  ,"ai_audit_diagram_policy": "AI Audit policy"
-  ,"ai_audit_diagram_prompt": "desired rules"
-  ,"ai_audit_diagram_create": "CREATE AI AUDIT"
-  ,"ai_audit_diagram_provider": "AI provider"
-  ,"ai_audit_diagram_once": "creation only"
-  ,"ai_audit_diagram_rules": "structured rules"
-  ,"ai_audit_diagram_engine": "AxonBase engine"
-  ,"ai_audit_diagram_catalog": "Audit catalog"
-  ,"ai_audit_diagram_local_rules": "materialized rules"
-  ,"ai_audit_diagram_no_sql": "no production SQL sent"
-  ,"ai_audit_diagram_gateway": "Audit gateway"
-  ,"ai_audit_diagram_classifies": "inspects and classifies"
-  ,"ai_audit_diagram_execution": "local decision"
-  ,"ai_audit_diagram_user": "User"
-  ,"ai_audit_diagram_assigned": "audit assigned"
-  ,"ai_audit_diagram_command": "SQL command"
-  ,"ai_audit_diagram_safe": "runs"
-  ,"ai_audit_diagram_warning": "opens a case"
-  ,"ai_audit_diagram_danger": "blocks"
-  ,"ai_audit_diagram_footer": "AI creates the rules. AxonBase makes every runtime decision."
-  ,"nav_sdk_php": "PHP"
-  ,"nav_sdk_ruby": "Ruby on Rails"
-  ,"sdk_php_title": "PHP SDK"
-  ,"sdk_php_intro": "WebSocket JSON-RPC client for PHP 8.1 and later."
-  ,"sdk_ruby_title": "Ruby on Rails SDK"
-  ,"sdk_ruby_intro": "WebSocket JSON-RPC client for Ruby and Rails applications."
-  ,"sdk_installation": "Installation"
-  ,"sdk_authentication": "Authentication"
-  ,"sdk_query": "Query and CRUD"
-  ,"sdk_php_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication."
-  ,"sdk_ruby_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication."
-  ,"use_cases_eyebrow": "AXONBASE / APPLICATIONS"
-  ,"use_cases_title": "Use Cases"
-  ,"use_cases_intro": "From financial services to healthcare, AxonBase replaces multiple specialized systems with a single engine, reducing infrastructure complexity, operational cost, and security risk."
-  ,"use_cases_positioning_badge": "POSITIONING"
-  ,"use_cases_positioning_text": "AxonBase is the database for microservices and AI agents that need distributed transactions, AI governance, and multi-model search, all in a single SQL engine."
-  ,"use_cases_positioning": {
+  "config_example_flow_code": "# 1. Start server with auth enabled\ndocker run -d --name axonbase -p 8000:8000 \\\n  -v axonbase-data:/data \\\n  -e AXON_PATH=/data \\\n  -e AXON_BIND=0.0.0.0 \\\n  -e AXON_REQUIRE_AUTH=true \\\n  -e AXON_SECRET=change-me-signing-secret \\\n  -e AXON_ROOT_PASSWORD=change-me-root-password \\\n  axonbase/axonbase:latest\n\n# 2. Sign in and capture the JWT token\nTOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"change-me-root-password\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\necho \"Token: $TOKEN\"\n\n# 3. Create data using the token\ncurl -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'CREATE person CONTENT {name: \"Ana\", age: 30}'\n\n# 4. Query data\ncurl -s -X POST http://127.0.0.1:8000/sql \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer '$TOKEN \\\n  -H 'Axon-Ns: test' -H 'Axon-Db: dev' \\\n  --data 'SELECT * FROM person'",
+  "nav_ai_audit": "AI Audit",
+  "ai_audit_kicker": "Policy-guided security",
+  "ai_audit_title": "AI Audit",
+  "ai_audit_intro": "AI Audit turns a natural-language policy into local audit rules. The AI is called only while creating the audit. Every later command is classified inside AxonBase, without sending production SQL to the provider.",
+  "ai_audit_diagram_alt": "AI Audit workflow illustration: a policy moves through rule generation, an inspection gateway, and three paths for safe execution, review, and blocking.",
+  "ai_audit_diagram_caption": "Image generated with fal.ai. Labels and decisions remain in the local AxonBase engine.",
+  "ai_audit_flow_title": "The decision cycle",
+  "ai_audit_flow_intro": "Creation materializes the rules. Later execution uses only those rules and records decisions that need human intervention.",
+  "ai_audit_flow": [
+    {
+      "label": "Define the policy",
+      "text": "Describe what deserves review and what must be blocked."
+    },
+    {
+      "label": "Generate rules",
+      "text": "CREATE AI AUDIT calls the provider once and saves the resulting rules in the catalog."
+    },
+    {
+      "label": "Classify locally",
+      "text": "SAFE continues immediately. WARNING opens a pending case. DANGER blocks the user."
+    },
+    {
+      "label": "Resolve the case",
+      "text": "An operator records the reason and authorizes or denies the original operation."
+    }
+  ],
+  "ai_audit_create_title": "Create a policy",
+  "ai_audit_create_desc": "The two prompts separate operations that need approval from prohibited operations. Prefer objective criteria and mention the AxonQL syntax used by the team.",
+  "ai_audit_create_code": "CREATE AI AUDIT protect_production\n  SET WARNING WHEN 'Require approval for UPDATE or DELETE without WHERE.'\n  SET DANGER WHEN 'Block DROP TABLE and TRUNCATE.';",
+  "ai_audit_config_title": "Configure the provider",
+  "ai_audit_config_desc": "Configure the provider and model on the server. ai_base_url supports Ollama or an organization-hosted compatible endpoint.",
+  "ai_audit_tab_env": "Environment variables",
+  "ai_audit_tab_file": "axonbase.conf",
+  "ai_audit_config_env": "AXON_AI_PROVIDER=openai\nAXON_AI_MODEL=gpt-4o-mini\nAXON_AI_API_KEY=$OPENAI_API_KEY\n\n# Ollama or a compatible endpoint\nAXON_AI_PROVIDER=ollama\nAXON_AI_MODEL=qwen3-coder:latest\nAXON_AI_API_KEY=ollama\nAXON_AI_BASE_URL=http://ollama.internal:11434",
+  "ai_audit_config_file": "ai_provider = openai\nai_model = gpt-4o-mini\nai_api_key = ${OPENAI_API_KEY}\n\n# Ollama or a compatible endpoint\nai_provider = ollama\nai_model = qwen3-coder:latest\nai_api_key = ollama\nai_base_url = http://ollama.internal:11434",
+  "ai_audit_assign_title": "Assign it to a user",
+  "ai_audit_assign_desc": "The AUDITED BY clause attaches the user to an audit. Only that user's commands pass through the materialized rules.",
+  "ai_audit_assign_code": "CREATE USER alice ON DATABASE\n  PASSWORD 'secret'\n  ROLES editor\n  AUDITED BY protect_production;",
+  "ai_audit_outcomes_title": "Three possible outcomes",
+  "ai_audit_safe_title": "SAFE",
+  "ai_audit_safe_desc": "The command does not match a rule and runs normally.",
+  "ai_audit_warning_title": "WARNING",
+  "ai_audit_warning_desc": "The command remains pending until someone records an explicit decision.",
+  "ai_audit_danger_title": "DANGER",
+  "ai_audit_danger_desc": "The operation is rejected and the user stays blocked until authorization.",
+  "ai_audit_resolve_title": "Justify and authorize",
+  "ai_audit_resolve_desc": "Authorization executes the original SQL exactly once with an audit bypass, avoiding a second case for the same operation.",
+  "ai_audit_resolve_code": "SET REASON AUDIT CASE 'a8d4...' 'Cleanup approved for the maintenance window';\nSET AUDIT CASE 'a8d4...' AUTHORIZED REASON 'Change registered in ticket OPS-218';",
+  "ai_audit_cases_title": "Inspect the audit trail",
+  "ai_audit_cases_desc": "AUDIT_CASES is a virtual table with the original SQL, classification, user, reason, resolution, and case events.",
+  "ai_audit_cases_code": "SELECT hash, user, sql, classification, status, reason, resolved_by, resolved_at\nFROM AUDIT_CASES\nORDER BY created_at DESC;",
+  "ai_audit_diagram_title": "AI Audit operational flow",
+  "ai_audit_diagram_policy": "AI Audit policy",
+  "ai_audit_diagram_prompt": "desired rules",
+  "ai_audit_diagram_create": "CREATE AI AUDIT",
+  "ai_audit_diagram_provider": "AI provider",
+  "ai_audit_diagram_once": "creation only",
+  "ai_audit_diagram_rules": "structured rules",
+  "ai_audit_diagram_engine": "AxonBase engine",
+  "ai_audit_diagram_catalog": "Audit catalog",
+  "ai_audit_diagram_local_rules": "materialized rules",
+  "ai_audit_diagram_no_sql": "no production SQL sent",
+  "ai_audit_diagram_gateway": "Audit gateway",
+  "ai_audit_diagram_classifies": "inspects and classifies",
+  "ai_audit_diagram_execution": "local decision",
+  "ai_audit_diagram_user": "User",
+  "ai_audit_diagram_assigned": "audit assigned",
+  "ai_audit_diagram_command": "SQL command",
+  "ai_audit_diagram_safe": "runs",
+  "ai_audit_diagram_warning": "opens a case",
+  "ai_audit_diagram_danger": "blocks",
+  "ai_audit_diagram_footer": "AI creates the rules. AxonBase makes every runtime decision.",
+  "nav_sdk_php": "PHP",
+  "nav_sdk_ruby": "Ruby on Rails",
+  "sdk_installation": "Installation",
+  "sdk_authentication": "Authentication",
+  "sdk_query": "Query and CRUD",
+  "sdk_php_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication.",
+  "sdk_ruby_auth_desc": "Authenticate the WebSocket session before querying a server that requires authentication.",
+  "use_cases_eyebrow": "AXONBASE / APPLICATIONS",
+  "use_cases_title": "Use Cases",
+  "use_cases_intro": "From financial services to healthcare, AxonBase replaces multiple specialized systems with a single engine, reducing infrastructure complexity, operational cost, and security risk.",
+  "use_cases_positioning_badge": "POSITIONING",
+  "use_cases_positioning_text": "AxonBase is the database for microservices and AI agents that need distributed transactions, AI governance, and multi-model search, all in a single SQL engine.",
+  "use_cases_positioning": {
     "title": "What Makes AxonBase Different",
     "subtitle": "Three capabilities that no other database combines in a single engine:",
     "features": [
@@ -2184,38 +2343,165 @@
       "AI governance with AI Audit: LLM-generated rules classify every query as SAFE, WARNING, or DANGER before execution, without sending production data to the AI provider",
       "Multi-model search in one engine: BM25 full-text, HNSW vectors, GeoJSON spatial, graph traversal, and columnar aggregation, all in a single AxonQL statement"
     ]
-  }
-  ,"use_cases_sectors_title": "Industry Applications"
-  ,"use_cases_sectors_intro": "Each sector benefits from a different combination of AxonBase capabilities. The engine adapts to the data shape, not the other way around."
-  ,"use_cases_pain": "The challenge:"
-  ,"use_cases_sectors": [
-    {"id": "banking", "title": "Banking and Financial Services", "pain": "Banks need ACID transactions, audit trails, and role-based access across millions of accounts, with real-time fraud detection and strict regulatory compliance.", "capabilities": ["Sagas for distributed ledger transactions across core banking systems, with automatic compensation on failure", "Data Rules with field masking to protect PII (CPF, account numbers, credit cards) without modifying application code", "AI Audit to classify every query as SAFE, WARNING, or DANGER before execution, meeting Bacen and LGPD requirements", "mTLS and certificate-based authentication (ICP-Brasil compatible) for secure inter-bank communication", "Columnar indexes for real-time aggregation of balances, transaction counts, and risk metrics without ETL"], "cta": "Explore Security", "path": "/security"},
-    {"id": "fintech", "title": "Fintech and Payments", "pain": "Fintechs move fast but cannot compromise on compliance. They need a database that supports rapid iteration, auditability, and multi-tenant isolation from day one.", "capabilities": ["Multi-tenant by design: namespaces and databases isolate each client or product line with zero configuration", "Graph relations for payment flows, wallet hierarchies, and recommendation networks in a single query", "Live queries for real-time balance updates, transaction notifications, and fraud alerts over WebSocket", "JDBC driver for existing BI tools, plus GraphQL and REST for mobile and web backends", "Scalable from startup MVP to millions of users with the same RocksDB-backed engine"], "cta": "Explore Getting Started", "path": "/getting-started"},
-    {"id": "government", "title": "Government and Public Sector", "pain": "Governments require data sovereignty, auditability, and ICP-Brasil certificate support. They cannot afford vendor lock-in or cloud-only solutions.", "capabilities": ["Certificate-based authentication with ICP-Brasil trust store for digital signatures and identity verification", "AI Audit for automated compliance verification of every data access and modification", "Data Rules with field masking to protect citizen PII across all queries without application changes", "Self-hosted deployment with no cloud dependency: RocksDB persistence, S3 backup, and Raft cluster", "Full audit trail via S3 backup encryption (AES-256-GCM) and export/import for data portability"], "cta": "Explore Certificate", "path": "/certificate"},
-    {"id": "healthtech", "title": "Healthtech and Healthcare", "pain": "Healthcare applications handle sensitive patient data, require strict access control, and need to query structured records, clinical notes, and medical images in a compliant way.", "capabilities": ["Data Rules with field masking to protect patient PII (name, CPF, diagnosis) without touching application code", "AI Audit to classify every query and block unauthorized access to patient records", "BM25 full-text search over clinical notes, prescriptions, and medical reports with relevance ranking", "HNSW vector search for semantic similarity over medical embeddings and imaging metadata", "Sagas for distributed healthcare workflows: appointment scheduling, lab results, and billing across systems"], "cta": "Explore Data Rules", "path": "/data-rules"},
-    {"id": "ecommerce", "title": "E-Commerce and Marketplace", "pain": "E-commerce platforms need real-time product search, personalized recommendations, inventory management, and order processing, all with high availability.", "capabilities": ["BM25 full-text search for product catalogs with relevance ranking and highlighting", "HNSW vector search for semantic product recommendations and visual similarity", "Graph traversal for recommendation networks: customers who bought X also bought Y", "Geo search for local inventory, store locators, and delivery radius queries", "Live queries for real-time inventory updates, order status changes, and price alerts via WebSocket"], "cta": "Explore Search", "path": "/search"},
-    {"id": "iot", "title": "IoT and Telemetry", "pain": "IoT systems ingest millions of data points per second, need time-series aggregation, geospatial queries, and real-time alerting with minimal operational overhead.", "capabilities": ["Columnar indexes for real-time aggregation of count, sum, avg, min, max over sensor data without loading raw documents", "Geo search for location-based queries: devices within a radius, fleet tracking, geofence alerts", "Live queries for real-time telemetry streaming and threshold alerts over WebSocket", "Raft cluster for high availability and automatic failover in distributed sensor networks", "RocksDB storage for high-ingestion throughput (243K inserts/s in batch)"], "cta": "Explore Columnar Index", "path": "/search/columnar"},
-    {"id": "legal", "title": "Legal and Compliance", "pain": "Legal departments manage contracts, litigation documents, and regulatory filings that require full-text search, version history, and strict access control.", "capabilities": ["BM25 full-text search over legal documents with configurable analyzers, stopwords, and stemming", "Data Rules to enforce attorney-client privilege and document-level access control", "AI Audit to classify queries and prevent unauthorized access to sensitive legal content", "Sagas for distributed contract lifecycle management: drafting, review, approval, and signing", "Export/import for data portability and archival compliance"], "cta": "Explore Full-Text Search", "path": "/search/fulltext"}
-  ]
-  ,"use_cases_comparison_title": "Before and After AxonBase"
-  ,"use_cases_comparison_intro": "Organizations today stitch together multiple systems to solve one problem. AxonBase replaces them with a single engine."
-  ,"use_cases_comparison_need": "What You Need"
-  ,"use_cases_comparison_traditional": "Traditional Architecture"
-  ,"use_cases_comparison_axonbase": "With AxonBase"
-  ,"use_cases_comparison": [
-    {"need": "Full-text search", "traditional": "Elasticsearch cluster", "axonbase": "CREATE INDEX ... SEARCH ANALYZER ... BM25 native"},
-    {"need": "Vector similarity", "traditional": "Qdrant, Pinecone, or Weaviate", "axonbase": "CREATE INDEX ... HNSW DIMENSION ... DIST ..."},
-    {"need": "Geospatial queries", "traditional": "MongoDB Geo or Elastic Geo", "axonbase": "geometry::point, geo::distance, CREATE INDEX ... GEO"},
-    {"need": "Graph traversal", "traditional": "Neo4j or Dgraph", "axonbase": "RELATE ... -> ... -> ... SELECT ->friend->person"},
-    {"need": "Distributed transactions", "traditional": "Kafka + outbox + manual compensation", "axonbase": "BEGIN SAGA, COMMIT SAGA, CANCEL SAGA nativo"},
-    {"need": "AI governance", "traditional": "Custom middleware + LLM proxy", "axonbase": "CREATE AI AUDIT ... PROMPT ... SAFE/WARNING/DANGER"},
-    {"need": "Row-level security", "traditional": "Custom middleware + application code", "axonbase": "CREATE DATA RULE ... APPLY ... MASK FIELDS WITH ... field masking"},
-    {"need": "Analytical aggregation", "traditional": "ClickHouse or Redshift", "axonbase": "CREATE INDEX ... COLUMNAR; count(), sum(), avg()"},
-    {"need": "Client SDKs", "traditional": "Custom per-language clients", "axonbase": "8 SDKs with parity: Java, Node, Python, Go, Rust, .NET, PHP, Ruby"}
-  ]
-  ,"use_cases_cta_title": "Ready to Try AxonBase?"
-  ,"use_cases_cta_desc": "Run the server in Docker, send your first query in 60 seconds, and explore what a unified engine can do for your architecture."
-  ,"use_cases_cta_sdk": "View SDKs",
+  },
+  "use_cases_sectors_title": "Industry Applications",
+  "use_cases_sectors_intro": "Each sector benefits from a different combination of AxonBase capabilities. The engine adapts to the data shape, not the other way around.",
+  "use_cases_pain": "The challenge:",
+  "use_cases_sectors": [
+    {
+      "id": "banking",
+      "title": "Banking and Financial Services",
+      "pain": "Banks need ACID transactions, audit trails, and role-based access across millions of accounts, with real-time fraud detection and strict regulatory compliance.",
+      "capabilities": [
+        "Sagas for distributed ledger transactions across core banking systems, with automatic compensation on failure",
+        "Data Rules with field masking to protect PII (CPF, account numbers, credit cards) without modifying application code",
+        "AI Audit to classify every query as SAFE, WARNING, or DANGER before execution, meeting Bacen and LGPD requirements",
+        "mTLS and certificate-based authentication (ICP-Brasil compatible) for secure inter-bank communication",
+        "Columnar indexes for real-time aggregation of balances, transaction counts, and risk metrics without ETL"
+      ],
+      "cta": "Explore Security",
+      "path": "/security"
+    },
+    {
+      "id": "fintech",
+      "title": "Fintech and Payments",
+      "pain": "Fintechs move fast but cannot compromise on compliance. They need a database that supports rapid iteration, auditability, and multi-tenant isolation from day one.",
+      "capabilities": [
+        "Multi-tenant by design: namespaces and databases isolate each client or product line with zero configuration",
+        "Graph relations for payment flows, wallet hierarchies, and recommendation networks in a single query",
+        "Live queries for real-time balance updates, transaction notifications, and fraud alerts over WebSocket",
+        "JDBC driver for existing BI tools, plus GraphQL and REST for mobile and web backends",
+        "Scalable from startup MVP to millions of users with the same RocksDB-backed engine"
+      ],
+      "cta": "Explore Getting Started",
+      "path": "/getting-started"
+    },
+    {
+      "id": "government",
+      "title": "Government and Public Sector",
+      "pain": "Governments require data sovereignty, auditability, and ICP-Brasil certificate support. They cannot afford vendor lock-in or cloud-only solutions.",
+      "capabilities": [
+        "Certificate-based authentication with ICP-Brasil trust store for digital signatures and identity verification",
+        "AI Audit for automated compliance verification of every data access and modification",
+        "Data Rules with field masking to protect citizen PII across all queries without application changes",
+        "Self-hosted deployment with no cloud dependency: RocksDB persistence, S3 backup, and Raft cluster",
+        "Full audit trail via S3 backup encryption (AES-256-GCM) and export/import for data portability"
+      ],
+      "cta": "Explore Certificate",
+      "path": "/certificate"
+    },
+    {
+      "id": "healthtech",
+      "title": "Healthtech and Healthcare",
+      "pain": "Healthcare applications handle sensitive patient data, require strict access control, and need to query structured records, clinical notes, and medical images in a compliant way.",
+      "capabilities": [
+        "Data Rules with field masking to protect patient PII (name, CPF, diagnosis) without touching application code",
+        "AI Audit to classify every query and block unauthorized access to patient records",
+        "BM25 full-text search over clinical notes, prescriptions, and medical reports with relevance ranking",
+        "HNSW vector search for semantic similarity over medical embeddings and imaging metadata",
+        "Sagas for distributed healthcare workflows: appointment scheduling, lab results, and billing across systems"
+      ],
+      "cta": "Explore Data Rules",
+      "path": "/data-rules"
+    },
+    {
+      "id": "ecommerce",
+      "title": "E-Commerce and Marketplace",
+      "pain": "E-commerce platforms need real-time product search, personalized recommendations, inventory management, and order processing, all with high availability.",
+      "capabilities": [
+        "BM25 full-text search for product catalogs with relevance ranking and highlighting",
+        "HNSW vector search for semantic product recommendations and visual similarity",
+        "Graph traversal for recommendation networks: customers who bought X also bought Y",
+        "Geo search for local inventory, store locators, and delivery radius queries",
+        "Live queries for real-time inventory updates, order status changes, and price alerts via WebSocket"
+      ],
+      "cta": "Explore Search",
+      "path": "/search"
+    },
+    {
+      "id": "iot",
+      "title": "IoT and Telemetry",
+      "pain": "IoT systems ingest millions of data points per second, need time-series aggregation, geospatial queries, and real-time alerting with minimal operational overhead.",
+      "capabilities": [
+        "Columnar indexes for real-time aggregation of count, sum, avg, min, max over sensor data without loading raw documents",
+        "Geo search for location-based queries: devices within a radius, fleet tracking, geofence alerts",
+        "Live queries for real-time telemetry streaming and threshold alerts over WebSocket",
+        "Raft cluster for high availability and automatic failover in distributed sensor networks",
+        "RocksDB storage for high-ingestion throughput (243K inserts/s in batch)"
+      ],
+      "cta": "Explore Columnar Index",
+      "path": "/search/columnar"
+    },
+    {
+      "id": "legal",
+      "title": "Legal and Compliance",
+      "pain": "Legal departments manage contracts, litigation documents, and regulatory filings that require full-text search, version history, and strict access control.",
+      "capabilities": [
+        "BM25 full-text search over legal documents with configurable analyzers, stopwords, and stemming",
+        "Data Rules to enforce attorney-client privilege and document-level access control",
+        "AI Audit to classify queries and prevent unauthorized access to sensitive legal content",
+        "Sagas for distributed contract lifecycle management: drafting, review, approval, and signing",
+        "Export/import for data portability and archival compliance"
+      ],
+      "cta": "Explore Full-Text Search",
+      "path": "/search/fulltext"
+    }
+  ],
+  "use_cases_comparison_title": "Before and After AxonBase",
+  "use_cases_comparison_intro": "Organizations today stitch together multiple systems to solve one problem. AxonBase replaces them with a single engine.",
+  "use_cases_comparison_need": "What You Need",
+  "use_cases_comparison_traditional": "Traditional Architecture",
+  "use_cases_comparison_axonbase": "With AxonBase",
+  "use_cases_comparison": [
+    {
+      "need": "Full-text search",
+      "traditional": "Elasticsearch cluster",
+      "axonbase": "CREATE INDEX ... SEARCH ANALYZER ... BM25 native"
+    },
+    {
+      "need": "Vector similarity",
+      "traditional": "Qdrant, Pinecone, or Weaviate",
+      "axonbase": "CREATE INDEX ... HNSW DIMENSION ... DIST ..."
+    },
+    {
+      "need": "Geospatial queries",
+      "traditional": "MongoDB Geo or Elastic Geo",
+      "axonbase": "geometry::point, geo::distance, CREATE INDEX ... GEO"
+    },
+    {
+      "need": "Graph traversal",
+      "traditional": "Neo4j or Dgraph",
+      "axonbase": "RELATE ... -> ... -> ... SELECT ->friend->person"
+    },
+    {
+      "need": "Distributed transactions",
+      "traditional": "Kafka + outbox + manual compensation",
+      "axonbase": "BEGIN SAGA, COMMIT SAGA, CANCEL SAGA nativo"
+    },
+    {
+      "need": "AI governance",
+      "traditional": "Custom middleware + LLM proxy",
+      "axonbase": "CREATE AI AUDIT ... PROMPT ... SAFE/WARNING/DANGER"
+    },
+    {
+      "need": "Row-level security",
+      "traditional": "Custom middleware + application code",
+      "axonbase": "CREATE DATA RULE ... APPLY ... MASK FIELDS WITH ... field masking"
+    },
+    {
+      "need": "Analytical aggregation",
+      "traditional": "ClickHouse or Redshift",
+      "axonbase": "CREATE INDEX ... COLUMNAR; count(), sum(), avg()"
+    },
+    {
+      "need": "Client SDKs",
+      "traditional": "Custom per-language clients",
+      "axonbase": "8 SDKs with parity: Java, Node, Python, Go, Rust, .NET, PHP, Ruby"
+    }
+  ],
+  "use_cases_cta_title": "Ready to Try AxonBase?",
+  "use_cases_cta_desc": "Run the server in Docker, send your first query in 60 seconds, and explore what a unified engine can do for your architecture.",
+  "use_cases_cta_sdk": "View SDKs",
   "nav_admin_api": "Management API",
   "nav_events": "Events and Webhook",
   "nav_performance": "Performance",
@@ -2226,19 +2512,291 @@
   "adminapi_auth_code": "TOKEN=$(curl -s -X POST http://127.0.0.1:8000/signin \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"user\":\"root\",\"pass\":\"change-me-root-password\"}' \\\n  | python3 -c \"import sys,json; print(json.load(sys.stdin)['token'])\")\n\ncurl -s http://127.0.0.1:8000/admin/v1/info -H \"Authorization: Bearer $TOKEN\"",
   "adminapi_roles_title": "Roles and scope",
   "adminapi_roles_desc": "There are three roles, in increasing order of power: viewer, operator and admin. The owner role counts as admin. A ROOT identity with no recognized role is treated as admin; an identity of another scope with no recognized role has no role and receives 403 on role-checked routes. Most routes require ROOT scope. Routes that take ns and db (tables, data-rules, audit/operations and audit/definitions) also accept an identity whose scope covers that database, with at least the viewer role. A role that is explicitly viewer is read-only in the engine (writes, DDL, kv::set and kv::del are refused); an identity with no recognized role is not made read-only. See Security, including the Axon-Role-Cap header that lowers the role of one request.",
-  "adminapi_roles_headers": ["Role", "Allowed"],
-  "adminapi_roles_rows": [["viewer", "All read routes: info, namespaces, tables, users, cluster, sagas, audit, data rules, truststores, certificates and events."], ["operator", "Everything viewer does, plus cancel sagas, decide audit cases, unblock users, and list, check and trigger backups."], ["admin", "Everything operator does, plus create and delete users, manage service tokens and truststores, and restore backups."]],
+  "adminapi_roles_headers": [
+    "Role",
+    "Allowed"
+  ],
+  "adminapi_roles_rows": [
+    [
+      "viewer",
+      "All read routes: info, namespaces, tables, users, cluster, sagas, audit, data rules, truststores, certificates and events."
+    ],
+    [
+      "operator",
+      "Everything viewer does, plus cancel sagas, decide audit cases, unblock users, and list, check and trigger backups."
+    ],
+    [
+      "admin",
+      "Everything operator does, plus create and delete users, manage service tokens and truststores, and restore backups."
+    ]
+  ],
   "adminapi_errors_title": "Errors",
   "adminapi_errors_desc": "An error returns the HTTP status and a JSON body with code and message. NOT_LEADER also carries leader and leaderAddress. Messages follow the server language (AXON_LANG).",
   "adminapi_errors_code": "{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"operation requires the admin role\"}}\n\n{\"error\":{\"code\":\"NOT_LEADER\",\"message\":\"...\",\"leaderAddress\":\"10.0.0.1:8000\",\"leader\":\"n1\"}}",
-  "adminapi_errors_headers": ["Code", "Status", "When"],
-  "adminapi_errors_rows": [["UNAUTHENTICATED", "401", "Token missing, invalid, expired or revoked."], ["FORBIDDEN", "403", "The role or the scope is not enough."], ["NOT_FOUND", "404", "Unknown route or method, or the resource does not exist."], ["BAD_REQUEST", "400", "Invalid JSON, field or parameter, or an engine error such as a rejected statement."], ["CONFLICT", "409", "State conflict: audit case already decided, saga that cannot be cancelled, backup already running or not configured, restore not allowed."], ["NOT_LEADER", "503", "A write reached a follower. Repeat it on leaderAddress."], ["INTERNAL", "500", "Unexpected failure. The detail goes to the server log."]],
+  "adminapi_errors_headers": [
+    "Code",
+    "Status",
+    "When"
+  ],
+  "adminapi_errors_rows": [
+    [
+      "UNAUTHENTICATED",
+      "401",
+      "Token missing, invalid, expired or revoked."
+    ],
+    [
+      "FORBIDDEN",
+      "403",
+      "The role or the scope is not enough."
+    ],
+    [
+      "NOT_FOUND",
+      "404",
+      "Unknown route or method, or the resource does not exist."
+    ],
+    [
+      "BAD_REQUEST",
+      "400",
+      "Invalid JSON, field or parameter, or an engine error such as a rejected statement."
+    ],
+    [
+      "CONFLICT",
+      "409",
+      "State conflict: audit case already decided, saga that cannot be cancelled, backup already running or not configured, restore not allowed."
+    ],
+    [
+      "NOT_LEADER",
+      "503",
+      "A write reached a follower. Repeat it on leaderAddress."
+    ],
+    [
+      "INTERNAL",
+      "500",
+      "Unexpected failure. The detail goes to the server log."
+    ]
+  ],
   "adminapi_conv_title": "Conventions",
   "adminapi_conv_desc": "Writes that change replicated state (create and delete users, cancel a saga, decide an audit case, unblock a user) run only on the leader. Service tokens, truststores and backups act on the node that receives the call. Timestamps follow RFC (Request for Comments) 3339 in UTC (Coordinated Universal Time). List routes that accept limit return 100 items by default and at most 1000. DELETE and unblock answer 204 with no body.",
   "adminapi_endpoints_title": "Endpoint reference",
   "adminapi_endpoints_desc": "The role column is the minimum required. Scoped means a ROOT identity, or an identity whose scope covers the database.",
-  "adminapi_endpoints_headers": ["Method", "Path", "Role", "Description"],
-  "adminapi_endpoints_rows": [["GET", "/info", "viewer", "Version, node, role, uptime, mode and the non-secret configuration."], ["GET", "/namespaces", "viewer", "Namespaces and their databases."], ["GET", "/databases/{ns}/{db}/tables", "viewer (scoped)", "Tables with schema mode, fields and indexes."], ["GET", "/databases/{ns}/{db}/tables/{table}/stats", "viewer (scoped)", "Row count, fields, indexes, geoFields and vectorFields of one table."], ["GET", "/users", "viewer", "Users with scope, roles and authentication kind. Never returns hashes."], ["POST", "/users", "admin", "Creates a user (runs DEFINE USER with the caller's claims). Leader only."], ["DELETE", "/users/{scope}/{name}", "admin", "Deletes the user of that exact scope. ns and db go in the query string. Leader only."], ["GET", "/service-tokens", "admin", "Lists service tokens without the secret."], ["POST", "/service-tokens", "admin", "Creates a service token. The secret appears only in this response."], ["DELETE", "/service-tokens/{id}", "admin", "Revokes the token. It stops working immediately."], ["GET", "/cluster", "viewer", "Mode, leader, term, commit index, quorum and members with lag."], ["GET", "/saga-definitions", "viewer", "Saga definitions and their links."], ["GET", "/sagas", "viewer", "Saga executions. Filters: status, limit."], ["GET", "/sagas/{correlationId}", "viewer", "One execution with its steps."], ["POST", "/sagas/{name}/{correlationId}/cancel", "operator", "Cancels a running saga (CANCEL SAGA). Leader only."], ["GET", "/audit/cases", "viewer", "AI audit cases from every database. Filters: status, limit."], ["POST", "/audit/cases/{hash}/decision", "operator", "Authorizes or denies a pending case (SET AUDIT CASE). Leader only."], ["GET", "/audit/blocked-users", "viewer", "Users blocked by AI audit."], ["POST", "/audit/blocked-users/{user}/unblock", "operator", "Unblocks the user in every database. Leader only."], ["GET", "/audit/operations", "viewer (scoped)", "Operation audit entries, newest first. Requires ns and db. Filters: from, limit."], ["GET", "/audit/definitions", "viewer (scoped)", "AI audit definitions of a database. Requires ns and db."], ["GET", "/data-rules", "viewer (scoped)", "Data rules of a database: predicate, mask patterns and injections. Requires ns and db."], ["GET", "/truststores", "viewer", "Registered truststores and their certificates."], ["POST", "/truststores", "admin", "Uploads and registers a JKS (Java KeyStore) as multipart/form-data."], ["DELETE", "/truststores/{name}", "admin", "Removes the truststore from the registry."], ["GET", "/certificates/expiring", "viewer", "Certificates that expire within days (default 30), including expired ones."], ["GET", "/backups", "operator", "Backups in remote storage with size, date and type."], ["GET", "/backups/status", "operator", "State of the backup scheduler and of the last run."], ["POST", "/backups", "operator", "Starts a backup in the background (202). Body: type auto or full."], ["POST", "/backups/{name}/restore", "admin", "Restores up to the named backup. Requires confirm."], ["GET", "/backups/export", "operator", "Streams the whole instance as an .axbak file. Query: type (full or incremental), since. See Backup."], ["POST", "/backups/restore", "admin", "Restores the instance from an .axbak body. Query: confirm, force. 409 in a cluster. See Backup."], ["GET", "/events", "viewer", "SSE (Server-Sent Events) stream. See Events and Webhook."], ["GET", "/logs", "viewer", "Last lines of the in-memory log buffer. Filters: limit, level, since."], ["GET", "/logs/stream", "viewer", "SSE stream of new log lines, one data: line per entry."]],
+  "adminapi_endpoints_headers": [
+    "Method",
+    "Path",
+    "Role",
+    "Description"
+  ],
+  "adminapi_endpoints_rows": [
+    [
+      "GET",
+      "/info",
+      "viewer",
+      "Version, node, role, uptime, mode and the non-secret configuration."
+    ],
+    [
+      "GET",
+      "/namespaces",
+      "viewer",
+      "Namespaces and their databases."
+    ],
+    [
+      "GET",
+      "/databases/{ns}/{db}/tables",
+      "viewer (scoped)",
+      "Tables with schema mode, fields and indexes."
+    ],
+    [
+      "GET",
+      "/databases/{ns}/{db}/tables/{table}/stats",
+      "viewer (scoped)",
+      "Row count, fields, indexes, geoFields and vectorFields of one table."
+    ],
+    [
+      "GET",
+      "/users",
+      "viewer",
+      "Users with scope, roles and authentication kind. Never returns hashes."
+    ],
+    [
+      "POST",
+      "/users",
+      "admin",
+      "Creates a user (runs DEFINE USER with the caller's claims). Leader only."
+    ],
+    [
+      "DELETE",
+      "/users/{scope}/{name}",
+      "admin",
+      "Deletes the user of that exact scope. ns and db go in the query string. Leader only."
+    ],
+    [
+      "GET",
+      "/service-tokens",
+      "admin",
+      "Lists service tokens without the secret."
+    ],
+    [
+      "POST",
+      "/service-tokens",
+      "admin",
+      "Creates a service token. The secret appears only in this response."
+    ],
+    [
+      "DELETE",
+      "/service-tokens/{id}",
+      "admin",
+      "Revokes the token. It stops working immediately."
+    ],
+    [
+      "GET",
+      "/cluster",
+      "viewer",
+      "Mode, leader, term, commit index, quorum and members with lag."
+    ],
+    [
+      "GET",
+      "/saga-definitions",
+      "viewer",
+      "Saga definitions and their links."
+    ],
+    [
+      "GET",
+      "/sagas",
+      "viewer",
+      "Saga executions. Filters: status, limit."
+    ],
+    [
+      "GET",
+      "/sagas/{correlationId}",
+      "viewer",
+      "One execution with its steps."
+    ],
+    [
+      "POST",
+      "/sagas/{name}/{correlationId}/cancel",
+      "operator",
+      "Cancels a running saga (CANCEL SAGA). Leader only."
+    ],
+    [
+      "GET",
+      "/audit/cases",
+      "viewer",
+      "AI audit cases from every database. Filters: status, limit."
+    ],
+    [
+      "POST",
+      "/audit/cases/{hash}/decision",
+      "operator",
+      "Authorizes or denies a pending case (SET AUDIT CASE). Leader only."
+    ],
+    [
+      "GET",
+      "/audit/blocked-users",
+      "viewer",
+      "Users blocked by AI audit."
+    ],
+    [
+      "POST",
+      "/audit/blocked-users/{user}/unblock",
+      "operator",
+      "Unblocks the user in every database. Leader only."
+    ],
+    [
+      "GET",
+      "/audit/operations",
+      "viewer (scoped)",
+      "Operation audit entries, newest first. Requires ns and db. Filters: from, limit."
+    ],
+    [
+      "GET",
+      "/audit/definitions",
+      "viewer (scoped)",
+      "AI audit definitions of a database. Requires ns and db."
+    ],
+    [
+      "GET",
+      "/data-rules",
+      "viewer (scoped)",
+      "Data rules of a database: predicate, mask patterns and injections. Requires ns and db."
+    ],
+    [
+      "GET",
+      "/truststores",
+      "viewer",
+      "Registered truststores and their certificates."
+    ],
+    [
+      "POST",
+      "/truststores",
+      "admin",
+      "Uploads and registers a JKS (Java KeyStore) as multipart/form-data."
+    ],
+    [
+      "DELETE",
+      "/truststores/{name}",
+      "admin",
+      "Removes the truststore from the registry."
+    ],
+    [
+      "GET",
+      "/certificates/expiring",
+      "viewer",
+      "Certificates that expire within days (default 30), including expired ones."
+    ],
+    [
+      "GET",
+      "/backups",
+      "operator",
+      "Backups in remote storage with size, date and type."
+    ],
+    [
+      "GET",
+      "/backups/status",
+      "operator",
+      "State of the backup scheduler and of the last run."
+    ],
+    [
+      "POST",
+      "/backups",
+      "operator",
+      "Starts a backup in the background (202). Body: type auto or full."
+    ],
+    [
+      "POST",
+      "/backups/{name}/restore",
+      "admin",
+      "Restores up to the named backup. Requires confirm."
+    ],
+    [
+      "GET",
+      "/backups/export",
+      "operator",
+      "Streams the whole instance as an .axbak file. Query: type (full or incremental), since. See Backup."
+    ],
+    [
+      "POST",
+      "/backups/restore",
+      "admin",
+      "Restores the instance from an .axbak body. Query: confirm, force. 409 in a cluster. See Backup."
+    ],
+    [
+      "GET",
+      "/events",
+      "viewer",
+      "SSE (Server-Sent Events) stream. See Events and Webhook."
+    ],
+    [
+      "GET",
+      "/logs",
+      "viewer",
+      "Last lines of the in-memory log buffer. Filters: limit, level, since."
+    ],
+    [
+      "GET",
+      "/logs/stream",
+      "viewer",
+      "SSE stream of new log lines, one data: line per entry."
+    ]
+  ],
   "adminapi_ex_info_title": "Server information",
   "adminapi_ex_info_desc": "The response never includes the JWT secret, the root password or the S3 keys. The config object is shortened here.",
   "adminapi_ex_info_code": "curl -s http://127.0.0.1:8000/admin/v1/info -H \"Authorization: Bearer $TOKEN\"\n\n# {\"version\":\"0.2.4\",\"nodeId\":\"local\",\"clusterId\":\"local\",\"role\":\"LEADER\",\n#  \"uptimeSeconds\":120,\"mode\":\"standalone\",\n#  \"config\":{\"path\":\"/data\",\"port\":8000,\"bind\":\"0.0.0.0\",\"requireAuth\":true,\n#            \"queryTimeoutMs\":30000,\"txnTimeoutMs\":300000,\"rateLimit\":0,\n#            \"tls\":false,\"httpThreads\":32,\"s3Configured\":false, ...}}",
@@ -2271,8 +2829,43 @@
   "events_envelope_title": "Envelope and event types",
   "events_envelope_desc": "Every event is one JSON object with type, time (RFC 3339 in UTC, Coordinated Universal Time) and data. Events are not stored: a client that is disconnected misses what happened meanwhile, and there is no replay. Events come from the node that serves the connection.",
   "events_envelope_code": "{\"type\":\"backup.failed\",\"time\":\"2026-11-23T14:05:09.311Z\",\"data\":{\"error\":\"connection refused\",\"durationMs\":812}}",
-  "events_types_headers": ["Type", "data fields", "Emitted when"],
-  "events_types_rows": [["audit.case.pending", "hash, user, sql, auditName, classification, ns, db", "AI audit opens a case that waits for a decision."], ["audit.user.blocked", "user, auditName, reason, ns, db", "AI audit blocks a user."], ["backup.finished", "name, sizeBytes, type, durationMs", "A backup upload finishes. type is full or incremental."], ["backup.failed", "error, durationMs", "A backup run fails."], ["leader.changed", "previous, leader, leaderAddress, term, role", "The node sees a different leader. It checks every 500 ms."], ["certificate.expiring", "truststore, subject, notAfter", "A certificate in a registered truststore expires within 30 days. Checked every hour, at most once per day for each certificate."]],
+  "events_types_headers": [
+    "Type",
+    "data fields",
+    "Emitted when"
+  ],
+  "events_types_rows": [
+    [
+      "audit.case.pending",
+      "hash, user, sql, auditName, classification, ns, db",
+      "AI audit opens a case that waits for a decision."
+    ],
+    [
+      "audit.user.blocked",
+      "user, auditName, reason, ns, db",
+      "AI audit blocks a user."
+    ],
+    [
+      "backup.finished",
+      "name, sizeBytes, type, durationMs",
+      "A backup upload finishes. type is full or incremental."
+    ],
+    [
+      "backup.failed",
+      "error, durationMs",
+      "A backup run fails."
+    ],
+    [
+      "leader.changed",
+      "previous, leader, leaderAddress, term, role",
+      "The node sees a different leader. It checks every 500 ms."
+    ],
+    [
+      "certificate.expiring",
+      "truststore, subject, notAfter",
+      "A certificate in a registered truststore expires within 30 days. Checked every hour, at most once per day for each certificate."
+    ]
+  ],
   "events_sse_title": "SSE stream",
   "events_sse_desc": "GET /admin/v1/events needs a ROOT identity with at least the viewer role. The response is text/event-stream. The server sends a first comment line (: connected), then one data: line per event, and a : keepalive comment every 15 seconds so proxies keep the connection open. Use -N with curl to disable buffering. The browser EventSource cannot send the Authorization header, so use fetch or a library that allows headers.",
   "events_sse_curl": "curl -N http://127.0.0.1:8000/admin/v1/events -H \"Authorization: Bearer $TOKEN\"\n\n# : connected\n#\n# data: {\"type\":\"leader.changed\",\"time\":\"2026-11-23T14:00:01Z\",\"data\":{\"previous\":\"n1\",\"leader\":\"n2\",\"leaderAddress\":\"n2:8000\",\"term\":4,\"role\":\"FOLLOWER\"}}\n#\n# : keepalive",
@@ -2286,8 +2879,48 @@
   "events_verify_python": "import hashlib\nimport hmac\nimport os\nimport time\n\nfrom flask import Flask, abort, request\n\napp = Flask(__name__)\nSECRET = os.environ[\"AXON_WEBHOOK_SECRET\"].encode()\nTOLERANCE_SECONDS = 300  # 5 minutes: rejects replayed deliveries\n\n\n@app.post(\"/axonbase-hook\")\ndef hook():\n    body = request.get_data()  # bytes exactly as received\n    timestamp = request.headers.get(\"X-Axon-Timestamp\", \"\")\n    received = request.headers.get(\"X-Axon-Signature-V2\", \"\")\n\n    # reject old or future timestamps (replay protection)\n    try:\n        age = abs(time.time() - float(timestamp))\n    except ValueError:\n        abort(401)\n    if age > TOLERANCE_SECONDS:\n        abort(401)\n\n    # the signature covers \"timestamp.body\"\n    signed = timestamp.encode() + b\".\" + body\n    expected = \"sha256=\" + hmac.new(SECRET, signed, hashlib.sha256).hexdigest()\n    if not hmac.compare_digest(received, expected):\n        abort(401)\n\n    event = request.get_json()\n    print(event[\"type\"], event[\"data\"])\n    return \"\", 204\n\n\nif __name__ == \"__main__\":\n    app.run(port=9000)",
   "security_rbac_title": "Roles enforced by the engine",
   "security_rbac_desc": "The engine checks the role of every session that carries an identity. A session without identity (embedded mode, or a server with require_auth set to false) is not restricted. The roles are viewer, operator and admin, in increasing order; owner counts as admin. A ROOT identity with no recognized role counts as admin, so older ROOT users keep working. An identity of another scope with no recognized role (for example, only a custom role such as editor) can still read and write data allowed by table PERMISSIONS, but it cannot run the statements below. Reads and writes of data are governed by PERMISSIONS, not by these roles.",
-  "security_rbac_headers": ["Statement", "Minimum role"],
-  "security_rbac_rows": [["DEFINE USER, CREATE USER, DROP USER", "admin"], ["DEFINE ACCESS, GRANT ACCESS, REVOKE ACCESS", "admin"], ["CREATE JKS (truststore registration)", "admin"], ["CREATE DATA RULE, DROP DATA RULE", "admin"], ["AI audit definitions (CREATE AI AUDIT and its removal)", "admin"], ["Database links (define, create, alter, drop)", "admin"], ["CREATE SAGA, DROP SAGA", "admin"], ["SET AUDIT CASE", "operator"], ["CANCEL SAGA", "operator (only an explicit viewer is refused, see below)"]],
+  "security_rbac_headers": [
+    "Statement",
+    "Minimum role"
+  ],
+  "security_rbac_rows": [
+    [
+      "DEFINE USER, CREATE USER, DROP USER",
+      "admin"
+    ],
+    [
+      "DEFINE ACCESS, GRANT ACCESS, REVOKE ACCESS",
+      "admin"
+    ],
+    [
+      "CREATE JKS (truststore registration)",
+      "admin"
+    ],
+    [
+      "CREATE DATA RULE, DROP DATA RULE",
+      "admin"
+    ],
+    [
+      "AI audit definitions (CREATE AI AUDIT and its removal)",
+      "admin"
+    ],
+    [
+      "Database links (define, create, alter, drop)",
+      "admin"
+    ],
+    [
+      "CREATE SAGA, DROP SAGA",
+      "admin"
+    ],
+    [
+      "SET AUDIT CASE",
+      "operator"
+    ],
+    [
+      "CANCEL SAGA",
+      "operator (only an explicit viewer is refused, see below)"
+    ]
+  ],
   "security_rbac_scope": "Scope has its own rule: a user below ROOT never creates an identity with a broader scope than its own, nor one outside its own namespace or database. The attempt fails with: creating an identity with a broader scope than your own is not allowed. A user blocked by AI audit cannot decide the audit case that blocked them.",
   "security_rbac_code": "-- Session of a DATABASE user whose roles are \"editor\" (no recognized role):\nCREATE person:1 CONTENT {name: \"Ana\"};          -- allowed by table PERMISSIONS\nDEFINE USER bob ON DATABASE PASSWORD \"x\";       -- error: operation requires the admin role\n\n-- Session of a DATABASE admin of app/main:\nDEFINE USER bob ON DATABASE PASSWORD \"x\";       -- allowed\nDEFINE USER eve ON NAMESPACE PASSWORD \"x\";      -- error: broader scope than your own",
   "security_readonly_title": "Viewer is read-only",
@@ -2311,24 +2944,392 @@
   "security_metrics_title": "Protecting /metrics",
   "security_metrics_desc": "By default GET /metrics is open, like /health. With AXON_METRICS_REQUIRE_AUTH=true and require_auth on, it answers 401 unless the request carries a valid token. Any valid token works, with no role check, so a viewer service token is enough for the scraper.",
   "security_metrics_code": "AXON_METRICS_REQUIRE_AUTH=true ./run.sh start --port 8000\n\ncurl -i http://127.0.0.1:8000/metrics\n# HTTP/1.1 401 Unauthorized\n\ncurl -s http://127.0.0.1:8000/metrics -H \"Authorization: Bearer axsvc_9f2c1a0b7d3e_...\"",
-  "obs_metric_headers": ["Series", "Type", "Labels", "Description"],
+  "obs_metric_headers": [
+    "Series",
+    "Type",
+    "Labels",
+    "Description"
+  ],
   "obs_metric_groups": [
-    {"title": "HTTP and queries", "rows": [["axe_requests_total", "counter", "-", "HTTP requests finished, all endpoints."], ["axe_http_requests_total", "counter", "endpoint, status", "Requests by mount path of the servlet (for example /sql, /rpc, /admin/v1) and HTTP status."], ["axe_query_total", "counter", "-", "AxonQL queries executed through POST /sql and the query RPC method (HTTP and WebSocket)."], ["axe_query_error_total", "counter", "-", "Queries that ended in error."], ["axe_query_slow_total", "counter", "-", "Queries that took 1 second or more."], ["axe_query_duration_seconds", "histogram", "le", "Query duration. Series _bucket, _sum and _count. Buckets in seconds: 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30 and +Inf."]]},
-    {"title": "Authentication and audit", "rows": [["axe_auth_signin_total", "counter", "-", "Successful sign-ins (POST /signin and the signin RPC method)."], ["axe_auth_signin_fail_total", "counter", "-", "Failed sign-ins."], ["axe_audit_pending_cases", "gauge", "-", "AI audit cases waiting for a decision, across databases."], ["axe_audit_blocked_users", "gauge", "-", "Users blocked by AI audit, across databases."]]},
-    {"title": "WebSocket", "rows": [["axe_ws_open", "gauge", "-", "Open WebSocket connections."], ["axe_ws_frames_received_total", "counter", "-", "Frames received."], ["axe_ws_frames_sent_total", "counter", "-", "Frames sent."], ["axe_ws_response_time_ns_total", "counter", "-", "Sum of response times in nanoseconds. Divide by axe_ws_response_count_total for the average."], ["axe_ws_response_count_total", "counter", "-", "Responses counted in the sum above."], ["axe_ws_query_errors_total", "counter", "-", "Query errors on WebSocket."], ["axe_ws_not_leader_errors_total", "counter", "-", "NOT_LEADER errors on WebSocket."]]},
-    {"title": "Storage and process", "rows": [["axe_storage_keys_total", "gauge", "-", "Keys in storage. Recomputed at most every 15 seconds."], ["axe_db_keys", "gauge", "ns, db", "Keys per database. Only present with AXON_METRICS_PER_DATABASE=true; the cost grows with the number of databases."], ["axe_jvm_heap_bytes", "gauge", "-", "JVM (Java Virtual Machine) heap in use."], ["axe_jvm_heap_max_bytes", "gauge", "-", "Maximum JVM heap."], ["axe_jvm_nonheap_bytes", "gauge", "-", "JVM non-heap memory in use."], ["axe_uptime_seconds", "gauge", "-", "Seconds since the server started."]]},
-    {"title": "Cluster and Raft", "rows": [["axe_cluster_role", "gauge", "role", "Always 1, with the current role in the label (LEADER, FOLLOWER and so on)."], ["axe_cluster_term", "gauge", "-", "Current Raft term."], ["axe_cluster_commit_index", "gauge", "-", "Commit index."], ["axe_cluster_active", "gauge", "-", "Active members."], ["axe_cluster_members", "gauge", "-", "Members of the cluster."], ["axe_cluster_quorum", "gauge", "-", "Votes needed for a quorum."], ["axe_raft_lag", "gauge", "-", "Sum of the lag, in entries, of all peers. Only in cluster mode."], ["axe_raft_peer_lag", "gauge", "peer", "Lag in entries of each peer. Only in cluster mode."], ["axe_raft_peer_last_contact_seconds", "gauge", "peer", "Seconds since the last contact with each peer, or -1 when there was none. Only in cluster mode."], ["axe_raft_election_started_total", "counter", "-", "Elections started by this node. Only in cluster mode."], ["axe_raft_quorum_unavailable_total", "counter", "-", "Times the quorum was unavailable. Only in cluster mode."], ["axe_raft_snapshot_bytes_total", "counter", "-", "Bytes of Raft snapshots. Only in cluster mode."]]},
-    {"title": "Backup", "rows": [["axe_backup_last_success_timestamp_seconds", "gauge", "-", "Epoch seconds of the last successful backup, or 0."], ["axe_backup_last_duration_seconds", "gauge", "-", "Duration of the last run in seconds."], ["axe_backup_last_size_bytes", "gauge", "-", "Size of the last backup in bytes."], ["axe_backup_runs_total", "counter", "result", "Backup runs. result is success or failure."]]}
+    {
+      "title": "HTTP and queries",
+      "rows": [
+        [
+          "axe_requests_total",
+          "counter",
+          "-",
+          "HTTP requests finished, all endpoints."
+        ],
+        [
+          "axe_http_requests_total",
+          "counter",
+          "endpoint, status",
+          "Requests by mount path of the servlet (for example /sql, /rpc, /admin/v1) and HTTP status."
+        ],
+        [
+          "axe_query_total",
+          "counter",
+          "-",
+          "AxonQL queries executed through POST /sql and the query RPC method (HTTP and WebSocket)."
+        ],
+        [
+          "axe_query_error_total",
+          "counter",
+          "-",
+          "Queries that ended in error."
+        ],
+        [
+          "axe_query_slow_total",
+          "counter",
+          "-",
+          "Queries that took 1 second or more."
+        ],
+        [
+          "axe_query_duration_seconds",
+          "histogram",
+          "le",
+          "Query duration. Series _bucket, _sum and _count. Buckets in seconds: 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30 and +Inf."
+        ]
+      ]
+    },
+    {
+      "title": "Authentication and audit",
+      "rows": [
+        [
+          "axe_auth_signin_total",
+          "counter",
+          "-",
+          "Successful sign-ins (POST /signin and the signin RPC method)."
+        ],
+        [
+          "axe_auth_signin_fail_total",
+          "counter",
+          "-",
+          "Failed sign-ins."
+        ],
+        [
+          "axe_audit_pending_cases",
+          "gauge",
+          "-",
+          "AI audit cases waiting for a decision, across databases."
+        ],
+        [
+          "axe_audit_blocked_users",
+          "gauge",
+          "-",
+          "Users blocked by AI audit, across databases."
+        ]
+      ]
+    },
+    {
+      "title": "WebSocket",
+      "rows": [
+        [
+          "axe_ws_open",
+          "gauge",
+          "-",
+          "Open WebSocket connections."
+        ],
+        [
+          "axe_ws_frames_received_total",
+          "counter",
+          "-",
+          "Frames received."
+        ],
+        [
+          "axe_ws_frames_sent_total",
+          "counter",
+          "-",
+          "Frames sent."
+        ],
+        [
+          "axe_ws_response_time_ns_total",
+          "counter",
+          "-",
+          "Sum of response times in nanoseconds. Divide by axe_ws_response_count_total for the average."
+        ],
+        [
+          "axe_ws_response_count_total",
+          "counter",
+          "-",
+          "Responses counted in the sum above."
+        ],
+        [
+          "axe_ws_query_errors_total",
+          "counter",
+          "-",
+          "Query errors on WebSocket."
+        ],
+        [
+          "axe_ws_not_leader_errors_total",
+          "counter",
+          "-",
+          "NOT_LEADER errors on WebSocket."
+        ]
+      ]
+    },
+    {
+      "title": "Storage and process",
+      "rows": [
+        [
+          "axe_storage_keys_total",
+          "gauge",
+          "-",
+          "Keys in storage. Recomputed at most every 15 seconds."
+        ],
+        [
+          "axe_db_keys",
+          "gauge",
+          "ns, db",
+          "Keys per database. Only present with AXON_METRICS_PER_DATABASE=true; the cost grows with the number of databases."
+        ],
+        [
+          "axe_jvm_heap_bytes",
+          "gauge",
+          "-",
+          "JVM (Java Virtual Machine) heap in use."
+        ],
+        [
+          "axe_jvm_heap_max_bytes",
+          "gauge",
+          "-",
+          "Maximum JVM heap."
+        ],
+        [
+          "axe_jvm_nonheap_bytes",
+          "gauge",
+          "-",
+          "JVM non-heap memory in use."
+        ],
+        [
+          "axe_uptime_seconds",
+          "gauge",
+          "-",
+          "Seconds since the server started."
+        ]
+      ]
+    },
+    {
+      "title": "Cluster and Raft",
+      "rows": [
+        [
+          "axe_cluster_role",
+          "gauge",
+          "role",
+          "Always 1, with the current role in the label (LEADER, FOLLOWER and so on)."
+        ],
+        [
+          "axe_cluster_term",
+          "gauge",
+          "-",
+          "Current Raft term."
+        ],
+        [
+          "axe_cluster_commit_index",
+          "gauge",
+          "-",
+          "Commit index."
+        ],
+        [
+          "axe_cluster_active",
+          "gauge",
+          "-",
+          "Active members."
+        ],
+        [
+          "axe_cluster_members",
+          "gauge",
+          "-",
+          "Members of the cluster."
+        ],
+        [
+          "axe_cluster_quorum",
+          "gauge",
+          "-",
+          "Votes needed for a quorum."
+        ],
+        [
+          "axe_raft_lag",
+          "gauge",
+          "-",
+          "Sum of the lag, in entries, of all peers. Only in cluster mode."
+        ],
+        [
+          "axe_raft_peer_lag",
+          "gauge",
+          "peer",
+          "Lag in entries of each peer. Only in cluster mode."
+        ],
+        [
+          "axe_raft_peer_last_contact_seconds",
+          "gauge",
+          "peer",
+          "Seconds since the last contact with each peer, or -1 when there was none. Only in cluster mode."
+        ],
+        [
+          "axe_raft_election_started_total",
+          "counter",
+          "-",
+          "Elections started by this node. Only in cluster mode."
+        ],
+        [
+          "axe_raft_quorum_unavailable_total",
+          "counter",
+          "-",
+          "Times the quorum was unavailable. Only in cluster mode."
+        ],
+        [
+          "axe_raft_snapshot_bytes_total",
+          "counter",
+          "-",
+          "Bytes of Raft snapshots. Only in cluster mode."
+        ]
+      ]
+    },
+    {
+      "title": "Backup",
+      "rows": [
+        [
+          "axe_backup_last_success_timestamp_seconds",
+          "gauge",
+          "-",
+          "Epoch seconds of the last successful backup, or 0."
+        ],
+        [
+          "axe_backup_last_duration_seconds",
+          "gauge",
+          "-",
+          "Duration of the last run in seconds."
+        ],
+        [
+          "axe_backup_last_size_bytes",
+          "gauge",
+          "-",
+          "Size of the last backup in bytes."
+        ],
+        [
+          "axe_backup_runs_total",
+          "counter",
+          "result",
+          "Backup runs. result is success or failure."
+        ]
+      ]
+    }
   ],
   "obs_scrape_title": "Scrape configuration",
   "obs_scrape_desc": "A Prometheus job for a server with AXON_METRICS_REQUIRE_AUTH=true. The token is a service token (see Security). Without that variable, remove authorization. Useful alerts: axe_backup_runs_total{result=\"failure\"} increasing, axe_audit_pending_cases above zero, axe_raft_quorum_unavailable_total increasing and axe_http_requests_total with status 503.",
   "obs_scrape_code": "scrape_configs:\n  - job_name: axonbase\n    metrics_path: /metrics\n    authorization:\n      type: Bearer\n      credentials_file: /etc/prometheus/axonbase.token\n    static_configs:\n      - targets: [\"axonbase:8000\"]",
   "obs_log_fields_title": "Log fields",
-  "obs_log_fields_headers": ["Field", "Description"],
-  "obs_log_fields_rows": [["time", "Instant in RFC 3339, UTC."], ["level", "info, warn or error."], ["event", "Event name, in snake_case. See the next table."], ["msg", "Short text. Absent when empty."], ["request_id", "In http_request: the X-Request-Id of the request."], ["user", "In http_request: the identity of the Bearer token, when valid."], ["ns, db", "In http_request: the Axon-Ns and Axon-Db headers. In audit events: where the case or block lives."], ["method, path, status, duration_ms", "In http_request. path includes the query string; status 500 or above logs at level error."], ["error", "In failure events."]],
+  "obs_log_fields_headers": [
+    "Field",
+    "Description"
+  ],
+  "obs_log_fields_rows": [
+    [
+      "time",
+      "Instant in RFC 3339, UTC."
+    ],
+    [
+      "level",
+      "info, warn or error."
+    ],
+    [
+      "event",
+      "Event name, in snake_case. See the next table."
+    ],
+    [
+      "msg",
+      "Short text. Absent when empty."
+    ],
+    [
+      "request_id",
+      "In http_request: the X-Request-Id of the request."
+    ],
+    [
+      "user",
+      "In http_request: the identity of the Bearer token, when valid."
+    ],
+    [
+      "ns, db",
+      "In http_request: the Axon-Ns and Axon-Db headers. In audit events: where the case or block lives."
+    ],
+    [
+      "method, path, status, duration_ms",
+      "In http_request. path includes the query string; status 500 or above logs at level error."
+    ],
+    [
+      "error",
+      "In failure events."
+    ]
+  ],
   "obs_log_events_title": "Log events",
-  "obs_log_events_headers": ["Event", "Level", "When"],
-  "obs_log_events_rows": [["http_request", "info (error from status 500)", "Every HTTP request, when it finishes."], ["server_started", "info", "The server is listening."], ["leader_changed", "info", "The leader changed. Same data as the leader.changed event."], ["certificate_expiring", "warn", "A truststore certificate expires within 30 days."], ["backup_finished", "info", "A backup finished. Fields: name, sizeBytes, type, durationMs."], ["backup_failed", "error", "A backup failed. Fields: error, durationMs."], ["audit_case_pending", "warn", "AI audit opened a case."], ["audit_user_blocked", "warn", "AI audit blocked a user."], ["truststore_loaded, truststore_load_failed", "info, error", "A truststore was registered, or could not be loaded."], ["certificate_login", "info", "A temporary credential was issued after a certificate login."], ["cert_issue_failed", "warn", "A temporary credential was refused."], ["webhook_failed", "warn", "A webhook delivery failed."]],
+  "obs_log_events_headers": [
+    "Event",
+    "Level",
+    "When"
+  ],
+  "obs_log_events_rows": [
+    [
+      "http_request",
+      "info (error from status 500)",
+      "Every HTTP request, when it finishes."
+    ],
+    [
+      "server_started",
+      "info",
+      "The server is listening."
+    ],
+    [
+      "leader_changed",
+      "info",
+      "The leader changed. Same data as the leader.changed event."
+    ],
+    [
+      "certificate_expiring",
+      "warn",
+      "A truststore certificate expires within 30 days."
+    ],
+    [
+      "backup_finished",
+      "info",
+      "A backup finished. Fields: name, sizeBytes, type, durationMs."
+    ],
+    [
+      "backup_failed",
+      "error",
+      "A backup failed. Fields: error, durationMs."
+    ],
+    [
+      "audit_case_pending",
+      "warn",
+      "AI audit opened a case."
+    ],
+    [
+      "audit_user_blocked",
+      "warn",
+      "AI audit blocked a user."
+    ],
+    [
+      "truststore_loaded, truststore_load_failed",
+      "info, error",
+      "A truststore was registered, or could not be loaded."
+    ],
+    [
+      "certificate_login",
+      "info",
+      "A temporary credential was issued after a certificate login."
+    ],
+    [
+      "cert_issue_failed",
+      "warn",
+      "A temporary credential was refused."
+    ],
+    [
+      "webhook_failed",
+      "warn",
+      "A webhook delivery failed."
+    ]
+  ],
   "backup_state_title": "State and history",
   "backup_state_desc": "With S3 configured, GET /admin/v1/backups/status returns configured, running, lastSuccessAt, lastErrorAt, lastError, lastDurationMs, lastSizeBytes, lastType and nextRunAt. Fields with no value yet are null; without S3, configured is false. GET /admin/v1/backups lists the backups in the bucket, oldest first, with name, sizeBytes, createdAt and type (full or incremental). sizeBytes and type are null for files that have no recorded metadata. createdAt comes from the timestamp in the file name (cluster-yyyyMMdd-HHmmss.axbak), read in the server time zone. Both routes need the operator role.",
   "backup_state_code": "curl -s http://127.0.0.1:8000/admin/v1/backups/status -H \"Authorization: Bearer $TOKEN\"\n# {\"configured\":true,\"running\":false,\"lastSuccessAt\":\"2026-11-23T14:00:03Z\",\"lastErrorAt\":null,\n#  \"lastError\":null,\"lastDurationMs\":2310,\"lastSizeBytes\":48211,\"lastType\":\"incremental\",\n#  \"nextRunAt\":\"2026-11-23T14:01:03Z\"}\n\ncurl -s http://127.0.0.1:8000/admin/v1/backups -H \"Authorization: Bearer $TOKEN\"\n# [{\"name\":\"cluster-20261123-130003.axbak\",\"sizeBytes\":912004,\"createdAt\":\"2026-11-23T13:00:03Z\",\"type\":\"full\"},\n#  {\"name\":\"cluster-20261123-140003.axbak\",\"sizeBytes\":48211,\"createdAt\":\"2026-11-23T14:00:03Z\",\"type\":\"incremental\"}]",
@@ -2347,8 +3348,32 @@
   "perf_intro": "Query planning and the HTTP server avoid reading more than the statement needs, and refuse work instead of queueing it when the server is saturated. This page lists the conditions under which each optimization applies.",
   "perf_select_title": "SELECT with an index",
   "perf_select_desc": "SELECT tries each index source in turn and falls back to scanning the table only when none applies. The scan is not computed beforehand, so an indexed query no longer reads the whole table first. The WHERE clause is still evaluated on every document the index returns.",
-  "perf_select_headers": ["Index", "Used when"],
-  "perf_select_rows": [["UNIQUE", "FROM is a plain table and the whole WHERE is field = literal, with a single-column UNIQUE index on that field."], ["Vector", "ORDER BY starts with vector::distance::... over a field with a vector index and a query vector of the right dimension."], ["Geo", "The whole WHERE is geo::distance(field, point) < radius (or <=), with a geo index on the field."], ["Columnar", "The whole WHERE is field = literal, with a columnar index that includes the field. With no match, the query falls through to the next source."], ["Full-text", "WHERE uses MATCH over a field with a search index."]],
+  "perf_select_headers": [
+    "Index",
+    "Used when"
+  ],
+  "perf_select_rows": [
+    [
+      "UNIQUE",
+      "FROM is a plain table and the whole WHERE is field = literal, with a single-column UNIQUE index on that field."
+    ],
+    [
+      "Vector",
+      "ORDER BY starts with vector::distance::... over a field with a vector index and a query vector of the right dimension."
+    ],
+    [
+      "Geo",
+      "The whole WHERE is geo::distance(field, point) < radius (or <=), with a geo index on the field."
+    ],
+    [
+      "Columnar",
+      "The whole WHERE is field = literal, with a columnar index that includes the field. With no match, the query falls through to the next source."
+    ],
+    [
+      "Full-text",
+      "WHERE uses MATCH over a field with a search index."
+    ]
+  ],
   "perf_select_code": "CREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;\n\nSELECT * FROM person WHERE email = \"ana@example.com\";            -- UNIQUE index\nSELECT * FROM person WHERE email = \"ana@example.com\" AND age > 18; -- not a single equality: no UNIQUE shortcut",
   "perf_limit_title": "SELECT ... LIMIT reads in a stream",
   "perf_limit_desc": "When no index source applies, a SELECT with LIMIT reads the table in key order through an iterator and stops as soon as START + LIMIT documents pass WHERE, Data Rules and permissions. The query then costs about the size of the window, not the size of the table. RocksDB serves the iterator without holding the backend lock, so a long scan does not block writers. It applies only when all of these hold: FROM is a plain table, there is a LIMIT, and the statement has no ORDER BY, no JOIN, no GROUP BY, no aggregate function and no MATCH. Otherwise the whole table is read.",
@@ -2359,8 +3384,28 @@
   "perf_admission_title": "HTTP admission control",
   "perf_admission_desc": "A slow query must not take every HTTP worker thread and leave health probes and operations unanswered. The server therefore limits how many data requests run at once to http_threads minus a reserve of max(2, http_threads / 8). The default http_threads is 32, which reserves 4 threads and admits 28 data requests. A request beyond the limit is refused at once, without waiting in a queue, with 503 and Retry-After: 1. These paths are exempt, never counted and never refused: /health, /ready, /status, /version, /metrics, /admin (including /admin/v1) and the WebSocket upgrade at /rpc/ws. Every other path counts, including /sql, /rpc, /graphql and /signin. Clients should retry after the interval, with backoff.",
   "perf_admission_code": "$ curl -i -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'SELECT * FROM big'\nHTTP/1.1 503 Service Unavailable\nRetry-After: 1\nContent-Type: application/json\n\n{\"status\":\"ERR\",\"kind\":\"OVERLOADED\",\"detail\":\"server busy\"}\n\n# Raise the pool (and with it the admitted requests)\nAXON_HTTP_THREADS=64 ./run.sh start --port 8000   # reserve 8, admits 56",
-  "perf_admission_headers": ["http_threads", "Reserved", "Data requests admitted"],
-  "perf_admission_rows": [["8", "2", "6"], ["32 (default)", "4", "28"], ["64", "8", "56"]],
+  "perf_admission_headers": [
+    "http_threads",
+    "Reserved",
+    "Data requests admitted"
+  ],
+  "perf_admission_rows": [
+    [
+      "8",
+      "2",
+      "6"
+    ],
+    [
+      "32 (default)",
+      "4",
+      "28"
+    ],
+    [
+      "64",
+      "8",
+      "56"
+    ]
+  ],
   "sql_ddl_unique_title": "UNIQUE Index on Existing Data",
   "sql_ddl_unique_desc": "CREATE INDEX ... UNIQUE on a table that already has records fills the index with the current values. If any value repeats, the statement is refused with a unique index violation and the index is not created; the check runs before anything is written, so a refusal leaves no partial entries. Records without the field stay out of the index, as in a normal write. Defining the same unique index again (same columns) does nothing. Changing the columns of an existing unique index checks the data again. Uniqueness compares the whole index entry, so values such as sfoo and foo, or 1 and n1, no longer collide.",
   "sql_ddl_unique_code": "CREATE person:1 CONTENT {email: \"ana@example.com\"};\nCREATE person:2 CONTENT {email: \"ana@example.com\"};\n\nCREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;\n-- error: unique index violation 'email_idx' (the value repeats)\n\nDELETE person:2;\nCREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;  -- fills the index\nCREATE INDEX email_idx ON TABLE person COLUMNS email UNIQUE;  -- identical: no effect\n\nSELECT * FROM person WHERE email = \"ana@example.com\";         -- uses the index",
@@ -2373,8 +3418,43 @@
   "backup_stream_title": "Streaming export and restore",
   "backup_stream_desc": "GET /admin/v1/backups/export streams the whole instance (every namespace, plus the control state) as an .axbak file, read from the storage and written straight to the HTTP (HyperText Transfer Protocol) response. It needs the operator role and does not depend on S3. POST /admin/v1/backups/restore reads an .axbak file from the request body, line by line, and needs the admin role. Unlike GET /export and POST /import, which handle one database as an AxonQL dump, these two routes handle the whole instance. The export response is named axonbase-full-<version>.axbak or axonbase-incremental-<version>.axbak in Content-Disposition.",
   "backup_stream_params_title": "Parameters and headers",
-  "backup_stream_params_headers": ["Name", "Where", "Description"],
-  "backup_stream_params_rows": [["type", "export, query", "full (default) or incremental. Any other value gives 400."], ["since", "export, query", "Required with type=incremental: a positive backend version, normally the X-Axon-Backup-Version of the previous export. Missing, zero or not a number gives 400."], ["confirm", "restore, query", "Must be true, otherwise 400."], ["force", "restore, query", "true overwrites a storage that already has data; without it the answer is 409."], ["X-Axon-Backup-Type", "export, response header", "full or incremental, what was really written. If the storage backend does not keep key versions, an incremental request produces a full file and the header says full."], ["X-Axon-Backup-Version", "export, response header", "The backend version read before the dump started. Pass it as since in the next incremental export."]],
+  "backup_stream_params_headers": [
+    "Name",
+    "Where",
+    "Description"
+  ],
+  "backup_stream_params_rows": [
+    [
+      "type",
+      "export, query",
+      "full (default) or incremental. Any other value gives 400."
+    ],
+    [
+      "since",
+      "export, query",
+      "Required with type=incremental: a positive backend version, normally the X-Axon-Backup-Version of the previous export. Missing, zero or not a number gives 400."
+    ],
+    [
+      "confirm",
+      "restore, query",
+      "Must be true, otherwise 400."
+    ],
+    [
+      "force",
+      "restore, query",
+      "true overwrites a storage that already has data; without it the answer is 409."
+    ],
+    [
+      "X-Axon-Backup-Type",
+      "export, response header",
+      "full or incremental, what was really written. If the storage backend does not keep key versions, an incremental request produces a full file and the header says full."
+    ],
+    [
+      "X-Axon-Backup-Version",
+      "export, response header",
+      "The backend version read before the dump started. Pass it as since in the next incremental export."
+    ]
+  ],
   "backup_stream_code": "# Full export (operator role). -D saves the response headers.\ncurl -s -D headers.txt \"http://127.0.0.1:8000/admin/v1/backups/export?type=full\" \\\n  -H \"Authorization: Bearer $TOKEN\" -o full.axbak\ngrep -i '^x-axon-backup' headers.txt\n# X-Axon-Backup-Type: full\n# X-Axon-Backup-Version: 48213        (example value)\n\n# Incremental export: only what changed after that version, plus deletions\ncurl -s -D headers2.txt \"http://127.0.0.1:8000/admin/v1/backups/export?type=incremental&since=48213\" \\\n  -H \"Authorization: Bearer $TOKEN\" -o inc.axbak\n\n# Restore on an empty node (admin role)\ncurl -s -X POST \"http://127.0.0.1:8000/admin/v1/backups/restore?confirm=true\" \\\n  -H \"Authorization: Bearer $TOKEN\" --data-binary @full.axbak\n# {\"restored\":true,\"restoredKeys\":2048}        (example value)\n\n# Overwrite a node that already has data\ncurl -s -X POST \"http://127.0.0.1:8000/admin/v1/backups/restore?confirm=true&force=true\" \\\n  -H \"Authorization: Bearer $TOKEN\" --data-binary @full.axbak",
   "backup_stream_format_title": "The .axbak format",
   "backup_stream_format_desc": "The file is text. The first line is --axonbase-backup-v1--, followed by a ctrl line with the control state and one line per key (key, a tab, and the value in Base64). An incremental file carries only the keys written after since and, for each key deleted after since, a line !del with the key in Base64 (a tombstone). The restore applies the lines in order, so a tombstone removes the key. The incremental files that the S3 scheduler writes carry the same tombstones. With s3_encrypt_key set, the export is encrypted in blocks: the first line is --axonbase-backup-encrypted-v2--, followed by one Base64 line per block of up to 64 KiB. Each block uses AES-256-GCM (Advanced Encryption Standard with Galois/Counter Mode) and its own random nonce, and the authenticated data holds the block index and a last-block flag, so reordering, removing or truncating blocks is detected. The key derivation is the one used by the S3 backups. The restore recognizes the format by the header: plain files, block-encrypted files and the single-block encrypted format of the S3 backups are accepted. Restoring an encrypted file needs the same s3_encrypt_key.",
@@ -2396,5 +3476,137 @@
   "obs_logs_desc": "Besides stdout, the server keeps the latest log lines in memory. GET /admin/v1/logs returns them (filters limit, level and since) and GET /admin/v1/logs/stream sends the new ones as an SSE (Server-Sent Events) stream; both need the viewer role. AXON_LOG_BUFFER sets how many lines are kept (default 10000), and the buffer is emptied on restart. The request format, the fields of each entry and examples are in Management API, section Logs.",
   "search_geo_json_title": "GeoJSON through /sql",
   "search_geo_json_desc": "Point, LineString and Polygon go into a document as JSON literals in the statement, with CREATE and UPDATE, and come back unchanged on SELECT. UPDATE ... SET p = {...} replaces only that field. geo::distance(a, b) (meters, between two points) and geo::contains(polygon, point) work in WHERE with a field or a JSON literal on either side. The example is the one covered by the integration test over /sql.",
-  "search_geo_json_code": "-- Table without schema; the GeoJSON objects go as JSON literals in the statement\nDEFINE TABLE geo SCHEMALESS;\n\nCREATE geo:a CONTENT {\n  p: {\"type\":\"Point\",\"coordinates\":[1,1]},\n  l: {\"type\":\"LineString\",\"coordinates\":[[0,0],[1,1],[2,2]]},\n  a: {\"type\":\"Polygon\",\"coordinates\":[[[0,0],[4,0],[4,4],[0,4],[0,0]]]}\n};\n\n-- Replaces only p; l and a stay as they were\nUPDATE geo:a SET p = {\"type\":\"Point\",\"coordinates\":[3,3]};\n\n-- Distance (meters) between two points, and point inside polygon\nSELECT * FROM geo WHERE geo::distance(p, {\"type\":\"Point\",\"coordinates\":[3,3]}) < 1;\nSELECT * FROM geo WHERE geo::contains(a, p);\nSELECT * FROM geo WHERE geo::contains(a, {\"type\":\"Point\",\"coordinates\":[9,9]});  -- no rows"
+  "search_geo_json_code": "-- Table without schema; the GeoJSON objects go as JSON literals in the statement\nDEFINE TABLE geo SCHEMALESS;\n\nCREATE geo:a CONTENT {\n  p: {\"type\":\"Point\",\"coordinates\":[1,1]},\n  l: {\"type\":\"LineString\",\"coordinates\":[[0,0],[1,1],[2,2]]},\n  a: {\"type\":\"Polygon\",\"coordinates\":[[[0,0],[4,0],[4,4],[0,4],[0,0]]]}\n};\n\n-- Replaces only p; l and a stay as they were\nUPDATE geo:a SET p = {\"type\":\"Point\",\"coordinates\":[3,3]};\n\n-- Distance (meters) between two points, and point inside polygon\nSELECT * FROM geo WHERE geo::distance(p, {\"type\":\"Point\",\"coordinates\":[3,3]}) < 1;\nSELECT * FROM geo WHERE geo::contains(a, p);\nSELECT * FROM geo WHERE geo::contains(a, {\"type\":\"Point\",\"coordinates\":[9,9]});  -- no rows",
+  "nav_activity": "Activity",
+  "act_title": "Activity",
+  "act_intro": "See what the server is doing and act on it: statements running now, slow statements, sessions and open transactions. Everything is per node and lives in memory. AxonBase Enterprise shows it in the Activity screen; the same data is available on the management API.",
+  "act_endpoints_title": "Endpoints",
+  "act_endpoints_desc": "All under /admin/v1/activity and only for ROOT-scope callers. Reading needs the viewer role; cancelling a statement and rolling back a transaction need operator; ending a session needs admin.",
+  "act_endpoints_headers": [
+    "Request",
+    "Role",
+    "What it returns or does"
+  ],
+  "act_endpoints_rows": [
+    [
+      "GET /summary",
+      "viewer",
+      "Counters for the cards: running, slow, cancelled, sessions, open transactions, version conflicts, thresholds."
+    ],
+    [
+      "GET /queries",
+      "viewer",
+      "Statements running now with user, database, elapsed time, origin and fingerprint."
+    ],
+    [
+      "GET /slow?limit=&since=",
+      "viewer",
+      "Recent statements that passed the slow threshold, newest first."
+    ],
+    [
+      "GET /top?orderBy=&limit=",
+      "viewer",
+      "Per-fingerprint stats: calls, errors, total, mean, p95 and max time. orderBy: total, max, count, mean, p95."
+    ],
+    [
+      "GET /sessions",
+      "viewer",
+      "WebSocket connections and issued access tokens."
+    ],
+    [
+      "GET /transactions",
+      "viewer",
+      "Sessions with a BEGIN still open: age, pending writes and deletes."
+    ],
+    [
+      "GET /conflicts",
+      "viewer",
+      "Version conflicts since start, total and per table."
+    ],
+    [
+      "POST /queries/{id}/cancel",
+      "operator",
+      "Asks the statement to stop."
+    ],
+    [
+      "POST /transactions/{session}/rollback",
+      "operator",
+      "Discards the pending writes. The session stays connected. Refused with 409 while the session is running a statement."
+    ],
+    [
+      "DELETE /sessions/{id}",
+      "admin",
+      "Closes a WebSocket (rolling back its transaction) or revokes a token. Refused for your own session and for the root user."
+    ]
+  ],
+  "act_cancel_title": "Cancelling a statement",
+  "act_cancel_desc": "Cancellation is cooperative: the executor checks a flag at every storage access, so the statement stops at its next read or write, normally within milliseconds, and the client receives the error \"query cancelled\". A write that already changed records before it stopped keeps those changes; use a transaction when you need all or nothing. The same flag is raised when a statement passes the query timeout, so a timed-out statement no longer keeps running in the background.",
+  "act_locks_title": "No locks: transactions and conflicts",
+  "act_locks_desc": "AxonBase uses optimistic concurrency. A commit is rejected when a record it read has changed in the meantime, instead of waiting on a lock. Contention therefore shows up as open transactions (they keep an old view of the data and may fail to commit) and as version conflicts, counted per table in axe_txn_conflicts_total. Idle connections, and the transactions on them, are closed after the txn_timeout setting.",
+  "act_privacy_title": "Statement text and privacy",
+  "act_privacy_desc": "Every list carries the fingerprint: the statement with text and number values replaced by ?, so two statements that differ only in values share one. The full statement text is returned only to callers with the operator or admin role (the Axon-Role-Cap header can lower it). The slow_query log event carries the fingerprint only. With AXON_ACTIVITY_CAPTURE_SQL=false the full text is never kept.",
+  "act_config_title": "Configuration",
+  "act_config_desc": "Environment variables, read at start.",
+  "act_config_headers": [
+    "Variable",
+    "Default",
+    "Meaning"
+  ],
+  "act_config_rows": [
+    [
+      "AXON_SLOW_QUERY_MS",
+      "1000",
+      "A statement running at least this long is slow. Also drives axe_query_slow_total."
+    ],
+    [
+      "AXON_ACTIVITY_SLOW_BUFFER",
+      "500",
+      "How many recent slow statements are kept in memory (maximum 10000). A restart clears them."
+    ],
+    [
+      "AXON_ACTIVITY_CAPTURE_SQL",
+      "true",
+      "false keeps only fingerprints and never the statement text."
+    ]
+  ],
+  "act_metrics_title": "Metrics",
+  "act_metrics_headers": [
+    "Metric",
+    "Type",
+    "Meaning"
+  ],
+  "act_metrics_rows": [
+    [
+      "axe_queries_running",
+      "gauge",
+      "Statements executing now."
+    ],
+    [
+      "axe_queries_cancelled_total",
+      "counter",
+      "Statements stopped by a cancel or a timeout."
+    ],
+    [
+      "axe_sessions_open{type}",
+      "gauge",
+      "Open WebSocket connections (ws) and valid access tokens (token)."
+    ],
+    [
+      "axe_txn_open",
+      "gauge",
+      "Sessions with an open transaction."
+    ],
+    [
+      "axe_txn_conflicts_total",
+      "counter",
+      "Commits rejected by a version conflict."
+    ],
+    [
+      "axe_slow_query_threshold_seconds",
+      "gauge",
+      "The configured slow threshold."
+    ]
+  ],
+  "act_examples_title": "Examples",
+  "act_examples_code": "# who is running what right now (viewer)\ncurl -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries\n\n# slow statements grouped by shape, worst total time first\ncurl -H \"Authorization: Bearer $TOKEN\" \"http://localhost:8000/admin/v1/activity/top?orderBy=total&limit=20\"\n\n# cancel a running statement (operator)\ncurl -X POST -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries/<id>/cancel\n\n# roll back an open transaction (operator) and end a session (admin)\ncurl -X POST   -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/transactions/<session>/rollback\ncurl -X DELETE -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/sessions/<session>"
 }
