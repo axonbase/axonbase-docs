@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import BackupFlowDiagram from "../components/BackupFlowDiagram";
 import CodeTabs from "../components/CodeTabs";
+import RefTable from "../components/RefTable";
 
 export default function Backup() {
   const { t } = useTranslation();
@@ -8,6 +9,9 @@ export default function Backup() {
   const scenarios = Array.isArray(translatedScenarios)
     ? translatedScenarios as Array<{ title: string; desc: string }>
     : [];
+
+  const list = (key: string) => t(key, { returnObjects: true }) as string[];
+  const rows = (key: string) => t(key, { returnObjects: true }) as string[][];
 
   return (
     <div className="page backup-page">
@@ -65,6 +69,20 @@ export default function Backup() {
         <h2>{t("backup_api_restore_title")}</h2>
         <p>{t("backup_api_restore_desc")}</p>
         <CodeTabs tabs={[{ label: "cURL", code: t("backup_api_restore_code"), language: "bash" }]} />
+      </section>
+
+      <section>
+        <h2>{t("backup_stream_title")}</h2>
+        <p>{t("backup_stream_desc")}</p>
+        <h3>{t("backup_stream_params_title")}</h3>
+        <RefTable headers={list("backup_stream_params_headers")} rows={rows("backup_stream_params_rows")} />
+        <CodeTabs tabs={[{ label: "cURL", code: t("backup_stream_code"), language: "bash" }]} />
+        <h3>{t("backup_stream_format_title")}</h3>
+        <p>{t("backup_stream_format_desc")}</p>
+        <h3>{t("backup_stream_restore_title")}</h3>
+        <p>{t("backup_stream_restore_desc")}</p>
+        <h3>{t("backup_stream_memory_title")}</h3>
+        <p>{t("backup_stream_memory_desc")}</p>
       </section>
 
       <section>
