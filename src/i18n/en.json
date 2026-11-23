@@ -367,8 +367,8 @@
       "key": "http_threads",
       "env": "AXON_HTTP_THREADS",
       "type": "int",
-      "default": "4",
-      "desc": "Jetty HTTP worker threads."
+      "default": "32",
+      "desc": "Jetty HTTP worker threads. About one eighth of them (at least 2) stay reserved for /health, /ready, /status, /metrics and /admin, so data requests beyond the rest receive 503 with Retry-After."
     },
     {
       "key": "http_queue",
