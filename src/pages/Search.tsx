@@ -62,6 +62,9 @@ export default function Search() {
         <CodeTabs tabs={[
           { label: "AxonQL", code: t("search_geo_code"), language: "sql" },
         ]} />
+        <h3>{t("search_geo_json_title")}</h3>
+        <p>{t("search_geo_json_desc")}</p>
+        <CodeTabs tabs={[{ label: "AxonQL", code: t("search_geo_json_code"), language: "sql" }]} />
       </section>
 
       <section>

@@ -19,6 +19,9 @@ import AiAudit from "./pages/AiAudit";
 import JDBC from "./pages/JDBC";
 import SpringData from "./pages/SpringData";
 import Observability from "./pages/Observability";
+import AdminApi from "./pages/AdminApi";
+import Events from "./pages/Events";
+import Performance from "./pages/Performance";
 import OperationAudit from "./pages/OperationAudit";
 import UseCases from "./pages/UseCases";
 import FAQ from "./pages/FAQ";
@@ -77,6 +80,9 @@ export default function App() {
         <Route path="/jdbc" element={<JDBC />} />
         <Route path="/spring-data" element={<SpringData />} />
         <Route path="/observability" element={<Observability />} />
+        <Route path="/admin-api" element={<AdminApi />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/performance" element={<Performance />} />
         <Route path="/operation-audit" element={<OperationAudit />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/use-cases" element={<UseCases />} />

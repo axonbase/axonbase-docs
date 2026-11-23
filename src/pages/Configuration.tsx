@@ -23,6 +23,12 @@ export default function Configuration() {
       </section>
 
       <section>
+        <h2>{t("config_secure_title")}</h2>
+        <p>{t("config_secure_desc")}</p>
+        <CodeTabs tabs={[{ label: "Bash", code: t("config_secure_code"), language: "bash" }]} />
+      </section>
+
+      <section>
         <h2>{t("config_example_flow_title")}</h2>
         <p>{t("config_example_flow_desc")}</p>
         <CodeTabs tabs={[{ label: "Bash", code: t("config_example_flow_code"), language: "bash" }]} />
@@ -55,6 +61,12 @@ export default function Configuration() {
       <section>
         <h2>{t("config_precedence_title")}</h2>
         <p>{t("config_precedence_desc")}</p>
+      </section>
+
+      <section>
+        <h2>{t("config_conf_title")}</h2>
+        <p>{t("config_conf_desc")}</p>
+        <CodeTabs tabs={[{ label: "INI", code: t("config_conf_code"), language: "ini" }]} />
       </section>
 
       <ConfigTable configs={configs} />
