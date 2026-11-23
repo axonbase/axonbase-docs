@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import CodeTabs from "../components/CodeTabs";
 import RefTable from "../components/RefTable";
 
-const examples = ["info", "catalog", "users", "tokens", "cluster", "sagas", "audit", "security", "backups", "logs"];
+const examples = ["info", "catalog", "stats", "users", "tokens", "cluster", "sagas", "audit", "security", "backups", "logs"];
 
 export default function AdminApi() {
   const { t } = useTranslation();
