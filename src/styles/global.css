@@ -342,3 +342,7 @@ td:first-child { color: #243b53; font-family: ui-monospace, SFMono-Regular, Menl
   .home-page .quick-start-section { grid-template-columns: 1fr; gap: 20px; margin-top: 42px; padding: 22px; border-radius: 13px; }.home-page .quick-start-section h2 { font-size: 25px; }.home-page :is(.use-cases-grid, .resources-grid) { grid-template-columns: 1fr; }
   .certificate-page > section { margin-top: 13px; padding: 21px 17px 5px 59px; border-radius: 11px; }.certificate-page > section::before { top: 22px; left: 16px; width: 28px; height: 28px; border-radius: 7px; font-size: 9px; }.certificate-page > section::after { top: 58px; bottom: -14px; left: 30px; }.certificate-page > section > h2 { font-size: 19px; }.certificate-page > section > p { font-size: 14px; }.certificate-page svg[aria-labelledby="certificate-challenge-title certificate-challenge-description"] { margin: 17px 0 !important; border-radius: 10px; }.certificate-page > section:has(svg[aria-labelledby="certificate-challenge-title certificate-challenge-description"]) > p { padding: 11px 12px 11px 14px; }
 }
+
+.ref-table-wrap { overflow-x: auto; }
+.ref-table td:first-child { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+.ref-table td { vertical-align: top; }

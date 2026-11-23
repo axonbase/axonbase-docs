@@ -15,7 +15,7 @@ export default function ConfigTable({ configs }: { configs: { key: string; env: 
       </thead>
       <tbody>
         {configs.map((c) => (
-          <tr key={c.key}>
+          <tr key={c.env}>
             <td>{c.key}</td>
             <td>{c.env}</td>
             <td>{c.type}</td>
