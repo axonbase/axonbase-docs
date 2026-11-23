@@ -57,6 +57,11 @@ export default function Observability() {
         <h3>{t("obs_log_events_title")}</h3>
         <RefTable headers={list("obs_log_events_headers")} rows={rows("obs_log_events_rows")} />
       </section>
+
+      <section>
+        <h2>{t("obs_logs_title")}</h2>
+        <p>{t("obs_logs_desc")}</p>
+      </section>
     </div>
   );
 }
