@@ -255,8 +255,8 @@
       "key": "path",
       "env": "AXON_PATH",
       "type": "string",
-      "default": "data",
-      "desc": "Diretório para armazenamento RocksDB (padrão), ou memory para manter os dados apenas em RAM."
+      "default": "memory",
+      "desc": "Diretório para armazenamento RocksDB, ou memory (padrão) para manter os dados apenas em RAM. A imagem Docker oficial inicia com --path /data."
     },
     {
       "key": "secret",
