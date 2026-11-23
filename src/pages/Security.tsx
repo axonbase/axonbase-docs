@@ -20,6 +20,23 @@ export default function Security() {
       </section>
 
       <section>
+        <h2>{t("security_readonly_title")}</h2>
+        <p>{t("security_readonly_desc")}</p>
+        <CodeTabs tabs={[{ label: "cURL", code: t("security_readonly_code"), language: "bash" }]} />
+      </section>
+
+      <section>
+        <h2>{t("security_cap_title")}</h2>
+        <p>{t("security_cap_desc")}</p>
+        <CodeTabs tabs={[{ label: "cURL", code: t("security_cap_code"), language: "bash" }]} />
+      </section>
+
+      <section>
+        <h2>{t("security_use_title")}</h2>
+        <p>{t("security_use_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("security_saga_title")}</h2>
         <p>{t("security_saga_desc")}</p>
       </section>
