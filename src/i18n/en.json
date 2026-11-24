@@ -885,6 +885,11 @@
       "example": "RELATE person:ana->friend->person:bob;\nSELECT ->friend->person FROM person:ana;"
     },
     {
+      "name": "Graph results and the Relations graph page",
+      "desc": "RELATE registers the edge kind in the catalog (as DEFINE TABLE kind SCHEMALESS), so the Relations graph page of AxonBase Enterprise finds the edges of a new graph without any declaration. Databases created before 0.5.1 are registered once at startup. In the Workspace, a result in which a column holds record ids gets a Graph tab: each row is a node, each id cited in a column is an arrow labeled with the column name, and a name column becomes the node label. Nodes can be dragged to arrange the drawing, and Reorganize restores the layout. Only ids that point to tables of the database count, up to 300 records. The arrow goes from the row to the cited record, so for incoming traversals (<-kind<-table) read it as the row being reached from the cited record. AxonQL cannot yet remove an edge, chain traversals (->a->t->b->t) or project fields of the linked record.",
+      "example": "RELATE pessoa:ana->segue->pessoa:bia;\nRELATE pessoa:ana->trabalha_em->empresa:acme;\n\nSELECT id, nome, ->segue->pessoa AS segue, ->trabalha_em->empresa AS empresa FROM pessoa;"
+    },
+    {
       "name": "Reverse and Bidirectional Traversal",
       "desc": "Use <-label<-table to follow incoming edges and <->label<->table for both directions.",
       "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
@@ -1469,8 +1474,8 @@
       ]
     },
     {
-      "version": "Unreleased",
-      "date": "Under development",
+      "version": "0.5.0",
+      "date": "2026-11-24",
       "changes": [
         "AxonQL aggregation: GROUP BY, HAVING and ORDER BY in any order (always run as filter, group, filter groups, sort, limit), ORDER BY and LIMIT over the groups, GROUP ALL, count(DISTINCT x), aggregate calls inside expressions, named group columns (a group that is not selected still comes back as group.N), and SELECT VALUE count() returning the number.",
         "New syntax: BETWEEN and NOT BETWEEN, object and array literals that read fields of the row, and FROM $variable.",
@@ -1478,6 +1483,14 @@
         "Faster queries: aggregation reads the table as a stream, an index can serve one part of an AND, geo::contains uses the GEO index, and subqueries that do not depend on the row run once per statement.",
         "GEO index maintenance no longer scans the whole index on every write (a reverse key per record); loading many points into a table with a GEO index is no longer quadratic.",
         "avg and division round to 10 decimal places instead of failing when the result does not divide exactly."
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "date": "2026-11-24",
+      "changes": [
+        "RELATE registers the edge kind in the catalog, so the Relations graph page finds the edges of new graphs; databases created before are registered once at startup.",
+        "AxonBase Enterprise: Graph tab for query results, draggable nodes with a Reorganize button, and edge labels with the edge kind."
       ]
     }
   ],
