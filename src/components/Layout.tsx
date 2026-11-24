@@ -10,7 +10,7 @@ export default function Layout() {
       <header className="topbar">
         <button className="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /></button>
         <a className="topbar-brand" href="/docs"><span className="brand-mark">A</span><span>AxonBase</span><em>Docs</em></a>
-        <div className="topbar-meta"><span className="status-dot" />v0.1.0</div>
+        <div className="topbar-meta"><span className="status-dot" />v0.9.0</div>
         <LanguageSwitcher />
       </header>
       <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)} />
