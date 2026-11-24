@@ -895,6 +895,11 @@
       "example": "UNRELATE pessoa:ana->amigo_de->pessoa:edu;\nUNRELATE pessoa:dani->segue;\n\nSELECT id, ->segue->pessoa->segue->pessoa AS amigos_de_amigos FROM pessoa:ana;\nSELECT id, ->comprou->produto.nome AS produtos FROM pessoa;\nSELECT id, ->comprou->produto AS produtos FROM pessoa:ana FETCH produtos;"
     },
     {
+      "name": "How two records are connected",
+      "desc": "graph::trail(from, to, kind, maxHops, direction) returns the shortest path between two records as one row per record, with a column named after the edge kind pointing to the next record, so the Graph tab of the Workspace draws only that path. graph::path returns the same path as a list of ids and graph::connected answers true or false. Kind, maxHops (default 10) and direction are optional; direction is 'out' (follows the arrows, default), 'in' or 'both', and a null kind lets the path use any edge. An empty list means there is no path. FROM also accepts a list of record ids and loads the records, and a row id compares equal to a record id in =, IN and NOT IN.",
+      "example": "RELATE pessoa:ana->segue->pessoa:caio;\nRELATE pessoa:caio->segue->pessoa:dani;\n\nRETURN graph::trail(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::path(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::trail(pessoa:dani, pessoa:ana, null, 5, 'both');"
+    },
+    {
       "name": "Reverse and Bidirectional Traversal",
       "desc": "Use <-label<-table to follow incoming edges and <->label<->table for both directions.",
       "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
@@ -1506,6 +1511,21 @@
         "Traversals can be chained (->a->t->b->t), a field after a traversal returns that field of every record reached, and FETCH works on columns calculated by a traversal.",
         "DROP TABLE now survives a restart (the table used to come back); its fields, indexes and events leave the control plane with it.",
         "The Docker pipeline no longer moves the latest tag on a push to main."
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "date": "2026-11-24",
+      "changes": [
+        "A record id written by hand (pessoa:dani) and one reached by a traversal (->segue->pessoa) are now the same record: = and IN work, and graph::path and graph::connected find the path."
+      ]
+    },
+    {
+      "version": "0.6.2",
+      "date": "2026-11-24",
+      "changes": [
+        "graph::trail returns the path between two records as rows for the Graph tab of the Workspace, and graph::path, graph::connected and graph::trail take an optional direction ('out', 'in' or 'both').",
+        "FROM accepts a list of record ids (FROM $path, FROM [pessoa:ana, pessoa:caio]) and loads the records; a row id (text) equals a record id in =, IN and NOT IN, and IN accepts the single value a traversal returns."
       ]
     }
   ],
