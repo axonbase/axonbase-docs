@@ -15,7 +15,11 @@ const sections = [
     { to: "/docker", label: "nav_docker" },
     { to: "/cluster", label: "nav_cluster" },
     { to: "/storage", label: "nav_storage" },
+    { to: "/scale", label: "nav_scale" },
     { to: "/backup", label: "nav_backup" },
+  ]},
+  { label: "nav_programs", links: [
+    { to: "/axonpl", label: "nav_axonpl" },
   ]},
   { label: "nav_sql", links: [
     { to: "/sql", label: "nav_sql_overview" },
