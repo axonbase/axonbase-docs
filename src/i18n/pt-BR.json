@@ -851,8 +851,28 @@
     },
     {
       "name": "Agregação",
-      "desc": "GROUP BY trabalha com as chamadas agregadas count, sum, avg, min e max.",
+      "desc": "GROUP BY trabalha com as chamadas agregadas count, sum, avg, min e max. avg e a divisão arredondam em 10 casas decimais em vez de falhar quando o valor não divide exatamente.",
       "example": "SELECT city, count() AS total FROM person GROUP BY city;"
+    },
+    {
+      "name": "Ordenar, filtrar e limitar grupos",
+      "desc": "GROUP BY, HAVING e ORDER BY podem ser escritos em qualquer ordem; a execução é sempre filtrar, agrupar, filtrar os grupos, ordenar e só então LIMIT e START. ORDER BY e HAVING aceitam os apelidos do SELECT e chamadas agregadas, e o LIMIT vale para os grupos, não para as linhas de origem. Uma coluna que está no GROUP BY e no SELECT mantém o próprio nome; um grupo que não foi selecionado continua saindo como group.0, group.1.",
+      "example": "SELECT city, count() AS total, sum(amount) AS revenue\nFROM sale\nGROUP BY city\nHAVING total > 10\nORDER BY revenue DESC\nLIMIT 5;"
+    },
+    {
+      "name": "Agregados da tabela toda e contagem de distintos",
+      "desc": "GROUP ALL agrega todas as linhas em um único resultado (mesmo em tabela vazia, onde count() vale 0). count(DISTINCT x) conta os valores diferentes e ignora nulos, e chamadas agregadas podem se combinar em expressões como sum(x) / count(). Sem GROUP BY, SELECT VALUE count() devolve o próprio número, o que ajuda quando ele é uma coluna de subconsulta.",
+      "example": "SELECT count() AS rows, count(DISTINCT customer) AS customers, sum(amount) / count() AS average FROM sale GROUP ALL;\nSELECT VALUE count() FROM sale WHERE city = 'SP';"
+    },
+    {
+      "name": "Janelas de horário, fusos e células no mapa",
+      "desc": "time::clock(t, fuso) devolve 'HH:mm' no fuso informado, então uma janela diária vira um BETWEEN sobre texto; BETWEEN é inclusivo e é reescrito como duas comparações. geo::cell(ponto, metros) devolve a célula da grade que contém o ponto como Polygon GeoJSON, o que a torna uma chave natural de GROUP BY e faz o mapa do Workspace desenhá-la direto. O exemplo ranqueia as células de 500 m mais movimentadas entre 18:00 e 19:30 em São Paulo, todos os dias. Os horários guardados são UTC, então passe sempre o fuso.",
+      "example": "SELECT geo::cell(pos, 500) AS trecho, count() AS pings, count(DISTINCT placa) AS carros\nFROM transito\nWHERE time::clock(quando, 'America/Sao_Paulo') BETWEEN '18:00' AND '19:30'\nGROUP BY trecho\nORDER BY pings DESC\nLIMIT 10;"
+    },
+    {
+      "name": "Filtro espacial que usa o índice GEO",
+      "desc": "Com um índice GEO (geoespacial) na coluna, WHERE geo::contains(polígono, coluna) lê só as células geohash que cobrem o polígono. O polígono pode ser um literal, uma variável ou $parent.geo em uma subconsulta correlacionada, e a condição pode ser uma parte de um AND. A varredura da tabela continua sendo usada quando o polígono depende da linha ou cobre uma área muito grande. Rode EXPLAIN para ver a estratégia.",
+      "example": "DEFINE INDEX transito_geo ON TABLE transito COLUMNS pos GEO;\nSELECT id, nome,\n  (SELECT VALUE count() FROM transito WHERE geo::contains($parent.geo, pos)) AS pings\nFROM trechos ORDER BY pings DESC;\nEXPLAIN SELECT * FROM transito WHERE geo::contains($area, pos);"
     },
     {
       "name": "JOIN",
@@ -991,6 +1011,16 @@
       "name": "search::score e search::highlight",
       "desc": "Projetam relevância e trecho destacado de uma correspondência textual indexada.",
       "example": "SELECT title, search::score() AS score, search::highlight(body) AS snippet FROM article WHERE body @@ \"gato\" ORDER BY search::score() DESC;"
+    },
+    {
+      "name": "time::clock, time::floor e fusos horários",
+      "desc": "Todos os extratores de time:: (year, month, day, hour, minute, second, wday, yday) aceitam um fuso horário como último argumento e usam UTC sem ele. time::clock devolve 'HH:mm'. time::floor(t, '10m' | '1h' | '1d' [, fuso]) devolve o início da janela que contém t, alinhada à meia-noite local.",
+      "example": "RETURN time::hour(<datetime>'2026-11-20T21:30:00Z', 'America/Sao_Paulo');\nRETURN time::clock(<datetime>'2026-11-20T21:30:00Z', 'America/Sao_Paulo');\nRETURN time::floor(<datetime>'2026-11-20T21:37:12Z', '10m');"
+    },
+    {
+      "name": "geo::cell",
+      "desc": "geo::cell(ponto, metros) devolve o Polygon da célula da grade, com cerca de metros de lado, que contém o ponto. A grade é fixa, então pontos da mesma célula recebem o mesmo polígono.",
+      "example": "SELECT geo::cell(pos, 500) AS cell, count() AS pings FROM transito GROUP BY cell ORDER BY pings DESC LIMIT 10;"
     }
   ],
   "sql_operators_title": "Operadores",
@@ -1436,6 +1466,18 @@
       "date": "2026-11-23",
       "changes": [
         "API de atividade: instruções em execução e lentas, estatísticas por fingerprint, sessões, transações abertas, conflitos de versão e as ações de cancelar, reverter e encerrar sessão em /admin/v1/activity. O executor agora interrompe de verdade as instruções canceladas e as que estouram o timeout. Novas métricas axe_queries_running, axe_queries_cancelled_total, axe_sessions_open, axe_txn_open, axe_txn_conflicts_total e axe_slow_query_threshold_seconds; AXON_SLOW_QUERY_MS, AXON_ACTIVITY_SLOW_BUFFER e AXON_ACTIVITY_CAPTURE_SQL."
+      ]
+    },
+    {
+      "version": "Não lançada",
+      "date": "Em desenvolvimento",
+      "changes": [
+        "Agregação no AxonQL: GROUP BY, HAVING e ORDER BY em qualquer ordem (a execução é sempre filtrar, agrupar, filtrar grupos, ordenar e limitar), ORDER BY e LIMIT sobre os grupos, GROUP ALL, count(DISTINCT x), chamadas agregadas dentro de expressões, colunas de grupo com nome (um grupo não selecionado continua saindo como group.N) e SELECT VALUE count() devolvendo o número.",
+        "Sintaxe nova: BETWEEN e NOT BETWEEN, literais de objeto e de array que leem campos da linha e FROM $variável.",
+        "Funções novas: fuso horário como último argumento dos extratores de time::, time::clock, time::floor e geo::cell.",
+        "Consultas mais rápidas: a agregação lê a tabela em fluxo, um índice pode atender uma parte de um AND, geo::contains usa o índice GEO e subconsultas que não dependem da linha rodam uma vez por statement.",
+        "A manutenção do índice GEO deixou de varrer o índice inteiro a cada escrita (uma chave reversa por registro); carregar muitos pontos em tabela com índice GEO não é mais quadrático.",
+        "avg e a divisão arredondam em 10 casas decimais em vez de falhar quando o resultado não divide exatamente."
       ]
     }
   ],
