@@ -895,6 +895,11 @@
       "example": "UNRELATE pessoa:ana->amigo_de->pessoa:edu;\nUNRELATE pessoa:dani->segue;\n\nSELECT id, ->segue->pessoa->segue->pessoa AS amigos_de_amigos FROM pessoa:ana;\nSELECT id, ->comprou->produto.nome AS produtos FROM pessoa;\nSELECT id, ->comprou->produto AS produtos FROM pessoa:ana FETCH produtos;"
     },
     {
+      "name": "Como dois registros se ligam",
+      "desc": "graph::trail(origem, destino, tipo, saltos, sentido) devolve o menor caminho entre dois registros em uma linha por registro, com uma coluna com o nome do tipo de aresta apontando para o próximo, e a aba Graph do Workspace desenha só esse caminho. graph::path devolve o mesmo caminho em uma lista de ids e graph::connected responde verdadeiro ou falso. Tipo, saltos (padrão 10) e sentido são opcionais; o sentido é 'out' (segue as setas, padrão), 'in' ou 'both', e o tipo null deixa o caminho usar qualquer aresta. Lista vazia quer dizer que não há caminho. O FROM também aceita uma lista de ids de registro e carrega os registros, e o id de uma linha é igual a um id de registro em =, IN e NOT IN.",
+      "example": "RELATE pessoa:ana->segue->pessoa:caio;\nRELATE pessoa:caio->segue->pessoa:dani;\n\nRETURN graph::trail(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::path(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::trail(pessoa:dani, pessoa:ana, null, 5, 'both');"
+    },
+    {
       "name": "Travessia inversa e bidirecional",
       "desc": "Use <-etiqueta<-tabela para seguir a relação de entrada e <->etiqueta<->tabela para considerar os dois sentidos. A tabela no fim da expressão restringe o tipo de registro retornado.",
       "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
@@ -1506,6 +1511,21 @@
         "Travessias podem ser encadeadas (->a->t->b->t), um campo depois da travessia devolve esse campo de cada registro alcançado e FETCH vale para colunas calculadas por uma travessia.",
         "DROP TABLE agora sobrevive ao reinício (a tabela voltava); campos, índices e eventos dela saem do plano de controle junto.",
         "O pipeline do Docker deixou de mover a tag latest em push na main."
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "date": "2026-11-24",
+      "changes": [
+        "O id de registro escrito à mão (pessoa:dani) e o alcançado por uma travessia (->segue->pessoa) passam a ser o mesmo registro: = e IN funcionam, e graph::path e graph::connected encontram o caminho."
+      ]
+    },
+    {
+      "version": "0.6.2",
+      "date": "2026-11-24",
+      "changes": [
+        "graph::trail devolve o caminho entre dois registros em linhas para a aba Graph do Workspace, e graph::path, graph::connected e graph::trail aceitam um sentido opcional ('out', 'in' ou 'both').",
+        "FROM aceita uma lista de ids de registro (FROM $caminho, FROM [pessoa:ana, pessoa:caio]) e carrega os registros; o id de uma linha (texto) é igual a um id de registro em =, IN e NOT IN, e o IN aceita o valor único que uma travessia devolve."
       ]
     }
   ],
