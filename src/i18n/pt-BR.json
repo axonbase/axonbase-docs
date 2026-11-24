@@ -1603,6 +1603,17 @@
         "Correções: DELETE libera a entrada do índice UNIQUE, erros do servidor escapam quebras de linha no JSON e a auditoria aceita chave numérica. A imagem Docker passa a incluir o módulo axonbase-pl.",
         "AxonBase Enterprise 0.8.0: AxonPL no Workspace com árvore de programas, formulário de assinatura e editor Python, Executar, Depurar (breakpoints, pilha, variáveis, avaliação), linha do tempo de consultas e mapa de calor, e a opção de efetivar para administradores."
       ]
+    },
+    {
+      "version": "0.9.1",
+      "date": "2026-11-24",
+      "changes": [
+        "Correção: o login deixa de parar de funcionar depois que uma procedure falha. Desfazer uma sessão reconstruía o catálogo a partir do plano de controle e apagava o usuário root do arranque, então nenhum novo login funcionava até reiniciar o servidor. O catálogo agora lembra os usuários de arranque e os restaura.",
+        "Correção: uma procedure que falha (ou qualquer CANCEL) deixa de custar segundos. Desfazer uma sessão reexecutava todo o plano de controle, de todos os bancos, mesmo sem DDL, e o custo crescia a cada falha (3,5 s, 11,7 s, 27 s num servidor com dados). O catálogo só é reconstruído quando houve DDL na transação; a mesma chamada leva cerca de 200 ms.",
+        "Correção: aritmética do AxonQL. Inteiro com inteiro continua inteiro (10 - 2, UPDATE ... SET n = n - 2, sum, math::sum, math::abs, math::product) e o estouro vira decimal exato. NULL e NONE se propagam: antes NONE + 5 dava 10, 5 * NONE dava 25 e um campo ausente em a + b virava a + a. Operando que não é número é erro claro, e não 0. 5 % 0 informa divisão por zero, e 2 ** 10000, math::sqrt(-1), math::ln(0) e math::pow(10, 1000) informam erro de intervalo no lugar de Infinity ou NaN, que não são JSON válido. 'a' + 'b' dá ab. Divisão exata de inteiros e média exata continuam inteiras.",
+        "Novo exemplo examples/axonpl-delivery: funções, procedures e um package de um fluxo de pedidos de delivery, com parâmetros tipados para o formulário do Workspace mostrar a entrada certa de cada um.",
+        "Enterprise 0.8.1: o console do Workspace mostra a mensagem do motor e o traceback quando uma instrução falha, em vez de só 'O AxonBase devolveu um erro'."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
