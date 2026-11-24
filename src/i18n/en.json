@@ -1603,6 +1603,17 @@
         "Fixes: DELETE frees the UNIQUE index entry, server errors escape line breaks in JSON, and the audit accepts a numeric key. The Docker image now includes the axonbase-pl module.",
         "AxonBase Enterprise 0.8.0: AxonPL in the Workspace with a program tree, signature form and Python editor, Run, Debug (breakpoints, stack, variables, evaluation), query timeline and heat map, and the Commit option for administrators."
       ]
+    },
+    {
+      "version": "0.9.1",
+      "date": "2026-11-24",
+      "changes": [
+        "Fix: signing in no longer stops working after a procedure fails. Undoing a session rebuilt the catalog from the control plane and erased the startup root user, so no new sign-in worked until the server restarted. The catalog now remembers startup users and restores them.",
+        "Fix: a failing procedure (or any CANCEL) no longer costs seconds. Undoing a session replayed the whole control plane, from every database, even when no DDL had run, and the cost grew with each failure (3.5 s, 11.7 s, 27 s on a populated server). The catalog is now rebuilt only when DDL ran during the transaction; the same call takes about 200 ms.",
+        "Fix: AxonQL arithmetic. Integer with integer stays integer (10 - 2, UPDATE ... SET n = n - 2, sum, math::sum, math::abs, math::product) and an overflow becomes an exact decimal. NULL and NONE propagate: before, NONE + 5 gave 10, 5 * NONE gave 25 and a missing field in a + b became a + a. A non-numeric operand is a clear error instead of 0. 5 % 0 reports division by zero, and 2 ** 10000, math::sqrt(-1), math::ln(0) and math::pow(10, 1000) report an out-of-range error instead of Infinity or NaN, which are not valid JSON. 'a' + 'b' gives ab. Exact integer division and exact averages stay integer.",
+        "New example examples/axonpl-delivery: functions, procedures and a package for a delivery order flow, with typed parameters so the Workspace form shows the right input for each one.",
+        "Enterprise 0.8.1: the Workspace console shows the engine message and the traceback when a statement fails, instead of only 'AxonBase returned an error'."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
