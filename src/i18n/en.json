@@ -851,8 +851,28 @@
     },
     {
       "name": "Aggregation",
-      "desc": "GROUP BY works with count, sum, avg, min, and max aggregate calls.",
+      "desc": "GROUP BY works with the count, sum, avg, min, and max aggregate calls. avg and division round to 10 decimal places instead of failing on values that do not divide exactly.",
       "example": "SELECT city, count() AS total FROM person GROUP BY city;"
+    },
+    {
+      "name": "Ordering, filtering and limiting groups",
+      "desc": "GROUP BY, HAVING and ORDER BY can be written in any order; they always run as filter, group, filter groups, sort, then LIMIT and START. ORDER BY and HAVING accept the SELECT aliases and aggregate calls, and LIMIT applies to the groups, not to the source rows. A column that is in GROUP BY and in the SELECT list keeps its own name; a group that is not selected still comes back as group.0, group.1.",
+      "example": "SELECT city, count() AS total, sum(amount) AS revenue\nFROM sale\nGROUP BY city\nHAVING total > 10\nORDER BY revenue DESC\nLIMIT 5;"
+    },
+    {
+      "name": "Whole-table aggregates and distinct counts",
+      "desc": "GROUP ALL aggregates every row into one result (even on an empty table, where count() is 0). count(DISTINCT x) counts different non-null values, and aggregate calls can be combined in expressions such as sum(x) / count(). Without GROUP BY, SELECT VALUE count() returns the number itself, which makes it handy as a column of a subquery.",
+      "example": "SELECT count() AS rows, count(DISTINCT customer) AS customers, sum(amount) / count() AS average FROM sale GROUP ALL;\nSELECT VALUE count() FROM sale WHERE city = 'SP';"
+    },
+    {
+      "name": "Time windows, time zones and map cells",
+      "desc": "time::clock(t, zone) gives 'HH:mm' in a time zone, so a daily window is a BETWEEN on text; BETWEEN is inclusive and is rewritten to two comparisons. geo::cell(point, meters) returns the grid cell that contains the point as a GeoJSON Polygon, which makes it a natural GROUP BY key and is drawn directly on the Workspace map. The example ranks the busiest 500 m cells between 18:00 and 19:30 in Sao Paulo, every day. Stored times are UTC, so always pass the zone.",
+      "example": "SELECT geo::cell(pos, 500) AS trecho, count() AS pings, count(DISTINCT placa) AS carros\nFROM transito\nWHERE time::clock(quando, 'America/Sao_Paulo') BETWEEN '18:00' AND '19:30'\nGROUP BY trecho\nORDER BY pings DESC\nLIMIT 10;"
+    },
+    {
+      "name": "Spatial filter that uses the GEO index",
+      "desc": "With a GEO index on the column, WHERE geo::contains(polygon, column) reads only the geohash cells that cover the polygon. The polygon can be a literal, a variable or $parent.geo in a correlated subquery, and the condition can be one part of an AND. A table scan is still used when the polygon depends on the row or covers a very large area. Run EXPLAIN to see the strategy.",
+      "example": "DEFINE INDEX transito_geo ON TABLE transito COLUMNS pos GEO;\nSELECT id, nome,\n  (SELECT VALUE count() FROM transito WHERE geo::contains($parent.geo, pos)) AS pings\nFROM trechos ORDER BY pings DESC;\nEXPLAIN SELECT * FROM transito WHERE geo::contains($area, pos);"
     },
     {
       "name": "JOIN",
@@ -991,6 +1011,16 @@
       "name": "search::score and search::highlight",
       "desc": "Project relevance score and highlighted snippet from an indexed text match.",
       "example": "SELECT title, search::score() AS score, search::highlight(body) AS snippet FROM article WHERE body @@ \"cat\" ORDER BY search::score() DESC;"
+    },
+    {
+      "name": "time::clock, time::floor and time zones",
+      "desc": "All time:: extractors (year, month, day, hour, minute, second, wday, yday) accept a time zone as the last argument and use UTC without it. time::clock returns 'HH:mm'. time::floor(t, '10m' | '1h' | '1d' [, zone]) returns the start of the window that contains t, aligned to local midnight.",
+      "example": "RETURN time::hour(<datetime>'2026-11-20T21:30:00Z', 'America/Sao_Paulo');\nRETURN time::clock(<datetime>'2026-11-20T21:30:00Z', 'America/Sao_Paulo');\nRETURN time::floor(<datetime>'2026-11-20T21:37:12Z', '10m');"
+    },
+    {
+      "name": "geo::cell",
+      "desc": "geo::cell(point, meters) returns the Polygon of the grid cell, about meters on each side, that contains the point. The grid is fixed, so points in the same cell get the same polygon.",
+      "example": "SELECT geo::cell(pos, 500) AS cell, count() AS pings FROM transito GROUP BY cell ORDER BY pings DESC LIMIT 10;"
     }
   ],
   "sql_operators_title": "Operators",
@@ -1436,6 +1466,18 @@
       "date": "2026-11-23",
       "changes": [
         "Activity API: running and slow statements, per-fingerprint stats, sessions, open transactions, version conflicts, and cancel, roll back and end-session actions under /admin/v1/activity. The executor now stops cancelled and timed-out statements for real. New metrics axe_queries_running, axe_queries_cancelled_total, axe_sessions_open, axe_txn_open, axe_txn_conflicts_total and axe_slow_query_threshold_seconds; AXON_SLOW_QUERY_MS, AXON_ACTIVITY_SLOW_BUFFER and AXON_ACTIVITY_CAPTURE_SQL."
+      ]
+    },
+    {
+      "version": "Unreleased",
+      "date": "Under development",
+      "changes": [
+        "AxonQL aggregation: GROUP BY, HAVING and ORDER BY in any order (always run as filter, group, filter groups, sort, limit), ORDER BY and LIMIT over the groups, GROUP ALL, count(DISTINCT x), aggregate calls inside expressions, named group columns (a group that is not selected still comes back as group.N), and SELECT VALUE count() returning the number.",
+        "New syntax: BETWEEN and NOT BETWEEN, object and array literals that read fields of the row, and FROM $variable.",
+        "New functions: time zone as the last argument of the time:: extractors, time::clock, time::floor and geo::cell.",
+        "Faster queries: aggregation reads the table as a stream, an index can serve one part of an AND, geo::contains uses the GEO index, and subqueries that do not depend on the row run once per statement.",
+        "GEO index maintenance no longer scans the whole index on every write (a reverse key per record); loading many points into a table with a GEO index is no longer quadratic.",
+        "avg and division round to 10 decimal places instead of failing when the result does not divide exactly."
       ]
     }
   ],
