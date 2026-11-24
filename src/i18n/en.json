@@ -336,6 +336,20 @@
       "desc": "Query execution timeout in milliseconds."
     },
     {
+      "key": "storage_sync",
+      "env": "AXON_STORAGE_SYNC",
+      "type": "string",
+      "default": "batch",
+      "desc": "When the write log is forced to disk: batch (fsync every 1 second), always (on every write) or off. Also accepted as -Daxon.storage.sync. See Scale and durability."
+    },
+    {
+      "key": "-",
+      "env": "AXON_PL_DEBUG_IDLE",
+      "type": "int",
+      "default": "300",
+      "desc": "Environment only. Seconds a paused AxonPL debug session may wait for a command before it is cancelled and rolled back. 0 turns it off."
+    },
+    {
       "key": "txn_timeout",
       "env": "AXON_TXN_TIMEOUT",
       "type": "long",
@@ -1194,7 +1208,7 @@
   "http_graphql_query_example": "query { person { id name age } }",
   "http_graphql_query_curl": "curl -X POST http://127.0.0.1:8000/graphql -H 'Content-Type: application/json' -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data '{\"query\":\"{ person { id name } }\"}'",
   "http_graphql_mutations_title": "Mutations",
-  "http_graphql_mutations_desc": "The current GraphQL endpoint does not execute mutations. Use POST /sql or JSON-RPC to write data.",
+  "http_graphql_mutations_desc": "The current GraphQL endpoint does not execute mutations. Use POST /sql or JSON-RPC to write data. A stored AxonPL program can be called by name with the call(name:, args:) field, for example { call(name: \"dobro\", args: [5]) }.",
   "http_graphql_mutation_example": "# GraphQL mutations are not supported.\nCREATE person CONTENT {name: \"Ana\"};",
   "http_graphql_mutation_curl": "curl -X POST http://127.0.0.1:8000/sql -H 'Axon-Ns: test' -H 'Axon-Db: dev' --data 'CREATE person CONTENT {name: \"Ana\"}'",
   "http_graphql_subscriptions_title": "Subscriptions",
@@ -1203,7 +1217,7 @@
   "http_mcp_title": "MCP (Model Context Protocol)",
   "http_mcp_intro": "AxonBase exposes an MCP (Model Context Protocol) server over SSE (Server-Sent Events) at /mcp. AI coding agents like Claude Code, Cursor, VS Code, and bolt.diy connect to discover tables, query data, and retrieve schema information using structured tools, not arbitrary AxonQL.",
   "http_mcp_tools_title": "Available Tools",
-  "http_mcp_tools_desc": "The MCP server exposes two read-only tools by default. Use tools/list to discover them.",
+  "http_mcp_tools_desc": "The MCP server exposes three tools by default: axon_select and axon_info only read, and axon_call calls a stored AxonPL function, procedure or package function by name. Use tools/list to discover them.",
   "http_mcp_tools_list_req": "{\"id\":1,\"method\":\"tools/list\"}",
   "http_mcp_tools_list_curl": "curl -X POST http://127.0.0.1:8000/mcp/message -H 'Content-Type: application/json' --data '{\"id\":1,\"method\":\"tools/list\"}'",
   "http_mcp_tools_call_title": "Calling Tools",
@@ -1253,7 +1267,7 @@
   "http_mcp_limitations_title": "Limitations",
   "http_mcp_limitations_desc": "The current MCP implementation has the following constraints:",
   "http_mcp_limitations_list": [
-    "Read-only by default: axon_query, axon_create, and axon_export are not exposed. Only axon_select and axon_info are available.",
+    "Read-only by default for data access: axon_query, axon_create, and axon_export are not exposed. axon_select and axon_info read, and axon_call runs a stored AxonPL program with the role of the caller (a viewer cannot call a procedure).",
     "No prompts support: prompts/list is not implemented.",
     "Authentication: when require_auth is enabled, clients must send Authorization: Bearer <token> headers on the SSE connection and every message POST.",
     "Single session per SSE connection: each SSE connection creates one MCP session. The session is tied to the HTTP connection lifecycle.",
@@ -1573,6 +1587,21 @@
         "The key is never stored (KEY ENV names an environment variable); retries with backoff on 429 and 5xx, query cache, concurrency limit, AXON_EMBEDDING_ALLOWED_HOSTS and metrics axe_embedding_*.",
         "INFO FOR DATABASE lists the embeddings (never the key) and INFO FOR TABLE shows which embedding a field follows.",
         "AxonBase Enterprise 0.7.0: embeddings panel with a Test button, fields that follow an embedding in the DDL editor, text search box in the Vector tab, new snippets and autocomplete."
+      ]
+    },
+    {
+      "version": "0.9.0",
+      "date": "2026-11-24",
+      "changes": [
+        "Single-node scale: storage without a global monitor (1024 locks by key range, lock-free iterator reads, value and version in one atomic batch). Each write command stores the record, the indexes and the edges in one atomic batch, so a command that fails halfway leaves nothing behind.",
+        "SELECT ... LIMIT stops scanning at the limit, ORDER BY ... LIMIT uses top-K, and the GEO index keeps the coordinates in its entry and answers the N nearest (GEO_KNN in EXPLAIN). Vector indexes, version counters and audit have a constant cost per write.",
+        "AXON_STORAGE_SYNC chooses the durability of the write log: batch (default, fsync every 1 second), always (zero loss window) and off. See Scale and durability for the measurements, including the HTTP load in a Linux container.",
+        "AxonPL: CREATE [OR REPLACE] FUNCTION, PROCEDURE and PACKAGE with a Python subset body, DROP, INFO FOR, CALL and pkg::function. Functions work in SELECT, WHERE and DEFINE FIELD ... ASSERT.",
+        "AxonPL runtime: limits for steps, time, depth and memory, the db.* and log.* modules, atomicity by implicit transaction or savepoint, SECURITY DEFINER, import validation in CREATE and a lock for package global state. Errors -32040 and -32041 carry a traceback.",
+        "AxonPL debugger: breakpoints, stepping, call stack, variables, expression evaluation, line profile and query timeline through /admin/v1/debug. It runs in a transaction that is rolled back by default.",
+        "Programs can be called by name through MCP (axon_call) and GraphQL (call). New metrics axe_pl_*, and the optional variable AXON_PL_DEBUG_IDLE.",
+        "Fixes: DELETE frees the UNIQUE index entry, server errors escape line breaks in JSON, and the audit accepts a numeric key. The Docker image now includes the axonbase-pl module.",
+        "AxonBase Enterprise 0.8.0: AxonPL in the Workspace with a program tree, signature form and Python editor, Run, Debug (breakpoints, stack, variables, evaluation), query timeline and heat map, and the Commit option for administrators."
       ]
     }
   ],
@@ -3351,6 +3380,53 @@
           "Backup runs. result is success or failure."
         ]
       ]
+    },
+    {
+      "title": "AxonPL",
+      "rows": [
+        [
+          "axe_pl_calls_total",
+          "counter",
+          "-",
+          "Calls to functions, procedures and package functions."
+        ],
+        [
+          "axe_pl_errors_total",
+          "counter",
+          "-",
+          "Calls that ended in a program error (-32040)."
+        ],
+        [
+          "axe_pl_limit_errors_total",
+          "counter",
+          "-",
+          "Calls stopped by a limit (-32041)."
+        ],
+        [
+          "axe_pl_steps_total",
+          "counter",
+          "-",
+          "Steps executed by programs."
+        ],
+        [
+          "axe_pl_seconds_total",
+          "counter",
+          "-",
+          "Time spent running programs, in seconds."
+        ],
+        [
+          "axe_pl_debug_sessions",
+          "gauge",
+          "-",
+          "Debug sessions active now."
+        ],
+        [
+          "axe_pl_debug_timeouts_total",
+          "counter",
+          "-",
+          "Debug sessions cancelled for being idle."
+        ]
+      ]
     }
   ],
   "obs_scrape_title": "Scrape configuration",
@@ -3745,5 +3821,770 @@
     ]
   ],
   "act_examples_title": "Examples",
-  "act_examples_code": "# who is running what right now (viewer)\ncurl -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries\n\n# slow statements grouped by shape, worst total time first\ncurl -H \"Authorization: Bearer $TOKEN\" \"http://localhost:8000/admin/v1/activity/top?orderBy=total&limit=20\"\n\n# cancel a running statement (operator)\ncurl -X POST -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries/<id>/cancel\n\n# roll back an open transaction (operator) and end a session (admin)\ncurl -X POST   -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/transactions/<session>/rollback\ncurl -X DELETE -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/sessions/<session>"
+  "act_examples_code": "# who is running what right now (viewer)\ncurl -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries\n\n# slow statements grouped by shape, worst total time first\ncurl -H \"Authorization: Bearer $TOKEN\" \"http://localhost:8000/admin/v1/activity/top?orderBy=total&limit=20\"\n\n# cancel a running statement (operator)\ncurl -X POST -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/queries/<id>/cancel\n\n# roll back an open transaction (operator) and end a session (admin)\ncurl -X POST   -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/transactions/<session>/rollback\ncurl -X DELETE -H \"Authorization: Bearer $TOKEN\" http://localhost:8000/admin/v1/activity/sessions/<session>",
+  "nav_programs": "Programming",
+  "nav_axonpl": "AxonPL: functions and packages",
+  "nav_scale": "Scale and durability",
+  "axonpl_title": "AxonPL: functions, procedures and packages",
+  "axonpl_intro": "AxonPL is the programming language built into AxonBase 0.9.0. It is a small subset of Python that runs inside the server, next to the data, so a piece of business logic is stored once and called by name from a query (SQL, Structured Query Language), from a script or from an agent. This page covers the language, the limits, the channels that can call it and the debugger. The debugger has an API (Application Programming Interface) under /admin/v1. That API works over HTTP (HyperText Transfer Protocol).",
+  "axonpl_sections": [
+    {
+      "id": "kinds",
+      "title": "Three kinds of program",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "A function is read-only and can appear inside a query. A procedure may write and is started with CALL. A package groups constants and functions under one name and can keep state between calls."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Kind",
+            "Writes data",
+            "Where it can be used",
+            "How to call"
+          ],
+          "rows": [
+            [
+              "FUNCTION",
+              "No",
+              "SELECT, WHERE, DEFINE FIELD ... ASSERT, RETURN",
+              "name(args) or fn::name(args)"
+            ],
+            [
+              "PROCEDURE",
+              "Yes",
+              "Statements",
+              "CALL name(args)"
+            ],
+            [
+              "PACKAGE",
+              "Functions read, and a package function called with CALL may write",
+              "Statements and expressions",
+              "pkg::function(args)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "syntax",
+      "title": "Syntax",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The body goes between $$ delimiters. When the body itself contains $$, use a tagged delimiter such as $x$ ... $x$. Lines inside the body are numbered from 1."
+        },
+        {
+          "type": "code",
+          "code": "CREATE [OR REPLACE] FUNCTION name(param [type] [= default], ...)\n    [RETURNS type] [SECURITY DEFINER | SECURITY INVOKER] AS $$\n    ...body in Python syntax...\n$$;\n\nCREATE [OR REPLACE] PROCEDURE name(param [type] [= default], ...)\n    [SECURITY DEFINER | SECURITY INVOKER] AS $$ ... $$;\n\nCREATE [OR REPLACE] PACKAGE name AS $$ ... $$;\n\nDROP FUNCTION name;  DROP PROCEDURE name;  DROP PACKAGE name;\nINFO FOR FUNCTION name;  INFO FOR PROCEDURE name;  INFO FOR PACKAGE name;\nCALL name(args);\nCALL pkg::function(args);\nRETURN pkg::function(args);",
+          "lang": "sql"
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Parameters accept a type (for example int, number or string) and a default value. Arguments are validated and converted: '5' and 5.0 become 5 for an int parameter, and 'abc' is rejected with a message naming the argument. A missing argument and too many arguments are also errors.",
+            "CREATE refuses a name that already exists. CREATE OR REPLACE swaps the program and raises its version, which INFO FOR shows together with the parameters, the return type, the docstring and the source. A name cannot change kind: a function cannot be replaced by a procedure.",
+            "Names that clash with the language are reserved, for example count, now, fn, math, string and db. A syntax error is reported when the program is created, not when it is first called.",
+            "Names that start with an underscore are private to a package and cannot be called from outside. INFO FOR PACKAGE lists the public constants and functions.",
+            "SECURITY INVOKER (the default) runs with the identity of whoever calls. SECURITY DEFINER runs with the identity of the owner, so Data Rules and permissions are those of the owner. Only an admin may create a DEFINER program."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "function",
+      "title": "A function in a query",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "This function applies a discount. It is used in the select list, in WHERE and in the ASSERT of a field, and also called directly."
+        },
+        {
+          "type": "code",
+          "code": "CREATE FUNCTION desconto(valor, pct int = 10) RETURNS number AS $$\n    return valor * (100 - pct) / 100\n$$;\n\nSELECT nome, desconto(preco) AS final FROM item ORDER BY nome;\nSELECT * FROM item WHERE desconto(preco, 50) > 40;\nRETURN fn::desconto(50);          -- 45\nRETURN desconto(50, 20);          -- 40\n\nDEFINE FIELD qtd ON TABLE item ASSERT desconto($value, 0) >= 0;",
+          "lang": "sql"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "title": "The db and log modules",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Inside a program, db runs AxonQL and log writes messages. Parameters are named and written as $name in the statement. The session variables of the caller are restored when the call ends."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Call",
+            "Returns"
+          ],
+          "rows": [
+            [
+              "db.query(sql, params)",
+              "All rows as a list"
+            ],
+            [
+              "db.one(sql, params)",
+              "The first row, or null when there is none"
+            ],
+            [
+              "db.count(sql, params)",
+              "The number of rows, or the value of a single count()"
+            ],
+            [
+              "db.exec(sql, params)",
+              "The result of a statement that writes (procedures only)"
+            ],
+            [
+              "db.rid(table, id)",
+              "A record id value"
+            ],
+            [
+              "log.info / log.warn / log.error, print",
+              "Writes to the call log and to the server log"
+            ]
+          ]
+        },
+        {
+          "type": "code",
+          "code": "CREATE FUNCTION le(grupo) AS $$\n    rows = db.query(\"SELECT * FROM p WHERE g = $g ORDER BY n\", {\"g\": grupo})\n    primeiro = db.one(\"SELECT * FROM p WHERE g = $g ORDER BY n\", {\"g\": grupo})\n    nenhum = db.one(\"SELECT * FROM p WHERE g = $g\", {\"g\": \"zzz\"})\n    total = db.count(\"SELECT * FROM p WHERE g = $g\", {\"g\": grupo})\n    return {\"n\": len(rows), \"primeiro\": primeiro[\"n\"], \"nenhum\": nenhum, \"total\": total,\n            \"r\": db.rid(\"p\", 7)}\n$$;\n\nRETURN le('a');",
+          "lang": "sql"
+        },
+        {
+          "type": "p",
+          "text": "A function that tries to write fails with a read-only error and nothing is stored. The same statement inside a procedure works, and the procedure must be started with CALL (RETURN name() on a procedure points to CALL)."
+        },
+        {
+          "type": "code",
+          "code": "CREATE PROCEDURE bom() AS $$ return db.exec(\"CREATE x CONTENT {a: 1}\") $$;\nCALL bom();",
+          "lang": "sql"
+        }
+      ]
+    },
+    {
+      "id": "atomicity",
+      "title": "Atomicity",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Every call to a procedure is atomic. Outside a transaction it runs in an implicit one; inside a BEGIN block it runs behind a savepoint. If the program raises an error, only its own writes are undone, indexes included, and the transaction of the caller stays open."
+        },
+        {
+          "type": "code",
+          "code": "DEFINE INDEX ux ON TABLE item COLUMNS code UNIQUE;\n\nCREATE PROCEDURE grava(total, falha_em = -1) AS $$\n    for i in range(total):\n        if i == falha_em:\n            raise ValueError(\"falha no registro \" + str(i))\n        db.exec(\"CREATE item CONTENT {code: $c}\", {\"c\": i})\n    return total\n$$;\n\nCALL grava(5, 3);   -- error with traceback, no row is kept\nCALL grava(3);      -- the same codes can be written now",
+          "lang": "sql"
+        },
+        {
+          "type": "p",
+          "text": "A program cannot change scope with USE and cannot control transactions with BEGIN, COMMIT or CANCEL. Schema statements (DDL, Data Definition Language) inside a program require the admin role. Data Rules and table permissions apply to every db call with the identity of the caller (or of the owner, in a DEFINER program). A viewer cannot call a procedure."
+        }
+      ]
+    },
+    {
+      "id": "packages",
+      "title": "Packages, imports and global state",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "A package is a module. Top-level assignments are constants or global state, and each def is a function. Another package is imported with import, and its functions are called as name.function(). The built-in modules math, json, db and log can be imported too."
+        },
+        {
+          "type": "code",
+          "code": "CREATE PACKAGE base AS $$\nIMPOSTO = 10\ndef com_imposto(v):\n    return v + v * IMPOSTO / 100\n$$;\n\nCREATE PACKAGE loja AS $$\nimport base\ndef total(v):\n    return base.com_imposto(v) + 1\n$$;\n\nRETURN loja::total(100);          -- 111\nCALL base::com_imposto(100);      -- 110",
+          "lang": "sql"
+        },
+        {
+          "type": "ul",
+          "items": [
+            "The import is checked when the package is created. A package that does not exist, a name that is a function and not a package, and any cycle (including a replace that closes one, reported as a -> c -> b -> a) are refused, and the original keeps working.",
+            "DROP PACKAGE lists the packages that still import the one being dropped and refuses until they are removed.",
+            "Global state lives as long as the package is loaded. CREATE OR REPLACE PACKAGE loads it again from the new source, so a counter starts from the new initial value.",
+            "A package that holds only immutable constants runs its functions in parallel. A package whose functions change globals (with global, or by changing a list or dictionary in place) takes a lock: calls to that package run one at a time, which keeps a counter free of lost updates under concurrent calls. Functions and procedures without package state never take that lock."
+          ]
+        },
+        {
+          "type": "code",
+          "code": "CREATE PACKAGE cont AS $$\nn = 0\ndef inc():\n    global n\n    n = n + 1\n    return n\n$$;\n\nRETURN cont::inc();   -- 1\nRETURN cont::inc();   -- 2",
+          "lang": "sql"
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Limits",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Every call runs under limits. Passing one stops the call and returns error -32041. Any other error raised by the program, such as a division by zero or a raise, returns -32040 with a traceback in Python style that shows the program lines and never Java paths."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Limit",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Steps per call",
+              "1,000,000"
+            ],
+            [
+              "Call depth",
+              "64 frames"
+            ],
+            [
+              "Items per collection",
+              "5,000,000"
+            ],
+            [
+              "Logical memory for block allocations",
+              "64 MB"
+            ],
+            [
+              "Text size",
+              "16,000,000 characters"
+            ],
+            [
+              "Time per call",
+              "AXON_QUERY_TIMEOUT (30,000 ms by default)"
+            ],
+            [
+              "Nesting between SQL and programs",
+              "16 levels"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "A running call can be cancelled from the activity list, the same way as a statement. A runaway loop such as while True stops at the step limit."
+        }
+      ]
+    },
+    {
+      "id": "channels",
+      "title": "Calling from other channels",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Besides POST /sql, a stored program can be called by name through MCP (Model Context Protocol) and GraphQL. These two channels do not run arbitrary AxonQL, so the program is created through /sql and then called by the channel. The caller needs a role that can call it (a viewer cannot call a procedure)."
+        },
+        {
+          "type": "code",
+          "code": "# MCP: tool axon_call\n{\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"axon_call\",\"arguments\":{\"name\":\"util::soma\",\"args\":[1,2]}}}\n\n# GraphQL: field call\n{ call(name: \"dobro\", args: [5]) }",
+          "lang": "bash"
+        },
+        {
+          "type": "p",
+          "text": "A program error comes back in the channel with its code (-32040 or -32041) and the traceback."
+        }
+      ]
+    },
+    {
+      "id": "metrics",
+      "title": "Metrics and configuration",
+      "blocks": [
+        {
+          "type": "table",
+          "headers": [
+            "Series",
+            "Type",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "axe_pl_calls_total",
+              "counter",
+              "Program calls"
+            ],
+            [
+              "axe_pl_errors_total",
+              "counter",
+              "Calls that ended in a program error"
+            ],
+            [
+              "axe_pl_limit_errors_total",
+              "counter",
+              "Calls stopped by a limit"
+            ],
+            [
+              "axe_pl_steps_total",
+              "counter",
+              "Steps executed"
+            ],
+            [
+              "axe_pl_seconds_total",
+              "counter",
+              "Time spent running programs"
+            ],
+            [
+              "axe_pl_debug_sessions",
+              "gauge",
+              "Debug sessions active now"
+            ],
+            [
+              "axe_pl_debug_timeouts_total",
+              "counter",
+              "Debug sessions cancelled for being idle"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "Programs are part of the database: they are replicated in a cluster, restored from a backup, included in the export and import of a database, and listed by INFO FOR DATABASE under functions, procedures and packages. A program that no longer compiles after an upgrade is marked as broken and does not stop the server from starting; replacing it fixes it. The Docker image of 0.9.0 already includes the axonbase-pl module."
+        }
+      ]
+    },
+    {
+      "id": "debugger",
+      "title": "AxonPL debugger",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "A debug session runs a program on its own server thread. It stops at breakpoints and steps, and the client drives it with commands. Every line is a line of the user body: line 1 is the first line of the function or procedure body, and the header the engine adds does not count. In a package the line is the one in the package text."
+        },
+        {
+          "type": "ul",
+          "items": [
+            "By default the run happens in a transaction that is always rolled back, including procedures that write, on error, on stop and on idle. Inside the session the writes are visible to the program and to evaluate, but not to other connections.",
+            "commit=true confirms the transaction at the end and requires the admin role (and the leader, in a cluster). If the run fails or is stopped, nothing is committed. Without commit, schema statements inside the program are refused.",
+            "The debugger uses the identity of whoever starts it, with the same Data Rules and permissions. It needs the same level as CREATE FUNCTION: a role other than viewer and a scope that covers the database.",
+            "The AxonPL limits apply. Time spent stopped at a breakpoint does not count against the AXON_QUERY_TIMEOUT deadline.",
+            "A paused session with no command for longer than the idle time is cancelled and rolled back (state timeout). The default is 300 seconds, and the optional AXON_PL_DEBUG_IDLE (seconds, 0 turns it off) changes it.",
+            "At most 4 sessions can be active at once per server. More than that returns 429."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "endpoints",
+      "title": "Endpoints",
+      "blocks": [
+        {
+          "type": "table",
+          "headers": [
+            "Method",
+            "Route",
+            "Purpose"
+          ],
+          "rows": [
+            [
+              "POST",
+              "/admin/v1/databases/{ns}/{db}/programs/{name}/debug",
+              "Creates and starts the session (201)"
+            ],
+            [
+              "GET",
+              "/admin/v1/debug/sessions",
+              "Lists the sessions the caller can see"
+            ],
+            [
+              "GET",
+              "/admin/v1/debug/sessions/{id}",
+              "Full state"
+            ],
+            [
+              "GET",
+              "/admin/v1/debug/sessions/{id}/events?after=N&wait=MS",
+              "Events (long poll)"
+            ],
+            [
+              "POST",
+              "/admin/v1/debug/sessions/{id}/command",
+              "{\"command\": \"...\"}"
+            ],
+            [
+              "PUT",
+              "/admin/v1/debug/sessions/{id}/breakpoints",
+              "{\"lines\": [3, 7]} replaces the breakpoints"
+            ],
+            [
+              "POST",
+              "/admin/v1/debug/sessions/{id}/evaluate",
+              "{\"expression\": \"a + 1\"}"
+            ],
+            [
+              "DELETE",
+              "/admin/v1/debug/sessions/{id}",
+              "Stops if active, rolls back and forgets (204)"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "For a package, {name} is package::function. The request body is optional in every field."
+        },
+        {
+          "type": "code",
+          "code": "curl -X POST http://127.0.0.1:8000/admin/v1/databases/app/main/programs/grava/debug \\\n  -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/json' \\\n  --data '{\"args\": [10], \"breakpoints\": [3], \"stopOnEntry\": true, \"commit\": false, \"profile\": false}'",
+          "lang": "bash"
+        },
+        {
+          "type": "ul",
+          "items": [
+            "stopOnEntry pauses at the first statement of the body. It is true by default when there are no breakpoints and no profile.",
+            "profile runs without stopping (unless there are breakpoints) and returns the trace at the end. The trace also comes back in every debug session."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commands",
+      "title": "Commands, events and state",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The commands are continue, stepOver, stepInto, stepOut, pause (stops at the next statement) and stop (cancels and rolls back). The steps only work while paused; otherwise the answer is 409. stepInto enters functions of the same program and imported packages; calls made through SQL, such as fn::other(...) inside db.query, are not followed."
+        },
+        {
+          "type": "p",
+          "text": "GET .../events?after=N&wait=MS returns the events with seq greater than N. When there are none and the session is active it waits up to wait milliseconds (at most 30000). The client repeats the call with after=next. The event types are paused, resumed, finished, error, stopped and timeout; the last four are final and carry state, committed and, on error, the error."
+        },
+        {
+          "type": "code",
+          "code": "{ \"events\": [ { \"seq\": 1, \"type\": \"paused\", \"at\": 1790000000000, \"pause\": { } } ], \"next\": 1, \"state\": \"paused\" }",
+          "lang": "json"
+        },
+        {
+          "type": "p",
+          "text": "The state is running, paused, finished, error, stopped or timeout. A pause carries the reason (breakpoint, step or pause), the call stack with the locals of each frame, and the globals. Values are short text (up to 200 characters, three levels of nesting and 20 items per collection). After the end the state also holds result, error, committed, log (the lines of log.* and print) and profile."
+        },
+        {
+          "type": "code",
+          "code": "{\n  \"id\": \"dbg-...\", \"state\": \"paused\", \"program\": \"grava\", \"kind\": \"procedure\",\n  \"function\": \"grava\", \"commit\": false, \"source\": \"...\", \"breakpoints\": [3], \"lastEventSeq\": 2,\n  \"pause\": {\n    \"number\": 1, \"reason\": \"breakpoint\",\n    \"stack\": [ { \"function\": \"grava\", \"program\": \"procedure grava\", \"line\": 3,\n                 \"locals\": [ { \"name\": \"v\", \"type\": \"int\", \"value\": \"10\" } ] } ],\n    \"globals\": [ { \"name\": \"BASE\", \"type\": \"int\", \"value\": \"10\" } ]\n  }\n}",
+          "lang": "json"
+        }
+      ]
+    },
+    {
+      "id": "evaluate",
+      "title": "Evaluate",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "evaluate runs a one-line expression in the top frame of the pause and returns its type and value, for example {\"type\": \"int\", \"value\": \"40\"}. The evaluation works on copies of the variables, so it never changes the program. It sees locals and globals and allows db.query, db.one and db.count, but never a write. Functions of the program and imported modules are not visible. A syntax or run error in the expression returns 400, and outside a pause the answer is 409."
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Profile and query timeline",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The trace lists, per line, how many times it ran and its exclusive time in microseconds (without the time of the functions it calls and without time spent paused). It also lists every db call in order, with the SQL text, duration, rows and the program line that triggered it."
+        },
+        {
+          "type": "code",
+          "code": "{\n  \"lines\":   [ { \"program\": \"procedure grava\", \"line\": 1, \"count\": 1, \"timeUs\": 120 } ],\n  \"queries\": [ { \"sql\": \"CREATE it CONTENT {v: $v}\", \"durationUs\": 340, \"rows\": 1, \"line\": 1 } ]\n}",
+          "lang": "json"
+        }
+      ]
+    },
+    {
+      "id": "errors",
+      "title": "Errors and known limits",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Errors use the standard format of /admin/v1: 400 (BAD_REQUEST), 401, 403 (FORBIDDEN, for example commit=true without admin), 404 (NOT_FOUND), 409 (CONFLICT, a command at the wrong time) and 429 (TOO_MANY_DEBUG_SESSIONS). An error in the debugged program is not an HTTP error: the session moves to the error state with the message and the traceback."
+        },
+        {
+          "type": "ul",
+          "items": [
+            "There is no pause on exception and there are no conditional breakpoints.",
+            "A session keeps the last 2000 events, and finished sessions stay 10 minutes in memory (or until DELETE).",
+            "In a cluster, a debug run without commit happens on the node that received the request and replicates nothing."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workspace",
+      "title": "Using it in the Enterprise Workspace",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "AxonBase Enterprise 0.8.0 edits, runs and debugs programs in the Workspace without extra setup."
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Program tree: inside each database the groups Functions, Procedures and Packages show the signature and version. A program that no longer compiles gets a warning icon. Double click or Enter opens the editor, and the context menu opens, copies the name or deletes the program (you confirm by typing the name). The New program button creates a function, a procedure or a package.",
+            "Editor: a signature form (name, parameters with type and default, RETURNS, INVOKER or DEFINER) above a Python editor with highlighting, line numbers, autocomplete and snippets for db.query, db.one, db.count, db.exec, log.info, loops and try. Ctrl or Cmd+S saves, as CREATE OR REPLACE for an existing program and as CREATE for a new one. A refusal from the engine appears under the editor, with the offending line underlined.",
+            "Run: a form for the arguments follows the parameters and types. Run executes RETURN for a function and CALL for a procedure (a procedure really writes). Run with profile and Debug execute in a debug session and undo the changes at the end.",
+            "Debug: click the editor margin or press F9 to set a breakpoint. The shortcuts are F8 (continue), F10 (step over), F11 (step into), Shift+F11 (step out), F6 (pause) and Shift+F5 (stop). On a pause the current line is highlighted, and the panel shows the call stack, the locals of the chosen frame, the globals and a field to evaluate expressions. A permanent notice says the changes will be undone. The Commit at the end option appears only for administrators and asks for the program name.",
+            "Timeline and heat map: after Run with profile or Debug, the Queries and profile tab lists the db queries in the order they ran (SQL, duration bar, rows and source line) and the profile by line. The Heat map button paints the editor lines by time spent, and clicking a line number jumps the editor to it.",
+            "Roles: a viewer sees the tree and runs functions, an operator also creates, replaces and deletes programs, runs procedures and debugs, and an admin can also commit a debug session."
+          ]
+        }
+      ]
+    }
+  ],
+  "scale_title": "Scale and durability",
+  "scale_intro": "Version 0.9.0 rewrites the storage and query path of a single node. No setting is required: the engine adjusts threads, caches and buffers by itself from the cores and the memory it sees. The one choice that matters is how often the write log is forced to disk, described below. The numbers on this page come from the development measurements of the project, taken in the environments described next to each table, and they are not a promise for your hardware.",
+  "scale_sections": [
+    {
+      "id": "sync",
+      "title": "Durability: AXON_STORAGE_SYNC",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The WAL (Write-Ahead Log) of RocksDB is always on. The optional variable AXON_STORAGE_SYNC (or the property -Daxon.storage.sync) chooses when the operating system is forced to write that log to disk with fsync."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Value",
+            "Behavior",
+            "Possible loss"
+          ],
+          "rows": [
+            [
+              "batch (default)",
+              "fsync in the background every 1 second",
+              "Up to about 1 second of writes, only on an operating system crash or a power cut"
+            ],
+            [
+              "always",
+              "fsync on every write",
+              "None"
+            ],
+            [
+              "off",
+              "No periodic fsync (the RocksDB default)",
+              "Whatever is still in the operating system cache"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "A crash of the database process alone loses nothing in any of the three modes, because the log is written before the write is acknowledged."
+        },
+        {
+          "type": "p",
+          "text": "On macOS a full fsync (F_FULLFSYNC) costs about 19 ms, so always measures 50 operations per second with one thread and 192 with eight. On Linux the cost is usually much lower, and the table of load over HTTP (HyperText Transfer Protocol) below shows it. Choose always when a zero-loss window is mandatory and the write rate is low."
+        },
+        {
+          "type": "code",
+          "code": "docker run -p 8000:8000 -e AXON_STORAGE_SYNC=always -v axon-data:/data axonbase/axonbase:0.9.0 --path /data",
+          "lang": "bash"
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "What changed in storage and queries",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            "The global storage monitor was replaced by 1024 locks by key range and lock-free iterator reads.",
+            "Value and version are written in a single atomic batch. Each write command (CREATE, INSERT, UPDATE, DELETE, RELATE, UNRELATE) writes the record, the indexes and the edges in one batch, so a command that fails halfway leaves no rows and no index entries.",
+            "SELECT ... LIMIT stops scanning when the limit is reached, and ORDER BY ... LIMIT uses a fixed-size heap (top-K).",
+            "The GEO index (geographic position) keeps the coordinates in the entry itself and answers the N nearest by expanding rings; EXPLAIN reports it as GEO_KNN.",
+            "Vector indexes, version counters and the audit trail have a constant cost per write. Before, every write listed the whole log.",
+            "The hot path of /sql (query fingerprint, id generation, log buffer and the JWT (JSON Web Token, the sign-in token) cache) no longer allocates or locks per request.",
+            "A DELETE now frees its UNIQUE index entry, so the same value can be written again."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "measures",
+      "title": "Measurements",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Load of 200 thousand rows, in process, on a macOS development machine with a system load between 10 and 18 during the run. The environment was busy, so read the ratios and not the absolute values."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Test",
+            "0.8.0",
+            "0.9.0 (batch)"
+          ],
+          "rows": [
+            [
+              "Ingestion, 1 thread",
+              "6,183 ops/s",
+              "14,505 ops/s"
+            ],
+            [
+              "Ingestion, 8 threads",
+              "10,340 ops/s",
+              "42,982 ops/s"
+            ],
+            [
+              "Ingestion with UNIQUE index and column",
+              "3,742 ops/s",
+              "25,491 ops/s"
+            ],
+            [
+              "Position update with GEO index",
+              "3,429 ops/s",
+              "10,849 ops/s"
+            ],
+            [
+              "Update, 4 threads",
+              "1,828 ops/s",
+              "10,963 ops/s"
+            ],
+            [
+              "SELECT * LIMIT 10",
+              "2,934 ms",
+              "6.3 ms"
+            ],
+            [
+              "2 km radius, 4 threads",
+              "8 ops/s (p50 409 ms)",
+              "1,475 ops/s (p50 2.5 ms)"
+            ],
+            [
+              "20 nearest, 4 threads",
+              "did not exist",
+              "334 ops/s (p50 10 ms)"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "The p50 is the median latency: half of the requests were faster than that value."
+        },
+        {
+          "type": "p",
+          "text": "Sync modes on macOS (200 thousand rows, in process), in operations per second."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Test",
+            "always",
+            "batch",
+            "off"
+          ],
+          "rows": [
+            [
+              "Ingestion, 1 thread",
+              "50",
+              "14,505",
+              "13,948"
+            ],
+            [
+              "Ingestion, 8 threads",
+              "192",
+              "42,982",
+              "48,132"
+            ],
+            [
+              "Ingestion with UNIQUE and column",
+              "180",
+              "25,491",
+              "32,113"
+            ],
+            [
+              "Update, 4 threads",
+              "95",
+              "10,963",
+              "16,105"
+            ],
+            [
+              "Position with GEO, 8 threads",
+              "184",
+              "10,849",
+              "28,899"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "Load over HTTP in a Linux container. The load generator is written in Go (scripts/loadtest in the engine repository), with 64 connections and 15 seconds per scenario, against the Docker image on Docker Desktop for macOS (12 CPUs, 8 GB). The generator runs on the host, so the limit here is the HTTP path and the port mapping, not the storage. The system load stayed near 20 during the run. Operations per second."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Scenario",
+            "0.8.0",
+            "0.9.0 batch",
+            "0.9.0 always",
+            "0.9.0 off"
+          ],
+          "rows": [
+            [
+              "Read by id",
+              "4,280",
+              "4,292",
+              "4,327",
+              "4,592"
+            ],
+            [
+              "Status update",
+              "1,251",
+              "3,845",
+              "1,874",
+              "3,572"
+            ],
+            [
+              "Order insert",
+              "2,029",
+              "4,449",
+              "1,990",
+              "4,400"
+            ],
+            [
+              "Driver position (GEO)",
+              "1,785",
+              "4,010",
+              "2,055",
+              "4,195"
+            ],
+            [
+              "Nearby drivers",
+              "17",
+              "3,327",
+              "3,203",
+              "3,273"
+            ],
+            [
+              "Mixed",
+              "249",
+              "4,835",
+              "3,537",
+              "4,654"
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "text": "On Linux the cost of always is much lower than on macOS: about half of the write throughput of batch, against 0.3% to 1% on macOS. Even so, batch is the default because it limits the loss to about 1 second and costs almost no throughput."
+        },
+        {
+          "type": "p",
+          "text": "To reproduce the in-process run (the result lines start with BASE):"
+        },
+        {
+          "type": "code",
+          "code": "mvn -pl axonbase-core -am -Daxon.bench=true -Daxon.bench.rows=200000 -Dtest=ScaleBaselineBenchmarkTest -Dsurefire.failIfNoSpecifiedTests=false test",
+          "lang": "bash"
+        }
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Known limits",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            "Commands that read scans with phantom reads inside explicit transactions, or in a cluster, still serialize, like the old monitor.",
+            "A very large command keeps its writes in memory until the end, in proportion to its size.",
+            "The multi-node gain (group commit in Raft, reads on followers, multiple Raft groups) is not part of this version."
+          ]
+        }
+      ]
+    }
+  ]
 }

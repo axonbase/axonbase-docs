@@ -23,6 +23,8 @@ import AdminApi from "./pages/AdminApi";
 import Events from "./pages/Events";
 import Activity from "./pages/Activity";
 import Performance from "./pages/Performance";
+import AxonPL from "./pages/AxonPL";
+import Scale from "./pages/Scale";
 import OperationAudit from "./pages/OperationAudit";
 import UseCases from "./pages/UseCases";
 import FAQ from "./pages/FAQ";
@@ -85,6 +87,8 @@ export default function App() {
         <Route path="/events" element={<Events />} />
         <Route path="/activity" element={<Activity />} />
         <Route path="/performance" element={<Performance />} />
+        <Route path="/axonpl" element={<AxonPL />} />
+        <Route path="/scale" element={<Scale />} />
         <Route path="/operation-audit" element={<OperationAudit />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/use-cases" element={<UseCases />} />
