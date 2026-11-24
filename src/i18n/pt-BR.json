@@ -905,6 +905,11 @@
       "example": "CREATE ANALYZER pt LOWERCASE STEMMING STOPWORDS \"de\", \"a\";\nCREATE INDEX artigo_texto ON TABLE artigo COLUMNS corpo SEARCH ANALYZER pt;\nCREATE INDEX artigo_vetor ON TABLE artigo COLUMNS emb HNSW DIMENSION 3 DIST cos;\n\nLET $q = [0.88, 0.12, 0.08];\nSELECT titulo, vector::similarity::cosine(emb, $q) AS similaridade FROM artigo WHERE emb @@ $q ORDER BY vector::distance::cosine(emb, $q) LIMIT 3;\nSELECT titulo, search::score() AS score, search::highlight(corpo) AS trecho FROM artigo WHERE corpo @@ 'motoristas' AND emb @@ $q ORDER BY search::score() DESC;"
     },
     {
+      "name": "Embeddings: texto para vetor com um provedor HTTP",
+      "desc": "DEFINE EMBEDDING nome PROVIDER http URL '...' MODEL '...' DIMENSION n [KEY ENV 'VAR'] [TIMEOUT s] [BATCH n] [DOCUMENT PREFIX '...'] [QUERY PREFIX '...'] [SEND DIMENSION] [AUTH HEADER '...'] descreve um provedor que fala o formato /v1/embeddings (OpenAI, Ollama, llama.cpp, vLLM). Só existe o provedor http; para privacidade, aponte a URL para um modelo seu, por exemplo o Ollama. A chave de API nunca é guardada: KEY ENV guarda só o NOME de uma variável de ambiente lida pelo servidor. O nome default é o usado por vector::embed('texto') (apelido vector::fromstr) quando nenhum outro embedding é indicado. DEFINE FIELD f ON TABLE t TYPE vector<N> EMBEDDING e FROM origem faz o campo se preencher sozinho em CREATE e UPDATE (só recalcula quando o texto de origem muda; um vetor informado na mão é mantido; se o provedor estiver fora do ar a escrita falha e nada é gravado). campo @@ 'texto' num campo assim transforma o texto em vetor com o embedding do próprio campo e devolve os registros mais próximos primeiro (10 por padrão sem ORDER BY e LIMIT), e funciona dentro de uma busca híbrida. REEMBED TABLE t [FIELD f] [DRY RUN] regera os vetores; o DRY RUN só estima linhas, caracteres e tokens. As dimensões do embedding, do campo e do índice HNSW precisam coincidir. Respostas 429 e 5xx são repetidas com espera crescente (Retry-After respeitado). Variáveis do servidor: AXON_EMBEDDING_ALLOWED_HOSTS e AXON_EMBEDDING_CONCURRENCY. Com provedor externo, os textos gravados e buscados saem do seu servidor e são cobrados por token.",
+      "example": "DEFINE EMBEDDING default PROVIDER http URL 'https://api.openai.com/v1/embeddings' MODEL 'text-embedding-3-small' DIMENSION 1536 KEY ENV 'OPENAI_API_KEY';\n\nDEFINE TABLE artigo SCHEMAFULL;\nDEFINE FIELD corpo ON TABLE artigo TYPE string;\nDEFINE FIELD emb ON TABLE artigo TYPE vector<1536> EMBEDDING default FROM corpo;\nCREATE INDEX artigo_vetor ON TABLE artigo COLUMNS emb HNSW DIMENSION 1536 DIST cosine;\n\nCREATE artigo:1 CONTENT {titulo: 'Motoristas por perto', corpo: 'Como achar os motoristas num raio de dois quilômetros.'};\nSELECT titulo FROM artigo WHERE emb @@ 'quem está perto de mim de carro' LIMIT 3;\n\nLET $q = vector::embed('rede de amigos');\nREEMBED TABLE artigo DRY RUN;"
+    },
+    {
       "name": "Agregação a partir de um índice colunar",
       "desc": "Quando todas as colunas usadas por um SELECT de agregação (campos, WHERE, GROUP BY, HAVING, ORDER BY) têm índice COLUMNAR na tabela, a consulta é respondida com as entradas do índice, sem carregar documentos; o EXPLAIN mostra a estratégia COLUMNAR_AGG. Usar id, uma coluna sem índice COLUMNAR, JOIN, permissões da tabela ou Data Rules faz a consulta ler os documentos como antes. Índices criados antes da 0.7.0 mantêm o comportamento antigo até serem definidos de novo ou o servidor reiniciar. DROP INDEX nome ON TABLE tabela é aceito e remove as entradas do índice.",
       "example": "CREATE INDEX venda_regiao ON TABLE venda COLUMNS regiao COLUMNAR;\nCREATE INDEX venda_valor ON TABLE venda COLUMNS valor COLUMNAR;\n\nSELECT regiao, count() AS vendas, sum(valor) AS faturamento FROM venda GROUP BY regiao;\nEXPLAIN SELECT regiao, sum(valor) FROM venda GROUP BY regiao;"
@@ -1557,6 +1562,17 @@
         "Vetor: DIST do HNSW aceita cosine (ou cos), euclidean (ou euclid, l2) e manhattan (ou l1) e recusa outros nomes; antes DIST cos se comportava como euclidiana sem aviso, então índices criados com cos devem ser definidos de novo.",
         "AxonBase Enterprise 0.6.0: abas Search, Vector e Chart nos resultados do Workspace, a visão do EXPLAIN com o plano real do motor, formulários de índices e analisadores que geram o DDL real, e um painel de índices por tabela.",
         "Docs: CREATE ANALYZER recebe as stop words como textos (STOPWORDS \"de\", \"a\"), e o Geo é descrito como grade geohash."
+      ]
+    },
+    {
+      "version": "0.8.0",
+      "date": "2026-11-24",
+      "changes": [
+        "Embeddings: DEFINE EMBEDDING (provedor http, formato /v1/embeddings: OpenAI, Ollama, llama.cpp, vLLM), DROP EMBEDDING, vector::embed (apelido vector::fromstr) e REEMBED TABLE com DRY RUN.",
+        "Um campo TYPE vector<N> EMBEDDING e FROM texto se preenche sozinho em CREATE e UPDATE, e campo @@ 'texto' busca por significado com o embedding do próprio campo (também na busca híbrida).",
+        "A chave nunca é guardada (KEY ENV nomeia uma variável de ambiente); repetição com espera crescente em 429 e 5xx, cache de consultas, limite de concorrência, AXON_EMBEDDING_ALLOWED_HOSTS e métricas axe_embedding_*.",
+        "INFO FOR DATABASE lista os embeddings (nunca a chave) e INFO FOR TABLE mostra qual embedding um campo segue.",
+        "AxonBase Enterprise 0.7.0: painel de embeddings com botão Testar, campos que seguem um embedding no editor de DDL, caixa de busca por texto na aba Vector, novos snippets e autocomplete."
       ]
     }
   ],
