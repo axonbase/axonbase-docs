@@ -885,6 +885,11 @@
       "example": "RELATE person:ana->friend->person:bob;\nSELECT ->friend->person FROM person:ana;"
     },
     {
+      "name": "Resultados em grafo e a página Relations graph",
+      "desc": "O RELATE registra o tipo de aresta no catálogo (como DEFINE TABLE tipo SCHEMALESS), então a página Relations graph do AxonBase Enterprise encontra as arestas de um grafo novo sem nenhuma declaração. Bancos criados antes da 0.5.1 são registrados uma vez na subida do servidor. No Workspace, um resultado em que uma coluna guarda ids de registros ganha a aba Graph: cada linha é um nó, cada id citado em uma coluna é uma seta com o nome da coluna, e uma coluna nome vira o rótulo do nó. Os nós podem ser arrastados para organizar o desenho, e Reorganizar restaura o layout. Só contam ids que apontam para tabelas do banco, até 300 registros. A seta vai da linha para o registro citado, então em travessias de entrada (<-tipo<-tabela) leia-a como a linha sendo alcançada pelo registro citado. O AxonQL ainda não remove uma aresta, não encadeia travessias (->a->t->b->t) e não projeta campos do registro ligado.",
+      "example": "RELATE pessoa:ana->segue->pessoa:bia;\nRELATE pessoa:ana->trabalha_em->empresa:acme;\n\nSELECT id, nome, ->segue->pessoa AS segue, ->trabalha_em->empresa AS empresa FROM pessoa;"
+    },
+    {
       "name": "Travessia inversa e bidirecional",
       "desc": "Use <-etiqueta<-tabela para seguir a relação de entrada e <->etiqueta<->tabela para considerar os dois sentidos. A tabela no fim da expressão restringe o tipo de registro retornado.",
       "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
@@ -1469,8 +1474,8 @@
       ]
     },
     {
-      "version": "Não lançada",
-      "date": "Em desenvolvimento",
+      "version": "0.5.0",
+      "date": "2026-11-24",
       "changes": [
         "Agregação no AxonQL: GROUP BY, HAVING e ORDER BY em qualquer ordem (a execução é sempre filtrar, agrupar, filtrar grupos, ordenar e limitar), ORDER BY e LIMIT sobre os grupos, GROUP ALL, count(DISTINCT x), chamadas agregadas dentro de expressões, colunas de grupo com nome (um grupo não selecionado continua saindo como group.N) e SELECT VALUE count() devolvendo o número.",
         "Sintaxe nova: BETWEEN e NOT BETWEEN, literais de objeto e de array que leem campos da linha e FROM $variável.",
@@ -1478,6 +1483,14 @@
         "Consultas mais rápidas: a agregação lê a tabela em fluxo, um índice pode atender uma parte de um AND, geo::contains usa o índice GEO e subconsultas que não dependem da linha rodam uma vez por statement.",
         "A manutenção do índice GEO deixou de varrer o índice inteiro a cada escrita (uma chave reversa por registro); carregar muitos pontos em tabela com índice GEO não é mais quadrático.",
         "avg e a divisão arredondam em 10 casas decimais em vez de falhar quando o resultado não divide exatamente."
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "date": "2026-11-24",
+      "changes": [
+        "O RELATE registra o tipo de aresta no catálogo, então a página Relations graph encontra as arestas de grafos novos; bancos criados antes são registrados uma vez na subida.",
+        "AxonBase Enterprise: aba Graph para resultados de consultas, nós arrastáveis com o botão Reorganizar e rótulos das setas com o tipo da aresta."
       ]
     }
   ],
