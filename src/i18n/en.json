@@ -1527,6 +1527,14 @@
         "graph::trail returns the path between two records as rows for the Graph tab of the Workspace, and graph::path, graph::connected and graph::trail take an optional direction ('out', 'in' or 'both').",
         "FROM accepts a list of record ids (FROM $path, FROM [pessoa:ana, pessoa:caio]) and loads the records; a row id (text) equals a record id in =, IN and NOT IN, and IN accepts the single value a traversal returns."
       ]
+    },
+    {
+      "version": "0.6.3",
+      "date": "2026-11-24",
+      "changes": [
+        "ORDER BY on the alias of a calculated column (geo::distance(pos, point) AS meters ... ORDER BY meters) now sorts by that expression; before, the order was ignored in a SELECT without aggregation.",
+        "Example: drivers within 2 km of a point, with a GEO index and the result on the Workspace map."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",

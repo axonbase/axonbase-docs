@@ -1527,6 +1527,14 @@
         "graph::trail devolve o caminho entre dois registros em linhas para a aba Graph do Workspace, e graph::path, graph::connected e graph::trail aceitam um sentido opcional ('out', 'in' ou 'both').",
         "FROM aceita uma lista de ids de registro (FROM $caminho, FROM [pessoa:ana, pessoa:caio]) e carrega os registros; o id de uma linha (texto) é igual a um id de registro em =, IN e NOT IN, e o IN aceita o valor único que uma travessia devolve."
       ]
+    },
+    {
+      "version": "0.6.3",
+      "date": "2026-11-24",
+      "changes": [
+        "ORDER BY pelo apelido de uma coluna calculada (geo::distance(pos, ponto) AS metros ... ORDER BY metros) passa a ordenar pela expressão; antes a ordenação era ignorada em SELECT sem agregação.",
+        "Exemplo: motoristas a até 2 km de um ponto, com índice GEO e o resultado no mapa do Workspace."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
