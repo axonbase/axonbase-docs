@@ -53,13 +53,13 @@
   "search_intro": "O AxonBase oferece quatro modalidades de busca indexada: texto completo (full-text), vetores semânticos, coordenadas geográficas e travessia de grafo. Cada modalidade tem seu próprio tipo de índice e operador de consulta no AxonQL.",
   "search_ft_title": "Busca Textual com Ranqueamento BM25",
   "search_ft_desc": "O índice SEARCH tokeniza o texto com um analisador configurável (lowercase, stopwords, stemming) e indexa os termos para busca por relevância BM25 (Best Matching 25). O operador @@ ativa o índice e as funções search::score() e search::highlight() expõem a pontuação de relevância e o trecho destacado na projeção. BM25 é o algoritmo padrão de ranking para recuperação de informação; ele pondera a frequência do termo no documento contra a frequência inversa nos documentos da coleção.",
-  "search_ft_example": "CREATE ANALYZER pt_analyzer LOWERCASE STOPWORDS [\"a\", \"o\", \"de\", \"da\", \"para\"] STEMMING;\nCREATE INDEX article_body_search ON TABLE article COLUMNS body SEARCH ANALYZER pt_analyzer;\nCREATE article:1 CONTENT {title: \"BM25 no AxonBase\", body: \"O algoritmo BM25 calcula relevância de documentos por termo.\"};\nSELECT title, search::score() AS relevancia, search::highlight(body) AS trecho FROM article WHERE body @@ \"bm25 relevancia\" ORDER BY search::score() DESC;",
+  "search_ft_example": "CREATE ANALYZER pt_analyzer LOWERCASE STEMMING STOPWORDS \"a\", \"o\", \"de\", \"da\", \"para\";\nCREATE INDEX article_body_search ON TABLE article COLUMNS body SEARCH ANALYZER pt_analyzer;\nCREATE article:1 CONTENT {title: \"BM25 no AxonBase\", body: \"O algoritmo BM25 calcula relevância de documentos por termo.\"};\nSELECT title, search::score() AS relevancia, search::highlight(body) AS trecho FROM article WHERE body @@ \"bm25 relevancia\" ORDER BY search::score() DESC;",
   "search_ft_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [data:/data]\nvolumes: {data:}",
   "search_vector_title": "Busca Vetorial com HNSW",
   "search_vector_desc": "O índice HNSW (Hierarchical Navigable Small World) organiza vetores em uma estrutura em vários níveis para busca aproximada do vizinho mais próximo (ANN). A similaridade por cosseno mede o ângulo entre dois vetores; quanto mais próximo de 1, maior a semelhança semântica. O operador WHERE campo @@ $vetor ativa o índice vetorial quando há um índice HNSW definido sobre o campo, e ORDER BY vector::distance::cosine(campo, $vetor) ordena os resultados por distância.",
   "search_vector_example": "CREATE INDEX article_vec ON TABLE article COLUMNS embedding HNSW;\nCREATE article:1 CONTENT {title: \"RAG com AxonBase\", embedding: [0.12, 0.45, 0.78, 0.33]};\nLET $query = [0.11, 0.44, 0.76, 0.35];\nSELECT title, vector::distance::cosine(embedding, $query) AS dist FROM article WHERE embedding @@ $query ORDER BY vector::distance::cosine(embedding, $query) ASC LIMIT 5;",
   "search_vector_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [vec_data:/data]\nvolumes: {vec_data:}",
-  "search_geo_title": "Busca Geoespacial com R-Tree",
+  "search_geo_title": "Busca Geoespacial com Grade Geohash",
   "search_geo_desc": "O índice GEO indexa pontos GeoJSON para buscas por proximidade geográfica. geometry::point(lon, lat) constrói um ponto e geo::distance() calcula a distância em metros entre dois pontos usando a fórmula do semiverseno. A combinação de WHERE com @@ em um campo geo-indexado e ORDER BY geo::distance() filtra por raio e ordena por proximidade.",
   "search_geo_example": "CREATE INDEX restaurant_geo ON TABLE restaurant COLUMNS location GEO;\nCREATE restaurant:1 CONTENT {name: \"Taco Mexicano\", location: geometry::point(-43.2096, -22.9110)};\nCREATE restaurant:2 CONTENT {name: \"Sushi Carioca\", location: geometry::point(-43.1775, -22.9028)};\nLET $user_pos = geometry::point(-43.1965, -22.9055);\nSELECT name, geo::distance(location, $user_pos) AS distancia_metros FROM restaurant WHERE location @@ $user_pos AND geo::distance(location, $user_pos) <= 5000 ORDER BY geo::distance(location, $user_pos) ASC;",
   "search_geo_docker": "services:\n  axonbase:\n    image: axonbase\n    ports: [\"8000:8000\"]\n    environment:\n      AXON_PATH: /data\n      AXON_BIND: 0.0.0.0\n      AXON_PORT: 8000\n    volumes: [geo_data:/data]\nvolumes: {geo_data:}",
@@ -900,6 +900,16 @@
       "example": "RELATE pessoa:ana->segue->pessoa:caio;\nRELATE pessoa:caio->segue->pessoa:dani;\n\nRETURN graph::trail(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::path(pessoa:ana, pessoa:dani, 'segue', 5);\nRETURN graph::trail(pessoa:dani, pessoa:ana, null, 5, 'both');"
     },
     {
+      "name": "Busca vetorial, híbrida e com destaque",
+      "desc": "WHERE campo @@ $vetor usa o índice HNSW do campo vetorial junto com ORDER BY vector::distance::cosine(campo, $vetor) LIMIT n, que escolhe os vizinhos mais próximos. WHERE campo_texto @@ 'termos' AND campo_vetor @@ $vetor é uma busca híbrida: o BM25 filtra e pontua o texto, e a similaridade do vetor entra em search::score(). search::highlight(campo) envolve em <em> a palavra inteira que contém o radical encontrado. INFO FOR TABLE informa o tipo de cada índice (UNIQUE, SEARCH, HNSW, GEO, COLUMNAR, COUNT) e os parâmetros do HNSW, e INFO FOR DATABASE lista os analisadores.",
+      "example": "CREATE ANALYZER pt LOWERCASE STEMMING STOPWORDS \"de\", \"a\";\nCREATE INDEX artigo_texto ON TABLE artigo COLUMNS corpo SEARCH ANALYZER pt;\nCREATE INDEX artigo_vetor ON TABLE artigo COLUMNS emb HNSW DIMENSION 3 DIST cos;\n\nLET $q = [0.88, 0.12, 0.08];\nSELECT titulo, vector::similarity::cosine(emb, $q) AS similaridade FROM artigo WHERE emb @@ $q ORDER BY vector::distance::cosine(emb, $q) LIMIT 3;\nSELECT titulo, search::score() AS score, search::highlight(corpo) AS trecho FROM artigo WHERE corpo @@ 'motoristas' AND emb @@ $q ORDER BY search::score() DESC;"
+    },
+    {
+      "name": "Agregação a partir de um índice colunar",
+      "desc": "Quando todas as colunas usadas por um SELECT de agregação (campos, WHERE, GROUP BY, HAVING, ORDER BY) têm índice COLUMNAR na tabela, a consulta é respondida com as entradas do índice, sem carregar documentos; o EXPLAIN mostra a estratégia COLUMNAR_AGG. Usar id, uma coluna sem índice COLUMNAR, JOIN, permissões da tabela ou Data Rules faz a consulta ler os documentos como antes. Índices criados antes da 0.7.0 mantêm o comportamento antigo até serem definidos de novo ou o servidor reiniciar. DROP INDEX nome ON TABLE tabela é aceito e remove as entradas do índice.",
+      "example": "CREATE INDEX venda_regiao ON TABLE venda COLUMNS regiao COLUMNAR;\nCREATE INDEX venda_valor ON TABLE venda COLUMNS valor COLUMNAR;\n\nSELECT regiao, count() AS vendas, sum(valor) AS faturamento FROM venda GROUP BY regiao;\nEXPLAIN SELECT regiao, sum(valor) FROM venda GROUP BY regiao;"
+    },
+    {
       "name": "Travessia inversa e bidirecional",
       "desc": "Use <-etiqueta<-tabela para seguir a relação de entrada e <->etiqueta<->tabela para considerar os dois sentidos. A tabela no fim da expressão restringe o tipo de registro retornado.",
       "example": "SELECT <-friend<-person FROM person:bob;\nSELECT <->friend<->person FROM person:ana;"
@@ -1535,6 +1545,19 @@
         "ORDER BY pelo apelido de uma coluna calculada (geo::distance(pos, ponto) AS metros ... ORDER BY metros) passa a ordenar pela expressão; antes a ordenação era ignorada em SELECT sem agregação.",
         "Exemplo: motoristas a até 2 km de um ponto, com índice GEO e o resultado no mapa do Workspace."
       ]
+    },
+    {
+      "version": "0.7.0",
+      "date": "2026-11-24",
+      "changes": [
+        "Vetor: WHERE campo @@ $vetor passa a funcionar com ORDER BY vector::distance e LIMIT (antes devolvia nenhuma linha), e a busca híbrida aceita texto @@ e vetor @@ no mesmo WHERE.",
+        "Texto: search::highlight envolve a palavra inteira que contém o radical, e não só o radical.",
+        "Colunar: agregações (count, sum, avg, min, max, GROUP BY, WHERE) são respondidas com as entradas do índice quando todas as colunas da consulta têm índice COLUMNAR; o EXPLAIN mostra COLUMNAR_AGG.",
+        "INFO FOR TABLE informa o tipo de cada índice e os parâmetros do HNSW; INFO FOR DATABASE lista os analisadores; DROP INDEX aceita ON TABLE.",
+        "Vetor: DIST do HNSW aceita cosine (ou cos), euclidean (ou euclid, l2) e manhattan (ou l1) e recusa outros nomes; antes DIST cos se comportava como euclidiana sem aviso, então índices criados com cos devem ser definidos de novo.",
+        "AxonBase Enterprise 0.6.0: abas Search, Vector e Chart nos resultados do Workspace, a visão do EXPLAIN com o plano real do motor, formulários de índices e analisadores que geram o DDL real, e um painel de índices por tabela.",
+        "Docs: CREATE ANALYZER recebe as stop words como textos (STOPWORDS \"de\", \"a\"), e o Geo é descrito como grade geohash."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
@@ -2028,12 +2051,12 @@
   "search_overview_ft_desc": "Ranqueamento BM25 padrao da industria com tokenizacao, remocao de stopwords e stemming via CREATE ANALYZER e CREATE INDEX SEARCH.",
   "search_overview_vector_title": "Vetorial (HNSW)",
   "search_overview_vector_desc": "Indice Hierarchical Navigable Small World para busca aproximada do vizinho mais proximo. Configure DIMENSION e DIST por indice.",
-  "search_overview_geo_title": "Geoespacial (R-Tree)",
-  "search_overview_geo_desc": "Indice espacial R-Tree em pontos GeoJSON com consultas de distancia em tempo real e filtro por caixa delimitadora.",
+  "search_overview_geo_title": "Geoespacial (grade geohash)",
+  "search_overview_geo_desc": "Índice espacial em grade geohash sobre pontos GeoJSON: uma consulta por raio ou polígono lê só as células em volta, com distância em metros em tempo real.",
   "search_overview_graph_title": "Grafo (Adjacencia)",
   "search_overview_graph_desc": "Arestas direcionadas de adjacencia com RELATE e travessia AxonQL em linha unica para amigos de amigos e consultas de caminho.",
   "search_overview_columnar_title": "Colunar (Analítico)",
-  "search_overview_columnar_desc": "Índice colunar com codificação sortable de valores para agregacão direta de count, sum, avg, min e max sem carregar documentos do KV principal. Varredura por prefixo em CI| prefix.",
+  "search_overview_columnar_desc": "Índice colunar que responde count, sum, avg, min e max (com GROUP BY e WHERE) só com as entradas do índice, sem carregar documentos, quando todas as colunas da consulta têm índice COLUMNAR. O EXPLAIN mostra COLUMNAR_AGG; senão os documentos são lidos.",
   "search_ft_subtitle": "Substitua o Elasticsearch: busca textual BM25 nativa com pipelines de analise, indices invertidos e resultados ranqueados, tudo em SQL.",
   "search_ft_scenario_title": "Cenario: Busca em CMS",
   "search_ft_scenario_desc": "Um sistema de gerenciamento de conteudo armazena milhares de artigos e precisa buscar por titulo e corpo com relevancia. O AxonBase substitui um cluster Elasticsearch separado por um motor de busca BM25 nativo.",
@@ -2086,9 +2109,9 @@
   "search_vector_docker_code": "version: \"3\"\nservices:\n  axonbase:\n    image: axonbase/axonbase:latest\n    ports: [\"8000:8000\"]\n\n# curl -X POST http://localhost:8000/sql -H \"Axon-Ns: app\" -H \"Axon-Db: main\" --data \"\n#   CREATE INDEX knowledge_embedding ON TABLE knowledge_chunks COLUMNS embedding HNSW DIMENSION 384 DIST cos;\n#   CREATE knowledge_chunks CONTENT {id: \"doc1\", content: \"Exemplo\", embedding: [0.1, 0.2, ...]};\n#   SELECT id, content, vector::distance::cosine(embedding, [0.15, 0.25, ...]) AS distance FROM knowledge_chunks ORDER BY distance ASC;\n# \"",
   "search_geo_subtitle": "Substitua servicos dedicados de geo: indexacao espacial nativa e consultas de distancia em pontos GeoJSON para busca de localizacao em tempo real.",
   "search_geo_scenario_title": "Cenario: App de Entrega",
-  "search_geo_scenario_desc": "Um aplicativo de entrega de comida precisa encontrar restaurantes em um raio de 5 quilometros da localizacao do usuario, ordenados por distancia. O AxonBase substitui um servico geo dedicado como MongoDB Geo ou Elastic Geo por um indice R-Tree nativo.",
+  "search_geo_scenario_desc": "Um aplicativo de entrega de comida precisa encontrar restaurantes em um raio de 5 quilometros da localizacao do usuario, ordenados por distancia. O AxonBase substitui um servico geo dedicado como MongoDB Geo ou Elastic Geo por um índice nativo em grade geohash.",
   "search_geo_index_title": "Criando um Indice GEO",
-  "search_geo_index_desc": "Defina um indice GEO em um campo de ponto GeoJSON. O indice constroi uma estrutura R-Tree para consultas eficientes de caixa delimitadora e raio.",
+  "search_geo_index_desc": "Defina um indice GEO em um campo de ponto GeoJSON. O índice liga cada ponto a células de uma grade geohash, e as consultas por raio e polígono leem só as células em volta do alvo.",
   "search_geo_index_code": "CREATE INDEX restaurant_location ON TABLE restaurant COLUMNS location GEO;\nCREATE restaurant CONTENT {name: \"Pizza Place\", location: geometry::point(-23.5505, -46.6333)};",
   "search_geo_query_title": "Consultando Distancia Geografica",
   "search_geo_query_desc": "Use geo::distance() para filtrar pontos dentro de um raio e ordenar por proximidade. A funcao aceita dois pontos GeoJSON e retorna a distancia em metros.",
@@ -2124,7 +2147,7 @@
   "search_overview_graph_code": "SELECT ->amigo->amigo.* FROM usuario:1;",
   "search_overview_columnar_code": "CREATE INDEX age_idx ON TABLE users COLUMNS age COLUMNAR;\nSELECT count(), sum(age), avg(age) FROM users;",
   "search_columnar_title": "Índice Colunar",
-  "search_columnar_subtitle": "O índice colunar acelera consultas analíticas (count, sum, avg, min, max) sem carregar documentos do KV principal. Substitui bancos colunares dedicados como ClickHouse para agregacão dentro do AxonBase.",
+  "search_columnar_subtitle": "O índice colunar responde consultas analíticas (count, sum, avg, min, max, com GROUP BY e WHERE) com as próprias entradas quando todas as colunas usadas pela consulta têm índice COLUMNAR; o EXPLAIN mostra COLUMNAR_AGG. As demais consultas leem os documentos. Substitui bancos colunares dedicados como ClickHouse para agregacão dentro do AxonBase.",
   "search_columnar_what_title": "O que é",
   "search_columnar_what_desc": "O índice colunar armazena cada coluna separadamente com codificação sortable de valores (null, bool, long, double, string, array, object). A chave segue o formato CI|{ns}|{db}|{table}|{index}|{column}|{typeByte}{encodedData}{rowKey}. Isso permite varrer os valores de uma coluna sem desserializar documentos inteiros.",
   "search_columnar_advantages_title": "Vantagens",
