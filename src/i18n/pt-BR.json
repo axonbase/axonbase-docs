@@ -886,8 +886,13 @@
     },
     {
       "name": "Resultados em grafo e a página Relations graph",
-      "desc": "O RELATE registra o tipo de aresta no catálogo (como DEFINE TABLE tipo SCHEMALESS), então a página Relations graph do AxonBase Enterprise encontra as arestas de um grafo novo sem nenhuma declaração. Bancos criados antes da 0.5.1 são registrados uma vez na subida do servidor. No Workspace, um resultado em que uma coluna guarda ids de registros ganha a aba Graph: cada linha é um nó, cada id citado em uma coluna é uma seta com o nome da coluna, e uma coluna nome vira o rótulo do nó. Os nós podem ser arrastados para organizar o desenho, e Reorganizar restaura o layout. Só contam ids que apontam para tabelas do banco, até 300 registros. A seta vai da linha para o registro citado, então em travessias de entrada (<-tipo<-tabela) leia-a como a linha sendo alcançada pelo registro citado. O AxonQL ainda não remove uma aresta, não encadeia travessias (->a->t->b->t) e não projeta campos do registro ligado.",
+      "desc": "O RELATE registra o tipo de aresta no catálogo (como DEFINE TABLE tipo SCHEMALESS), então a página Relations graph do AxonBase Enterprise encontra as arestas de um grafo novo sem nenhuma declaração. Bancos criados antes da 0.5.1 são registrados uma vez na subida do servidor. No Workspace, um resultado em que uma coluna guarda ids de registros ganha a aba Graph: cada linha é um nó, cada id citado em uma coluna é uma seta com o nome da coluna, e uma coluna nome vira o rótulo do nó. Os nós podem ser arrastados para organizar o desenho, e Reorganizar restaura o layout. Só contam ids que apontam para tabelas do banco, até 300 registros. A seta vai da linha para o registro citado, então em travessias de entrada (<-tipo<-tabela) leia-a como a linha sendo alcançada pelo registro citado. A remoção de arestas, as travessias encadeadas e o campo depois da travessia estão descritos a seguir.",
       "example": "RELATE pessoa:ana->segue->pessoa:bia;\nRELATE pessoa:ana->trabalha_em->empresa:acme;\n\nSELECT id, nome, ->segue->pessoa AS segue, ->trabalha_em->empresa AS empresa FROM pessoa;"
+    },
+    {
+      "name": "Remover arestas e encadear travessias",
+      "desc": "UNRELATE a->tipo->b remove uma aresta e UNRELATE a->tipo remove todas as arestas de saída desse tipo a partir de a. Apagar um registro (DELETE) também apaga as arestas que saem e chegam nele, e DROP TABLE de um tipo de aresta leva as arestas dele. Uma travessia pode ser encadeada (->segue->pessoa->segue->pessoa segue duas vezes), um campo depois dela (->comprou->produto.nome) devolve esse campo de cada registro alcançado, e FETCH expande a coluna calculada por uma travessia (->comprou->produto AS p ... FETCH p). Um campo comum que guarda um id (autor: pessoa:ana em CONTENT) é armazenado como texto, então use RELATE para ligações que você quer navegar. UNRELATE ainda não funciona em DATABASE LINK.",
+      "example": "UNRELATE pessoa:ana->amigo_de->pessoa:edu;\nUNRELATE pessoa:dani->segue;\n\nSELECT id, ->segue->pessoa->segue->pessoa AS amigos_de_amigos FROM pessoa:ana;\nSELECT id, ->comprou->produto.nome AS produtos FROM pessoa;\nSELECT id, ->comprou->produto AS produtos FROM pessoa:ana FETCH produtos;"
     },
     {
       "name": "Travessia inversa e bidirecional",
@@ -1491,6 +1496,16 @@
       "changes": [
         "O RELATE registra o tipo de aresta no catálogo, então a página Relations graph encontra as arestas de grafos novos; bancos criados antes são registrados uma vez na subida.",
         "AxonBase Enterprise: aba Graph para resultados de consultas, nós arrastáveis com o botão Reorganizar e rótulos das setas com o tipo da aresta."
+      ]
+    },
+    {
+      "version": "0.6.0",
+      "date": "2026-11-24",
+      "changes": [
+        "Grafo: UNRELATE remove uma aresta (ou todas as arestas de saída de um tipo), DELETE de um registro apaga as arestas dele e DROP TABLE de um tipo de aresta leva as arestas.",
+        "Travessias podem ser encadeadas (->a->t->b->t), um campo depois da travessia devolve esse campo de cada registro alcançado e FETCH vale para colunas calculadas por uma travessia.",
+        "DROP TABLE agora sobrevive ao reinício (a tabela voltava); campos, índices e eventos dela saem do plano de controle junto.",
+        "O pipeline do Docker deixou de mover a tag latest em push na main."
       ]
     }
   ],
