@@ -1344,7 +1344,7 @@
   "jdbc_url_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev",
   "jdbc_driver_title": "Dependency",
   "jdbc_driver_desc": "Add the axonbase-jdbc module to the application classpath.",
-  "jdbc_driver_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.1</version>\n</dependency>",
+  "jdbc_driver_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.3</version>\n</dependency>",
   "jdbc_datagrip_title": "DataGrip e DBeaver",
   "jdbc_datagrip_desc": "Use the com.axonbase.jdbc.AxonDriver class and the AxonBase JDBC URL.",
   "jdbc_examples_title": "Query",
@@ -1452,7 +1452,7 @@
     }
   ],
   "changelog_title": "Changelog",
-  "changelog_intro": "The project is under development as 0.1.0-SNAPSHOT.",
+  "changelog_intro": "Changes by version. The current release is 0.9.1.",
   "changelog_versions": [
     {
       "version": "0.1.0-SNAPSHOT",
@@ -1622,42 +1622,42 @@
     {
       "name": "Java",
       "desc": "Reference SDK in the axonbase-sdk-java module.",
-      "install": "mvn dependency:get -Dartifact=com.axondatabase:axonbase-sdk-java:0.2.1"
+      "install": "mvn dependency:get -Dartifact=com.axondatabase:axonbase-sdk-java:0.2.3"
     },
     {
       "name": "Node.js",
       "desc": "TypeScript client for Node.js.",
-      "install": "npm install @axonbase/sdk@0.1.1"
+      "install": "npm install @axonbase/sdk@0.9.1"
     },
     {
       "name": "Python",
       "desc": "Async Python client.",
-      "install": "python -m pip install axonbase-sdk==0.1.1"
+      "install": "python -m pip install axonbase-sdk==0.9.1"
     },
     {
       "name": "Go",
       "desc": "Go client.",
-      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.1.0"
+      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.9.1"
     },
     {
       "name": ".NET",
       "desc": "C# client for .NET.",
-      "install": "dotnet add package AxonBase.Sdk --version 0.1.0"
+      "install": "dotnet add package AxonBase.Sdk --version 0.2.4"
     },
     {
       "name": "Rust",
       "desc": "Async Rust client.",
-      "install": "cargo add axonbase-sdk@0.1.1"
+      "install": "cargo add axonbase-sdk@0.9.1"
     },
     {
       "name": "PHP",
       "desc": "PHP 8.1+ client.",
-      "install": "composer require axonbase/sdk:^0.1"
+      "install": "composer require axonbase/sdk:^0.2"
     },
     {
       "name": "Ruby / Rails",
       "desc": "Ruby client for Rails.",
-      "install": "gem install axonbase-sdk -v 0.1.0"
+      "install": "gem install axonbase-sdk -v 0.9.1"
     }
   ],
   "sdk_java_title": "Java SDK",
@@ -2257,7 +2257,7 @@
   "jdbc_hibernate_title": "Dialeto Hibernate",
   "jdbc_hibernate_desc": "The AxonBaseDialect allows Hibernate ORM (version 6.5+) to persist and query entities through the AxonBase JDBC driver.",
   "jdbc_hibernate_url": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true",
-  "jdbc_hibernate_maven": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>\n<dependency>\n  <groupId>org.hibernate.orm</groupId>\n  <artifactId>hibernate-core</artifactId>\n  <version>6.5.3.Final</version>\n  <scope>provided</scope>\n</dependency>",
+  "jdbc_hibernate_maven": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.3</version>\n</dependency>\n<dependency>\n  <groupId>org.hibernate.orm</groupId>\n  <artifactId>hibernate-core</artifactId>\n  <version>6.5.3.Final</version>\n  <scope>provided</scope>\n</dependency>",
   "jdbc_hibernate_props": "# Hibernate Configuration\nhibernate.connection.driver_class = com.axonbase.jdbc.AxonDriver",
   "jdbc_hibernate_entity": "@Entity\n@Table(name = \"person\")\npublic class Person {\n    @Id\n    public Long id;\n    @Column(name = \"name\")\n    public String name;\n    @Column(name = \"age\")\n    public Integer age;\n}",
   "jdbc_hibernate_crud": "SessionFactory sf = new Configuration()\n    .setProperty(\"hibernate.connection.driver_class\", \"com.axonbase.jdbc.AxonDriver\")\n    .setProperty(\"hibernate.connection.url\",\n        \"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true\")\n    .setProperty(\"hibernate.dialect\", \"com.axonbase.jdbc.hibernate.AxonBaseDialect\")\n    .setProperty(\"hibernate.hbm2ddl.auto\", \"create\")\n    .addAnnotatedClass(Person.class)\n    .buildSessionFactory();\n\ntry (Session s = sf.openSession()) {\n    s.beginTransaction();\n    Person p = new Person();\n    p.id = System.nanoTime();\n    p.name = \"Alice\";\n    p.age = 30;\n    s.persist(p);\n    s.getTransaction().commit();\n}\n\n// HQL\nList<Person> results = sf.createSession()\n    .createQuery(\"from Person where age > :min\", Person.class)\n    .setParameter(\"min\", 25)\n    .list();\n\nsf.close();",
@@ -2291,7 +2291,7 @@
   "spring_intro": "The spring-data-axonbase module offers a Spring Data repository and template for AxonBase using the WebSocket JSON-RPC SDK.",
   "spring_dep_title": "Maven Dependency",
   "spring_dep_desc": "Add the spring-data-axonbase module to the classpath. It depends on the axonbase-sdk-java module.",
-  "spring_dep_code": "<dependency>\n  <groupId>com.axonbase</groupId>\n  <artifactId>spring-data-axonbase</artifactId>\n  <version>0.1.0-SNAPSHOT</version>\n</dependency>",
+  "spring_dep_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-spring-data</artifactId>\n  <version>0.2.3</version>\n</dependency>",
   "spring_repo_title": "Repository (CRUD)",
   "spring_repo_desc": "SimpleAxonBaseRepository<T, ID> implements Repository, CrudRepository, and PagingAndSortingRepository.",
   "spring_template_title": "AxonTemplate",
