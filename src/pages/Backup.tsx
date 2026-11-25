@@ -48,6 +48,12 @@ export default function Backup() {
       </section>
 
       <section>
+        <h2>{t("backup_chain_title")}</h2>
+        <p>{t("backup_chain_desc")}</p>
+        <CodeTabs tabs={[{ label: "Bash", code: t("backup_chain_code"), language: "bash" }]} />
+      </section>
+
+      <section>
         <h2>{t("backup_state_title")}</h2>
         <p>{t("backup_state_desc")}</p>
         <CodeTabs tabs={[{ label: "cURL", code: t("backup_state_code"), language: "bash" }]} />

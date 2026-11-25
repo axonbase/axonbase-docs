@@ -1452,7 +1452,7 @@
     }
   ],
   "changelog_title": "Changelog",
-  "changelog_intro": "Changes by version. The current release is 0.9.1.",
+  "changelog_intro": "Changes by version. The current release is 0.9.2.",
   "changelog_versions": [
     {
       "version": "0.1.0-SNAPSHOT",
@@ -1614,6 +1614,18 @@
         "New example examples/axonpl-delivery: functions, procedures and a package for a delivery order flow, with typed parameters so the Workspace form shows the right input for each one.",
         "Enterprise 0.8.1: the Workspace console shows the engine message and the traceback when a statement fails, instead of only 'AxonBase returned an error'."
       ]
+    },
+    {
+      "version": "0.9.2",
+      "date": "2026-11-25",
+      "changes": [
+        "Backup v2 chains. The file now carries a manifest (format, type, base, start and end versions, time, node and engine version) and a sha256 checksum per segment. Export reads data and versions from a single RocksDB snapshot, so a backup taken under concurrent writes restores with consistent records and indexes.",
+        "Fix: restore validates the whole chain before erasing anything. An isolated, out-of-order, tampered or truncated incremental is refused (BACKUP_CHAIN_INVALID, BACKUP_CHECKSUM, BACKUP_TRUNCATED) and the database stays intact. An incremental whose since is ahead of the engine answers BACKUP_SINCE_AHEAD.",
+        "Fix: COLUMNAR index keys contain newline and tab bytes. Format v2 escapes them. Format v1 silently lost them on restore, so a v1 backup of a table with a COLUMNAR index should be taken again.",
+        "Scale: ORDER BY ... LIMIT and filters without an index scan in parallel with top-K and a memory limit. CI now runs a scale gate test with 200 thousand rows on Linux, and a regression above 25% against the baseline fails it.",
+        "Fix: NULL = NULL and NONE = NONE no longer throw NullPointerException.",
+        "Enterprise 0.8.2: chained backup restore. The screen builds the full backup and the incrementals in order, the agent checks each link's sha256 before sending it to the engine, confirming by cluster name now sends force (it used to answer 409) and the next backup after a restore is a full one. Requires AxonBase 0.9.2."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
@@ -1627,17 +1639,17 @@
     {
       "name": "Node.js",
       "desc": "TypeScript client for Node.js.",
-      "install": "npm install @axonbase/sdk@0.9.1"
+      "install": "npm install @axonbase/sdk@0.9.2"
     },
     {
       "name": "Python",
       "desc": "Async Python client.",
-      "install": "python -m pip install axonbase-sdk==0.9.1"
+      "install": "python -m pip install axonbase-sdk==0.9.2"
     },
     {
       "name": "Go",
       "desc": "Go client.",
-      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.9.1"
+      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.9.2"
     },
     {
       "name": ".NET",
@@ -1647,7 +1659,7 @@
     {
       "name": "Rust",
       "desc": "Async Rust client.",
-      "install": "cargo add axonbase-sdk@0.9.1"
+      "install": "cargo add axonbase-sdk@0.9.2"
     },
     {
       "name": "PHP",
@@ -1657,7 +1669,7 @@
     {
       "name": "Ruby / Rails",
       "desc": "Ruby client for Rails.",
-      "install": "gem install axonbase-sdk -v 0.9.1"
+      "install": "gem install axonbase-sdk -v 0.9.2"
     }
   ],
   "sdk_java_title": "Java SDK",
@@ -4597,5 +4609,8 @@
         }
       ]
     }
-  ]
+  ],
+  "backup_chain_title": "Chained backup (format v2)",
+  "backup_chain_desc": "The full backup and the incrementals form a chain. To restore, send the full backup followed by the incrementals, in order, in the same body. The engine validates everything before touching the database: the first segment must be a full one, and each incremental's since must equal the version of the previous segment. An incomplete, out-of-order, tampered or truncated chain answers BACKUP_CHAIN_INVALID, BACKUP_CHECKSUM or BACKUP_TRUNCATED and the database stays intact. Restoring a lone incremental is refused. Through AxonBase Enterprise the agent builds the chain and checks each link's sha256 before sending. v1 files are still accepted, but they do not escape COLUMNAR index keys and silently lose those lines: take v1 backups of tables with that index again.",
+  "backup_chain_code": "# full, then incrementals from the watermark returned in X-Axon-Backup-Version\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=full\" -H \"Authorization: Bearer $TOKEN\" -D full.h -o full.axbak\nWM=$(grep -i x-axon-backup-version full.h | tr -d '\\r' | awk '{print $2}')\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=incremental&since=$WM\" -H \"Authorization: Bearer $TOKEN\" -o inc1.axbak\n\n# restore: the body is the concatenation in order\ncat full.axbak inc1.axbak | curl -s -X POST \"http://127.0.0.1:8000/admin/v1/backups/restore?confirm=true&force=true\" -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/octet-stream' --data-binary @-"
 }
