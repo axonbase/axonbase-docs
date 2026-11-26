@@ -1626,6 +1626,18 @@
         "Fix: NULL = NULL and NONE = NONE no longer throw NullPointerException.",
         "Enterprise 0.8.2: chained backup restore. The screen builds the full backup and the incrementals in order, the agent checks each link's sha256 before sending it to the engine, confirming by cluster name now sends force (it used to answer 409) and the next backup after a restore is a full one. Requires AxonBase 0.9.2."
       ]
+    },
+    {
+      "version": "0.10.0",
+      "date": "2026-11-25",
+      "changes": [
+        "Physical backup. The engine copies the RocksDB files with the BackupEngine, without stopping and without rereading record by record. The first backup is full and the following ones only pay for what changed (with 10 GB, the incremental took 6 s against 47 s for the full one). Routes under /admin/v1/backups/physical: create, list, verify, retain and restore. Single node with RocksDB storage only.",
+        "In-process physical restore, no restart. The engine prepares the database in a side directory, proves it opens, holds the operations in flight, swaps the contents of the data directory and reopens. The previous database is kept in .replaced-<instant>. If the process dies in the middle of the swap (tested with kill -9 over 24 rounds), the next open brings back the whole old database or delivers the whole new one, never a mix. Restore of 10 GB in 36 s on local disk, with a SHA-256 (Secure Hash Algorithm) checksum equal to the source.",
+        "File transfer for the physical backup (list, read, write, import and restore by source), with optional encryption through AXON_S3_ENCRYPT_KEY. It is the base for keeping backups in object storage.",
+        "Online index build. DEFINE INDEX no longer blocks writes on the whole table: the index is built in chunks of 500 rows, writes continue between chunks and the definition only becomes ready at the end. A UNIQUE index with duplicates aborts cleanly, leaving no half-built index. Measured with 5 million rows.",
+        "Fix: a transaction opened while a DEFINE INDEX ran lost the index entry on commit. Commit now checks the catalog epoch.",
+        "Enterprise 0.9.0: per-cluster physical backup policy (default 5-minute interval and 7-day retention), incremental upload to MinIO of only what is missing, daily verification, restore from the UI confirmed by typing the cluster name, and an RPO (Recovery Point Objective, the maximum data loss accepted) indicator in green, amber or red. Metric axe_backup_rpo_seconds and Prometheus alerts. Requires AxonBase 0.10.0."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
