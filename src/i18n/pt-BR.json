@@ -1626,6 +1626,18 @@
         "Correção: NULL = NULL e NONE = NONE não lançam mais NullPointerException.",
         "Enterprise 0.8.2: restore de backup em cadeia. A tela monta o completo e os incrementais na ordem, o agente confere o sha256 de cada elo antes de enviar ao motor, confirmar pelo nome do cluster passa a enviar force (antes dava 409) e o próximo backup depois de um restore é completo. Requer AxonBase 0.9.2."
       ]
+    },
+    {
+      "version": "0.10.0",
+      "date": "2026-11-25",
+      "changes": [
+        "Backup físico. O motor copia os arquivos do RocksDB com o BackupEngine, sem parar e sem reler registro por registro. O primeiro backup é completo e os seguintes só pagam pelo que mudou (num teste com 10 GB, o incremental levou 6 s contra 47 s do completo). Rotas em /admin/v1/backups/physical: criar, listar, verificar, reter e restaurar. Vale para nó único com armazenamento RocksDB.",
+        "Restore físico dentro do processo, sem reiniciar. O motor prepara a base num diretório à parte, prova que ela abre, segura as operações em curso, troca o conteúdo do diretório de dados e reabre. A base anterior fica guardada em .replaced-<instante>. Se o processo cair no meio da troca (testado com kill -9 em 24 rodadas), a próxima abertura devolve a base inteira antiga ou entrega a inteira nova, nunca uma mistura. Restore de 10 GB em 36 s em disco local, com checksum SHA-256 (Secure Hash Algorithm) igual ao da origem.",
+        "Transferência de arquivos do backup físico (listar, ler, gravar, importar e restaurar por origem), com cifra opcional por AXON_S3_ENCRYPT_KEY. É a base para guardar os backups em armazenamento de objetos.",
+        "Índice em segundo plano (online). DEFINE INDEX deixa de bloquear escritas na tabela inteira: o índice é construído em blocos de 500 linhas, as escritas continuam entre os blocos e a definição só vira pronta no fim. Um índice UNIQUE com duplicatas aborta limpo, sem deixar índice pela metade. Medido com 5 milhões de linhas.",
+        "Correção: uma transação aberta enquanto um DEFINE INDEX acontecia perdia a entrada do índice ao confirmar. A confirmação agora confere a época do catálogo.",
+        "Enterprise 0.9.0: política de backup físico por cluster (padrão de 5 minutos de intervalo e 7 dias de retenção), envio incremental ao MinIO só do que falta, verificação diária, restore pela tela com confirmação digitando o nome do cluster e indicador de RPO (Recovery Point Objective, a perda máxima de dados aceita) em verde, âmbar ou vermelho. Métrica axe_backup_rpo_seconds e alertas no Prometheus. Requer AxonBase 0.10.0."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
