@@ -1638,6 +1638,13 @@
         "Fix: a transaction opened while a DEFINE INDEX ran lost the index entry on commit. Commit now checks the catalog epoch.",
         "Enterprise 0.9.0: per-cluster physical backup policy (default 5-minute interval and 7-day retention), incremental upload to MinIO of only what is missing, daily verification, restore from the UI confirmed by typing the cluster name, and an RPO (Recovery Point Objective, the maximum data loss accepted) indicator in green, amber or red. Metric axe_backup_rpo_seconds and Prometheus alerts. Requires AxonBase 0.10.0."
       ]
+    },
+    {
+      "version": "0.10.1",
+      "date": "2026-11-26",
+      "changes": [
+        "Fix: the Raft log recovered only the last entry on reopen, so a cluster node that restarted was left with an almost empty log. All entries are now reread and a tail cut by a crash in the middle of a write is dropped without losing the earlier ones. Only affects multi-node clusters; a single node does not use this log."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",

@@ -1638,6 +1638,13 @@
         "Correção: uma transação aberta enquanto um DEFINE INDEX acontecia perdia a entrada do índice ao confirmar. A confirmação agora confere a época do catálogo.",
         "Enterprise 0.9.0: política de backup físico por cluster (padrão de 5 minutos de intervalo e 7 dias de retenção), envio incremental ao MinIO só do que falta, verificação diária, restore pela tela com confirmação digitando o nome do cluster e indicador de RPO (Recovery Point Objective, a perda máxima de dados aceita) em verde, âmbar ou vermelho. Métrica axe_backup_rpo_seconds e alertas no Prometheus. Requer AxonBase 0.10.0."
       ]
+    },
+    {
+      "version": "0.10.1",
+      "date": "2026-11-26",
+      "changes": [
+        "Correção: o log Raft recuperava só a última entrada ao reabrir, então um nó de cluster que reiniciava ficava com o log quase vazio. Agora todas as entradas são relidas e uma cauda cortada por queda no meio da escrita é descartada sem perder as anteriores. Só afeta cluster com vários nós; nó único não usa esse log."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
