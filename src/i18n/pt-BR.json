@@ -2420,7 +2420,7 @@
   "data_rules_mask_desc": "A cláusula opcional MASK FIELDS WITH oculta valores de campos de primeiro nível que correspondem a um padrão. Use % como curinga, similar ao SQL LIKE. Campos ocultos aparecem como *** nas consultas (inclusive SELECT VALUE, apelidos, acesso por id e FETCH) e nas respostas de escrita.",
   "data_rules_mask_code": "CREATE DATA RULE lgpd\n  APPLY sales_rep_id = $auth.id\n  MASK FIELDS WITH '%cpf%', '%credit%card%';",
   "data_rules_drop_title": "Remover uma Data Rule",
-  "data_rules_drop_desc": "Use DROP DATA RULE para remover uma regra. As consultas voltam ao acesso sem filtro.",
+  "data_rules_drop_desc": "Use DROP DATA RULE para remover uma regra. Usuários que continuam com essa regra atribuída passam a ter o acesso negado até que ela seja recriada ou que o usuário seja redefinido sem ela.",
   "data_rules_drop_code": "DROP DATA RULE region_sp;",
   "data_rules_show_title": "Listar Data Rules",
   "data_rules_show_desc": "Use SHOW DATA RULES para ver todas as regras definidas e seus predicados.",

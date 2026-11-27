@@ -2420,7 +2420,7 @@
   "data_rules_mask_desc": "The optional MASK FIELDS WITH clause hides the values of top level fields that match the patterns, for users who have the rule assigned. Hidden fields appear as *** in queries (including SELECT VALUE, aliases, access by id and FETCH) and in write responses.",
   "data_rules_mask_code": "CREATE DATA RULE lgpd\n  APPLY sales_rep_id = $auth.id\n  MASK FIELDS WITH '%cpf%', '%credit%card%';",
   "data_rules_drop_title": "Remover uma Data Rule",
-  "data_rules_drop_desc": "Use DROP DATA RULE para remover uma regra. As consultas voltam ao acesso sem filtro.",
+  "data_rules_drop_desc": "Use DROP DATA RULE to remove a rule. Users that still have the rule assigned are denied access until the rule is created again or the user is redefined without it.",
   "data_rules_drop_code": "DROP DATA RULE region_sp;",
   "data_rules_show_title": "Listar Data Rules",
   "data_rules_show_desc": "Use SHOW DATA RULES para ver todas as regras definidas e seus predicados.",
