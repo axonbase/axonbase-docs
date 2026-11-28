@@ -45,6 +45,14 @@ export default function Vector() {
       </section>
 
       <section>
+        <h2>{t("search_vector_embeddings_title")}</h2>
+        <p>{t("search_vector_embeddings_desc")}</p>
+        <CodeTabs tabs={[
+          { label: "AxonQL", code: t("search_vector_embeddings_code"), language: "sql" },
+        ]} />
+      </section>
+
+      <section>
         <h2>{t("search_vector_python_sdk_title")}</h2>
         <p>{t("search_vector_python_sdk_desc")}</p>
         <CodeTabs tabs={[

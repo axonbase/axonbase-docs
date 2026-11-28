@@ -40,6 +40,11 @@ export default function Graph() {
       </section>
 
       <section>
+        <h2>{t("search_graph_limits_title")}</h2>
+        <p>{t("search_graph_limits_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("search_graph_docker_title")}</h2>
         <p>{t("search_graph_docker_desc")}</p>
         <CodeTabs tabs={[
