@@ -2,7 +2,7 @@ export default function GraphJoinComparisonDiagram() {
   return (
     <svg aria-labelledby="graph-compare-title graph-compare-desc" role="img" viewBox="0 0 820 380" width="100%" style={{ display: "block", height: "auto", margin: "1.75rem 0", maxWidth: "820px" }} xmlns="http://www.w3.org/2000/svg">
       <title id="graph-compare-title">Graph traversal versus traditional JOIN</title>
-      <desc id="graph-compare-desc">Left: traditional SQL with four JOIN hops. Right: one AxonQL graph traversal selecting user record ids.</desc>
+      <desc id="graph-compare-desc">Left: traditional SQL with three JOINs. Right: one AxonQL friends-of-friends traversal.</desc>
       <defs>
         <linearGradient id="gc-bg" x1="0" x2="1"><stop stopColor="#0a1b38" /><stop offset="1" stopColor="#162854" /></linearGradient>
         <marker id="gc-join" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0 0L8 4L0 8Z" fill="#f43f5e" /></marker>
@@ -33,9 +33,9 @@ export default function GraphJoinComparisonDiagram() {
       <text fill="#fecdd3" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" fontWeight="700" textAnchor="middle" x="305" y="197">JOIN users u3</text>
 
       <rect fill="#1e1a3a" height="28" rx="14" stroke="#fb7185" strokeWidth="1" width="240" x="85" y="233" />
-      <text fill="#fda4af" fontSize="10" fontFamily="ui-sans-serif, system-ui" textAnchor="middle" x="205" y="252">WHERE u1.id = 1 AND u3.id != f1.user_id</text>
+      <text fill="#fda4af" fontSize="10" fontFamily="ui-sans-serif, system-ui" textAnchor="middle" x="205" y="252">WHERE u1.id = 1</text>
 
-      <text fill="#fb7185" fontSize="10" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="205" y="290">4 JOINs junction-table · sub-query</text>
+      <text fill="#fb7185" fontSize="10" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="205" y="290">3 JOINs · junction table</text>
 
       { /* Right side - AxonQL graph path */ }
       <text fill="#2dd4bf" fontFamily="ui-sans-serif, system-ui" fontSize="14" fontWeight="700" textAnchor="middle" x="615" y="72">AxonQL graph traversal</text>
@@ -46,17 +46,17 @@ export default function GraphJoinComparisonDiagram() {
 
       <path d="M570 160h22" stroke="#2dd4bf" strokeWidth="3" markerEnd="url(#gc-arrow)" />
       <rect fill="#134e4a" height="36" rx="6" stroke="#2dd4bf" strokeWidth="1.5" width="92" x="592" y="142" />
-      <text fill="#ccfbf1" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" fontWeight="700" textAnchor="middle" x="638" y="164">{'->friend'}</text>
+      <text fill="#ccfbf1" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" fontWeight="700" textAnchor="middle" x="638" y="164">{'->friend x2'}</text>
 
       <path d="M570 200h30s16 0 16-16l16-16" stroke="#2dd4bf" strokeWidth="2" fill="none" markerEnd="url(#gc-arrow)" strokeDasharray="6 3" />
 
       <rect fill="#0d3b3a" height="30" rx="6" stroke="#2dd4bf" strokeWidth="1" width="120" x="520" y="244" />
-      <text fill="#ccfbf1" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="580" y="263">Result: ["user:2","user:3"]</text>
+      <text fill="#ccfbf1" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="580" y="263">Result: ["user:3","user:4"]</text>
 
-      <text fill="#2dd4bf" fontSize="10" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="615" y="298">{'SELECT VALUE ->friend->user FROM user:1'}</text>
+      <text fill="#2dd4bf" fontSize="10" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="615" y="298">{'SELECT VALUE ->friend->user->friend->user FROM user:1'}</text>
 
       <rect fill="#172853" height="36" rx="18" width="296" x="262" y="326" />
-      <text fill="#c7d2fe" fontFamily="ui-sans-serif, system-ui" fontSize="13" fontWeight="700" textAnchor="middle" x="410" y="349">One traversal, no JOINs, instant results</text>
+      <text fill="#c7d2fe" fontFamily="ui-sans-serif, system-ui" fontSize="13" fontWeight="700" textAnchor="middle" x="410" y="349">One traversal, no JOINs</text>
     </svg>
   );
 }

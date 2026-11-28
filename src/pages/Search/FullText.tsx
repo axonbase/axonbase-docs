@@ -37,6 +37,11 @@ export default function FullText() {
       </section>
 
       <section>
+        <h2>{t("search_ft_limits_title")}</h2>
+        <p>{t("search_ft_limits_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("search_ft_docker_title")}</h2>
         <p>{t("search_ft_docker_desc")}</p>
         <CodeTabs tabs={[

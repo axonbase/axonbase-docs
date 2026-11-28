@@ -32,6 +32,28 @@ export default function Geo() {
       </section>
 
       <section>
+        <h2>{t("search_geo_h3_title")}</h2>
+        <p>{t("search_geo_h3_desc")}</p>
+        <CodeTabs tabs={[
+          { label: "AxonQL", code: t("search_geo_h3_code"), language: "sql" },
+        ]} />
+      </section>
+
+      <section>
+        <h2>{t("search_geo_limits_title")}</h2>
+        <ul>
+          {(t("search_geo_limits_list", { returnObjects: true }) as string[]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2>{t("search_geo_migration_title")}</h2>
+        <p>{t("search_geo_migration_desc")}</p>
+      </section>
+
+      <section>
         <h2>{t("search_geo_docker_title")}</h2>
         <p>{t("search_geo_docker_desc")}</p>
         <CodeTabs tabs={[

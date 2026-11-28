@@ -2,7 +2,7 @@ export default function ColumnarIndexDiagram() {
   return (
     <svg aria-labelledby="col-title col-desc" role="img" viewBox="0 0 820 480" width="100%" style={{ display: "block", height: "auto", margin: "1.75rem 0", maxWidth: "820px" }} xmlns="http://www.w3.org/2000/svg">
       <title id="col-title">Columnar index architecture</title>
-      <desc id="col-desc">Columnar index stores each column separately with sortable encoding for fast aggregation.</desc>
+      <desc id="col-desc">Columnar index stores each column separately with typed entries for aggregation.</desc>
       <defs>
         <linearGradient id="bg" x1="0" x2="1"><stop stopColor="#071b36" /><stop offset="1" stopColor="#122a57" /></linearGradient>
         <linearGradient id="colg" x1="0" x2="1"><stop stopColor="#0d3b4c" /><stop offset="1" stopColor="#0a2d3a" /></linearGradient>
@@ -40,9 +40,9 @@ export default function ColumnarIndexDiagram() {
       <text fill="#99f6e4" fontFamily="ui-monospace, monospace" fontSize="10" x="48" y="331">CI|test|dev|users|age_idx|age|T2[35..]n0003</text>
 
       <rect fill="#2e1a0a" height="68" rx="10" stroke="#f59e0b" strokeWidth="1.5" width="340" x="430" y="250" />
-      <text fill="#fbbf24" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="272">SORTABLE ENCODING</text>
-      <text fill="#fde68a" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="292">TYPE byte + XOR MIN_VALUE long</text>
-      <text fill="#fde68a" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="310">Lexicographic order = numeric order</text>
+      <text fill="#fbbf24" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="272">KEY ENCODING</text>
+      <text fill="#fde68a" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="292">TYPE byte + encoded value</text>
+      <text fill="#fde68a" fontFamily="ui-monospace, monospace" fontSize="10" x="443" y="310">Equality: exact value prefix</text>
 
       <rect fill="url(#colg)" height="82" rx="10" stroke="#2dd4bf" strokeWidth="1.5" width="340" x="430" y="340" />
       <text fill="#2dd4bf" fontFamily="ui-monospace, monospace" fontSize="10" fontWeight="700" x="443" y="362">AGGREGATION</text>
