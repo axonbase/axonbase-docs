@@ -1344,7 +1344,7 @@
   "jdbc_url_code": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev",
   "jdbc_driver_title": "Dependência",
   "jdbc_driver_desc": "Adicione o módulo axonbase-jdbc ao classpath da aplicação.",
-  "jdbc_driver_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.3</version>\n</dependency>",
+  "jdbc_driver_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>1.0.0</version>\n</dependency>",
   "jdbc_datagrip_title": "DataGrip e DBeaver",
   "jdbc_datagrip_desc": "Use a classe com.axonbase.jdbc.AxonDriver e a URL JDBC do AxonBase.",
   "jdbc_examples_title": "Consulta",
@@ -1645,6 +1645,20 @@
       "changes": [
         "Correção: o log Raft recuperava só a última entrada ao reabrir, então um nó de cluster que reiniciava ficava com o log quase vazio. Agora todas as entradas são relidas e uma cauda cortada por queda no meio da escrita é descartada sem perder as anteriores. Só afeta cluster com vários nós; nó único não usa esse log."
       ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-11-27",
+      "changes": [
+        "Primeira versão final da linha 1.0. O código do motor é o da 1.0.0-rc2. Acompanha o AxonBase Enterprise 0.10.0.",
+        "Segurança, leia antes de usar: PERMISSIONS de leitura não valem na leitura por id, no FETCH, na leitura de um registro ligado nem em LIVE SELECT. Correção prevista para a 1.0.1. A lista completa está na página Limitações da 1.0.0.",
+        "Experimental: vários shards, partições por tempo, TTL, camada fria e prioridade por tipo de carga passaram nos testes funcionais, mas não tiveram as metas de carga medidas.",
+        "Atualização: vindo da 0.10.x ou anterior em cluster, pare os três nós. As versões 0.4.0 a 0.10.1 podem confirmar, em cluster, escritas que nenhum nó guarda.",
+        "Atualização: contêineres vindos da 1.0.0-rc1 ou anterior precisam de scripts/migrar-estado-docker.sh antes de serem recriados, para não perder o estado do cluster.",
+        "Novidades desde a 0.10.1: Raft com sincronização em grupo e leitura em seguidor, restauração a um instante (PITR), índice geográfico H3, transferência de liderança e drenagem de nó.",
+        "Mudanças de comportamento: CREATE e INSERT recusam registro existente; NOT NULL, PRIMARY KEY e CHECK passam a valer; definições sensíveis exigem administrador; PERMISSIONS NONE passa a negar; certificado revogado é recusado.",
+        "Desempenho: a escrita de registros novos em um nó ficou cerca de 12% mais lenta com 1 thread e 6% com 8 threads, comparada à 0.10.1."
+      ]
     }
   ],
   "sdk_overview_title": "SDKs",
@@ -1653,42 +1667,42 @@
     {
       "name": "Java",
       "desc": "SDK de referência no módulo axonbase-sdk-java.",
-      "install": "mvn dependency:get -Dartifact=com.axondatabase:axonbase-sdk-java:0.2.3"
+      "install": "mvn dependency:get -Dartifact=com.axondatabase:axonbase-sdk-java:1.0.0"
     },
     {
       "name": "Node.js",
       "desc": "Cliente TypeScript para Node.js.",
-      "install": "npm install @axonbase/sdk@0.9.2"
+      "install": "npm install @axonbase/sdk@1.0.0"
     },
     {
       "name": "Python",
       "desc": "Cliente assíncrono em Python.",
-      "install": "python -m pip install axonbase-sdk==0.9.2"
+      "install": "python -m pip install axonbase-sdk==1.0.0"
     },
     {
       "name": "Go",
       "desc": "Cliente para Go.",
-      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v0.9.2"
+      "install": "go get github.com/axonbase/axonbase/axonbase-sdk-go@v1.0.0"
     },
     {
       "name": ".NET",
       "desc": "Cliente C# para .NET.",
-      "install": "dotnet add package AxonBase.Sdk --version 0.2.4"
+      "install": "dotnet add package AxonBase.Sdk --version 1.0.0"
     },
     {
       "name": "Rust",
       "desc": "Cliente Rust assíncrono.",
-      "install": "cargo add axonbase-sdk@0.9.2"
+      "install": "cargo add axonbase-sdk@1.0.0"
     },
     {
       "name": "PHP",
       "desc": "Cliente PHP 8.1+.",
-      "install": "composer require axonbase/sdk:^0.2"
+      "install": "composer require axonbase/sdk:^1.0"
     },
     {
       "name": "Ruby / Rails",
       "desc": "Cliente Ruby para Rails.",
-      "install": "gem install axonbase-sdk -v 0.9.2"
+      "install": "gem install axonbase-sdk -v 1.0.0"
     }
   ],
   "sdk_java_title": "SDK Java",
@@ -2288,7 +2302,7 @@
   "jdbc_hibernate_title": "Dialeto Hibernate",
   "jdbc_hibernate_desc": "O AxonBaseDialect permite que o Hibernate ORM (versão 6.5+) persista entidades usando o driver JDBC com sql.translate=true. Adicione a dependência hibernate-core (escopo provided) e configure o dialeto, driver e URL. Todas as operações do Hibernate — persist, merge, remove, find, consultas HQL — funcionam de forma transparente. O esquema pode ser gerado automaticamente com hibernate.hbm2ddl.auto=create. O dialeto sobrescreve os mapeamentos de tipo, desabilita sequências e colunas de identidade, e configura time::now() como a função de timestamp atual.",
   "jdbc_hibernate_url": "jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true",
-  "jdbc_hibernate_maven": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>0.2.3</version>\n</dependency>\n<dependency>\n  <groupId>org.hibernate.orm</groupId>\n  <artifactId>hibernate-core</artifactId>\n  <version>6.5.3.Final</version>\n  <scope>provided</scope>\n</dependency>",
+  "jdbc_hibernate_maven": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-jdbc</artifactId>\n  <version>1.0.0</version>\n</dependency>\n<dependency>\n  <groupId>org.hibernate.orm</groupId>\n  <artifactId>hibernate-core</artifactId>\n  <version>6.5.3.Final</version>\n  <scope>provided</scope>\n</dependency>",
   "jdbc_hibernate_props": "# Configuração Hibernate\nhibernate.connection.driver_class = com.axonbase.jdbc.AxonDriver\nhibernate.connection.url = jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true\nhibernate.dialect = com.axonbase.jdbc.hibernate.AxonBaseDialect\nhibernate.hbm2ddl.auto = create",
   "jdbc_hibernate_entity": "@Entity\n@Table(name = \"person\")\npublic class Person {\n    @Id\n    public Long id;\n    @Column(name = \"name\")\n    public String name;\n    @Column(name = \"age\")\n    public Integer age;\n}",
   "jdbc_hibernate_crud": "SessionFactory sf = new Configuration()\n    .setProperty(\"hibernate.connection.driver_class\", \"com.axonbase.jdbc.AxonDriver\")\n    .setProperty(\"hibernate.connection.url\",\n        \"jdbc:axonbase:ws://127.0.0.1:8000/rpc/ws?ns=test&db=dev&sql.translate=true\")\n    .setProperty(\"hibernate.dialect\", \"com.axonbase.jdbc.hibernate.AxonBaseDialect\")\n    .setProperty(\"hibernate.hbm2ddl.auto\", \"create\")\n    .addAnnotatedClass(Person.class)\n    .buildSessionFactory();\n\ntry (Session s = sf.openSession()) {\n    s.beginTransaction();\n    Person p = new Person();\n    p.id = System.nanoTime();\n    p.name = \"Alice\";\n    p.age = 30;\n    s.persist(p);\n    s.getTransaction().commit();\n}\n\n// HQL\nList<Person> results = sf.createSession()\n    .createQuery(\"from Person where age > :min\", Person.class)\n    .setParameter(\"min\", 25)\n    .list();\n\nsf.close();",
@@ -2322,7 +2336,7 @@
   "spring_intro": "O módulo spring-data-axonbase oferece um repositório Spring Data e um template programático para integrar aplicações Spring Boot com o AxonBase. Usa as anotações @AxonTable, @AxonId, @AxonField e @AxonEdge para mapear entidades Java para tabelas e relações de grafo.",
   "spring_dep_title": "Dependência Maven",
   "spring_dep_desc": "Adicione o módulo spring-data-axonbase ao classpath. Ele depende do axonbase-sdk-java e do spring-data-commons.",
-  "spring_dep_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-spring-data</artifactId>\n  <version>0.2.3</version>\n</dependency>",
+  "spring_dep_code": "<dependency>\n  <groupId>com.axondatabase</groupId>\n  <artifactId>axonbase-spring-data</artifactId>\n  <version>1.0.0</version>\n</dependency>",
   "spring_repo_title": "Repository (CRUD)",
   "spring_repo_desc": "SimpleAxonBaseRepository<T, ID> implementa Repository, CrudRepository e PagingAndSortingRepository. Métodos: save, findById, findAll, findAll(Sort), findAll(Pageable), count, deleteById, delete, existsById. Converte registros AxonQL em objetos Java automaticamente.",
   "spring_template_title": "AxonTemplate",
@@ -2428,7 +2442,19 @@
   "data_rules_auth_title": "$auth e $token",
   "data_rules_auth_desc": "$auth e $token trazem os dados do token da sessão, e $auth.id é o nome do usuário. Uma sessão autenticada não pode definir essas variáveis. Quem tem Data Rule não abre LIVE SELECT nem usa /export.",
   "data_rules_limits_title": "O que a Data Rule não cobre",
-  "data_rules_limits_items": ["WHERE e ORDER BY sobre um campo mascarado usam o valor real, que pode ser deduzido.", "Uma escrita que copie um campo mascarado para outro campo da mesma linha (SET copia = cpf) expõe o valor.", "A máscara não alcança campos aninhados, como endereco.cpf.", "Propriedades de arestas lidas por travessia de grafo não são mascaradas.", "As tabelas virtuais AUDIT_LOG e AUDIT_CASES mostram o conteúdo original.", "O corpo de um DEFINE EVENT recebe $before e $after sem máscara.", "Funções que leem o armazenamento diretamente, como kv::, e consultas enviadas por DATABASE LINK.", "Instruções de esquema, como DROP TABLE, além de RELATE e UNRELATE, não são restringidas pela regra.", "Mensagens de erro, como a de índice único, podem revelar que um valor oculto existe.", "Um programa declarado SECURITY DEFINER roda com as regras do dono.", "As rotas de backup e de gestão, que exigem papel administrativo."],
+  "data_rules_limits_items": [
+    "WHERE e ORDER BY sobre um campo mascarado usam o valor real, que pode ser deduzido.",
+    "Uma escrita que copie um campo mascarado para outro campo da mesma linha (SET copia = cpf) expõe o valor.",
+    "A máscara não alcança campos aninhados, como endereco.cpf.",
+    "Propriedades de arestas lidas por travessia de grafo não são mascaradas.",
+    "As tabelas virtuais AUDIT_LOG e AUDIT_CASES mostram o conteúdo original.",
+    "O corpo de um DEFINE EVENT recebe $before e $after sem máscara.",
+    "Funções que leem o armazenamento diretamente, como kv::, e consultas enviadas por DATABASE LINK.",
+    "Instruções de esquema, como DROP TABLE, além de RELATE e UNRELATE, não são restringidas pela regra.",
+    "Mensagens de erro, como a de índice único, podem revelar que um valor oculto existe.",
+    "Um programa declarado SECURITY DEFINER roda com as regras do dono.",
+    "As rotas de backup e de gestão, que exigem papel administrativo."
+  ],
   "data_rules_diagram_alt": "Diagrama de Data Rules: um usuário com uma regra atribuída envia uma consulta, o motor aplica o predicado como uma cláusula WHERE adicional, e apenas as linhas correspondentes são retornadas com campos sensíveis ocultos.",
   "data_rules_demo_title": "Exemplo real",
   "data_rules_demo_desc": "Os comandos a seguir criam duas ordens, definem uma regra, atribuem a alice, e demonstram o filtro e a máscara em ação. Execute-os contra um servidor ativo.",
@@ -3011,7 +3037,7 @@
   ],
   "adminapi_ex_info_title": "Informações do servidor",
   "adminapi_ex_info_desc": "A resposta nunca inclui o segredo do JWT, a senha do root nem as chaves do S3. O objeto config está abreviado aqui.",
-  "adminapi_ex_info_code": "curl -s http://127.0.0.1:8000/admin/v1/info -H \"Authorization: Bearer $TOKEN\"\n\n# {\"version\":\"0.2.4\",\"nodeId\":\"local\",\"clusterId\":\"local\",\"role\":\"LEADER\",\n#  \"uptimeSeconds\":120,\"mode\":\"standalone\",\n#  \"config\":{\"path\":\"/data\",\"port\":8000,\"bind\":\"0.0.0.0\",\"requireAuth\":true,\n#            \"queryTimeoutMs\":30000,\"txnTimeoutMs\":300000,\"rateLimit\":0,\n#            \"tls\":false,\"httpThreads\":32,\"s3Configured\":false, ...}}",
+  "adminapi_ex_info_code": "curl -s http://127.0.0.1:8000/admin/v1/info -H \"Authorization: Bearer $TOKEN\"\n\n# {\"version\":\"1.0.0\",\"nodeId\":\"local\",\"clusterId\":\"local\",\"role\":\"LEADER\",\n#  \"uptimeSeconds\":120,\"mode\":\"standalone\",\n#  \"config\":{\"path\":\"/data\",\"port\":8000,\"bind\":\"0.0.0.0\",\"requireAuth\":true,\n#            \"queryTimeoutMs\":30000,\"txnTimeoutMs\":300000,\"rateLimit\":0,\n#            \"tls\":false,\"httpThreads\":32,\"s3Configured\":false, ...}}",
   "adminapi_ex_catalog_title": "Namespaces e tabelas",
   "adminapi_ex_catalog_desc": "index.kind é standard, unique, search, vector, geo ou columnar. schemaMode é SCHEMAFULL ou SCHEMALESS.",
   "adminapi_ex_catalog_code": "curl -s http://127.0.0.1:8000/admin/v1/namespaces -H \"Authorization: Bearer $TOKEN\"\n# [{\"name\":\"app\",\"databases\":[\"main\",\"other\"]}]\n\ncurl -s http://127.0.0.1:8000/admin/v1/databases/app/main/tables -H \"Authorization: Bearer $TOKEN\"\n# [{\"name\":\"person\",\"schemaMode\":\"SCHEMAFULL\",\n#   \"fields\":[{\"name\":\"name\",\"type\":\"string\"}],\n#   \"indexes\":[{\"name\":\"idx_name\",\"columns\":[\"name\"],\"kind\":\"unique\"}]}]",
@@ -4635,5 +4661,117 @@
   ],
   "backup_chain_title": "Backup em cadeia (formato v2)",
   "backup_chain_desc": "O backup completo e os incrementais formam uma cadeia. No restore, envie o completo seguido dos incrementais, na ordem, no mesmo corpo. O motor valida tudo antes de tocar na base: o primeiro segmento tem de ser completo, e o since de cada incremental tem de ser igual à versão do segmento anterior. Cadeia incompleta, fora de ordem, adulterada ou truncada responde com BACKUP_CHAIN_INVALID, BACKUP_CHECKSUM ou BACKUP_TRUNCATED e a base fica intacta. Restaurar só um incremental é recusado. Pelo AxonBase Enterprise o agente monta a cadeia e confere o sha256 de cada elo antes de enviar. Arquivos v1 ainda são aceitos, mas não escapam as chaves do índice COLUMNAR e perdem essas linhas em silêncio: refaça os backups v1 de tabelas com esse índice.",
-  "backup_chain_code": "# completo, depois incrementais a partir da marca d'água devolvida em X-Axon-Backup-Version\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=full\" -H \"Authorization: Bearer $TOKEN\" -D full.h -o full.axbak\nWM=$(grep -i x-axon-backup-version full.h | tr -d '\\r' | awk '{print $2}')\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=incremental&since=$WM\" -H \"Authorization: Bearer $TOKEN\" -o inc1.axbak\n\n# restore: o corpo é a concatenação na ordem\ncat full.axbak inc1.axbak | curl -s -X POST \"http://127.0.0.1:8000/admin/v1/backups/restore?confirm=true&force=true\" -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/octet-stream' --data-binary @-"
+  "backup_chain_code": "# completo, depois incrementais a partir da marca d'água devolvida em X-Axon-Backup-Version\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=full\" -H \"Authorization: Bearer $TOKEN\" -D full.h -o full.axbak\nWM=$(grep -i x-axon-backup-version full.h | tr -d '\\r' | awk '{print $2}')\ncurl -s \"http://127.0.0.1:8000/admin/v1/backups/export?type=incremental&since=$WM\" -H \"Authorization: Bearer $TOKEN\" -o inc1.axbak\n\n# restore: o corpo é a concatenação na ordem\ncat full.axbak inc1.axbak | curl -s -X POST \"http://127.0.0.1:8000/admin/v1/backups/restore?confirm=true&force=true\" -H \"Authorization: Bearer $TOKEN\" -H 'Content-Type: application/octet-stream' --data-binary @-",
+  "nav_limitations": "Limitações da 1.0.0",
+  "notice_text": "Antes de usar a 1.0.0 em produção, leia as limitações de segurança e a lista de recursos experimentais.",
+  "notice_link": "Ver limitações",
+  "limitations_title": "Limitações da 1.0.0",
+  "limitations_intro": "Leia esta página antes de usar a 1.0.0 em produção. Ela reúne as limitações de segurança conhecidas, os recursos experimentais e o que ainda não foi verificado.",
+  "limitations_security_title": "Limitações de segurança conhecidas",
+  "limitations_warning": "Não dependa de PERMISSIONS para esconder dados na leitura por id, no FETCH, na leitura de um registro ligado nem em LIVE SELECT. Nesses caminhos a condição de leitura não é aplicada. A correção é prevista para a 1.0.1.",
+  "limitations_col_issue": "Limitação",
+  "limitations_col_action": "O que fazer",
+  "limitations_security": [
+    [
+      "PERMISSIONS de leitura não valem no acesso direto por id (RETURN t:1.campo), no FETCH e na leitura de um registro ligado.",
+      "Não ofereça consultas AxonQL livres a quem não pode ler a tabela inteira. Faça o controle na aplicação, ou separe os dados em bancos e dê a cada usuário uma identidade com escopo só do banco dele."
+    ],
+    [
+      "LIVE SELECT não aplica as PERMISSIONS de leitura aos avisos, e um $parâmetro do filtro é lido das variáveis de quem grava.",
+      "Não exponha a conexão WebSocket a quem não pode ler a tabela. Um usuário com Data Rule não abre LIVE SELECT."
+    ],
+    [
+      "SHOW SAGA TRANSACTION mostra o estado anterior dos registros a quem alcança a SAGA, sem aplicar PERMISSIONS de leitura, Data Rules ou máscaras.",
+      "Em bancos com SAGA, dê acesso só a quem pode ver os dados."
+    ],
+    [
+      "Quem alcança uma SAGA e pode gravar consegue cancelá-la, e o cancelamento repõe o estado anterior mesmo que as PERMISSIONS negassem essa escrita.",
+      "Dê permissão de escrita nesses bancos só a identidades confiáveis."
+    ],
+    [
+      "$saga_corr e o cabeçalho X-Correlation-Id não conferem escopo, e uma SAGA aberta sem namespace e sem passos pode ser concluída por qualquer identidade que grave.",
+      "Não aceite a correlação vinda do cliente final. Coordene SAGAs com identidade de namespace ou root."
+    ],
+    [
+      "REEMBED não exige administrador e regrava as linhas sem consultar as PERMISSIONS.",
+      "Não dê escrita a quem não pode regravar a tabela inteira."
+    ],
+    [
+      "Um DATABASE LINK vale para todo o namespace: um usuário de banco consegue consultá-lo com a credencial gravada na ligação.",
+      "Use na ligação uma credencial mínima e não a crie em namespace com usuários restritos."
+    ],
+    [
+      "Numa consulta banco.tabela feita por identidade de namespace ou root, valem as PERMISSIONS e as Data Rules do banco da sessão.",
+      "Para usuários sujeitos a regras, use identidade com escopo de banco."
+    ],
+    [
+      "Um usuário com papel viewer ainda grava a definição de uma tabela ao consultar uma tabela que não existe.",
+      "Revise o catálogo periodicamente com INFO FOR DATABASE."
+    ],
+    [
+      "Data Rules não são uma fronteira completa de isolamento: a máscara não alcança campos aninhados, WHERE e ORDER BY permitem deduzir o valor, e a estimativa do EXPLAIN conta linhas ocultas.",
+      "Veja a cobertura e os limites na página de Data Rules antes de confiar nelas."
+    ],
+    [
+      "Na auditoria por IA, AUDITED BY atribuído depois do login só vale no login seguinte, e dois auditados com papel de operador podem aprovar os casos WARNING um do outro.",
+      "Atribua a auditoria antes de liberar o acesso."
+    ],
+    [
+      "Pelo painel Enterprise, a pessoa auditada com papel de operador consegue decidir o próprio caso.",
+      "Não dê o papel de operador no painel a pessoas auditadas."
+    ],
+    [
+      "A porta do Raft não tem autenticação nem cifra.",
+      "Exponha-a só numa rede privada."
+    ],
+    [
+      "Sem TLS entre o gateway e os shards, o segredo dos shards trafega em claro.",
+      "Use TLS ou uma rede privada."
+    ]
+  ],
+  "limitations_experimental_title": "Recursos experimentais",
+  "limitations_experimental_intro": "Passaram nos testes funcionais, mas as metas de carga e de falha não foram medidas em máquinas separadas. O comportamento e o formato gravado podem mudar numa versão 1.x. Teste com a sua carga e mantenha backup.",
+  "limitations_col_feature": "Recurso",
+  "limitations_col_enabled": "Como se liga",
+  "limitations_col_missing": "O que falta",
+  "limitations_experimental": [
+    [
+      "Vários shards (SHARD BY, gateway e backup de shards)",
+      "gateway e SHARD BY",
+      "A meta de ingestão com três shards nunca foi medida. O gateway atende só /sql."
+    ],
+    [
+      "Partições por tempo",
+      "DEFINE PARTITION",
+      "Os portões de desempenho nunca rodaram."
+    ],
+    [
+      "TTL (expiração de registros)",
+      "DEFINE TTL",
+      "O efeito sobre a latência de escrita nunca foi medido."
+    ],
+    [
+      "Camada fria",
+      "AXON_COLD_DIR ou AXON_COLD_S3",
+      "Nunca testada contra um armazenamento S3 real."
+    ],
+    [
+      "Prioridade por tipo de carga (QoS)",
+      "AXON_QOS, desligada por padrão",
+      "A meta de latência nunca foi medida em máquinas separadas."
+    ]
+  ],
+  "limitations_other_title": "Outras limitações",
+  "limitations_other": [
+    "No JOIN, um filtro sobre a tabela ligada pode zerar o resultado, o ORDER BY é ignorado e LEFT JOIN se comporta como junção interna.",
+    "Uma consulta com AT devolve o valor atual quando não há histórico para o instante pedido.",
+    "O GraphQL ignora os campos pedidos, os argumentos e as demais raízes da consulta.",
+    "CANCEL SAGA não desfaz a escrita em registro com chave tipada, lista ou objeto: o comando devolve erro e a SAGA fica em COMPENSATING.",
+    "BEGIN SAGA com um nome sem definição é aceito, sem participantes.",
+    "O pacote publicado para Spring Data não traz repositórios, template nem anotações.",
+    "A escrita de registros novos em um nó ficou cerca de 12% mais lenta com 1 thread e 6% com 8 threads, comparada à 0.10.1.",
+    "Os portões de carga e de resiliência em máquinas dedicadas não foram executados no código desta versão, e a recuperação de desastre nunca foi testada contra um armazenamento S3 real."
+  ],
+  "limitations_full": "A lista completa e os passos de atualização estão nas notas da 1.0.0",
+  "spring_notice": "Atenção: na 1.0.0, o pacote axonbase-spring-data publicado não traz repositórios, template nem anotações. O que esta página descreve não funciona com o pacote do Maven Central. Para Java, use o SDK ou o driver JDBC."
 }

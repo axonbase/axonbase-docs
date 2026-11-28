@@ -58,6 +58,7 @@ import SearchGraph from "./pages/Search/Graph";
 import SearchColumnar from "./pages/Search/Columnar";
 import Rust from "./pages/SDK/Rust";
 import Landing from "./pages/Landing";
+import Limitations from "./pages/Limitations";
 
 export default function App() {
   return (
@@ -65,6 +66,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route element={<Layout />}>
         <Route path="/docs" element={<Home />} />
+        <Route path="/limitations" element={<Limitations />} />
         <Route path="/getting-started" element={<GettingStarted />} />
         <Route path="/installation" element={<Installation />} />
         <Route path="/configuration" element={<Configuration />} />

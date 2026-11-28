@@ -6,6 +6,7 @@ export default function SpringData() {
   return (
     <div className="page spring-data-page">
       <h1>{t("spring_title")}</h1>
+      <p className="release-warning" role="note">{t("spring_notice")}</p>
       <p>{t("spring_intro")}</p>
 
       <section>
