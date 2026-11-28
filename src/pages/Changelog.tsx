@@ -7,8 +7,9 @@ export default function Changelog() {
     <div className="page changelog-page">
       <h1>{t("changelog_title")}</h1>
       <p>{t("changelog_intro")}</p>
-      {versions.map((v, i) => (
-        <section key={i} className="changelog-version">
+      {/* Os textos guardam as versões em ordem cronológica; a página mostra a mais recente primeiro. */}
+      {[...versions].reverse().map((v) => (
+        <section key={v.version} className="changelog-version">
           <h2>{v.version} <span className="changelog-date">{v.date}</span></h2>
           <ul>
             {v.changes.map((c, j) => (
