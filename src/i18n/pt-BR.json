@@ -1648,7 +1648,7 @@
     },
     {
       "version": "1.0.0",
-      "date": "2026-11-27",
+      "date": "2026-11-28",
       "changes": [
         "Primeira versão final da linha 1.0. O código do motor é o da 1.0.0-rc2. Acompanha o AxonBase Enterprise 0.10.0.",
         "Segurança, leia antes de usar: PERMISSIONS de leitura não valem na leitura por id, no FETCH, na leitura de um registro ligado nem em LIVE SELECT. Correção prevista para a 1.0.1. A lista completa está na página Limitações da 1.0.0.",

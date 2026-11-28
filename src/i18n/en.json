@@ -1648,7 +1648,7 @@
     },
     {
       "version": "1.0.0",
-      "date": "2026-11-27",
+      "date": "2026-11-28",
       "changes": [
         "First final release of the 1.0 line. The engine code is the one in 1.0.0-rc2. Ships with AxonBase Enterprise 0.10.0.",
         "Security, read before use: read PERMISSIONS do not apply to reads by record id, FETCH, linked record reads or LIVE SELECT. A fix is planned for 1.0.1. The full list is on the 1.0.0 limitations page.",
