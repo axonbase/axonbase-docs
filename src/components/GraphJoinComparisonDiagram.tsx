@@ -50,7 +50,7 @@ export default function GraphJoinComparisonDiagram() {
 
       <path d="M570 200h30s16 0 16-16l16-16" stroke="#2dd4bf" strokeWidth="2" fill="none" markerEnd="url(#gc-arrow)" strokeDasharray="6 3" />
 
-      <rect fill="#0d3b3a" height="30" rx="6" stroke="#2dd4bf" strokeWidth="1" width="120" x="520" y="244" />
+      <rect fill="#0d3b3a" height="30" rx="6" stroke="#2dd4bf" strokeWidth="1" width="210" x="475" y="244" />
       <text fill="#ccfbf1" fontSize="11" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="580" y="263">Result: ["user:3","user:4"]</text>
 
       <text fill="#2dd4bf" fontSize="10" fontFamily="ui-monospace, SFMono-Regular, monospace" textAnchor="middle" x="615" y="298">{'SELECT VALUE ->friend->user->friend->user FROM user:1'}</text>
