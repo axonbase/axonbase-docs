@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import ReleaseNotice from "../components/ReleaseNotice";
 
 const connectors = [
   ["Java", "java/java-original.svg", "https://central.sonatype.com/artifact/com.axondatabase/axonbase-sdk-java"], ["Python", "python/python-original.svg", "https://pypi.org/project/axonbase-sdk/"],
@@ -43,6 +44,7 @@ export default function Landing() {
 
   return <main className="landing landing-reframed">
     <nav className="landing-nav"><a className="landing-brand" href="/"><span>A</span>AxonBase</a><div><a className="landing-nav-link" href="https://github.com/axonbase/axonbase" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.61-3.37-1.18-3.37-1.18-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.54 1.03 1.54 1.03.9 1.54 2.35 1.1 2.92.84.09-.65.35-1.1.64-1.35-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.8c.85 0 1.7.11 2.5.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.9.68 1.82v2.7c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" /></svg>{copy.github}</a><Link className="landing-nav-link landing-nav-docs" to="/docs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 0-3 0V3Zm3 15h9V6H8v12Zm2-9h5v2h-5V9Zm0 4h5v2h-5v-2Z" /></svg>{copy.docs}</Link><div className="landing-language" aria-label="Language"><button className={pt ? "active" : ""} onClick={() => i18n.changeLanguage("pt-BR")}>PT</button><button className={!pt ? "active" : ""} onClick={() => i18n.changeLanguage("en")}>EN</button></div></div></nav>
+    <ReleaseNotice />
     <section className="landing-hero">
       <div className="landing-grid" />
       <div className="landing-hero-copy"><p className="landing-kicker">{copy.signal}</p><h1>{copy.hero}</h1><p>{copy.lead}</p><div className="landing-actions"><Link to="/docs" className="landing-primary">{copy.start} <b>→</b></Link><a href="https://github.com/axonbase/axonbase" target="_blank" rel="noreferrer" className="landing-secondary">{copy.github}</a></div></div>

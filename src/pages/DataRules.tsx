@@ -69,6 +69,20 @@ export default function DataRules() {
         <p>{t("data_rules_show_desc")}</p>
         <CodeTabs tabs={[{ label: "AxonQL", code: t("data_rules_show_code"), language: "sql" }]} />
       </section>
+
+      <section>
+        <h2>{t("data_rules_auth_title")}</h2>
+        <p>{t("data_rules_auth_desc")}</p>
+      </section>
+
+      <section>
+        <h2>{t("data_rules_limits_title")}</h2>
+        <ul>
+          {(t("data_rules_limits_items", { returnObjects: true }) as string[]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
