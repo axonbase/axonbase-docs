@@ -1452,7 +1452,7 @@
     }
   ],
   "changelog_title": "Changelog",
-  "changelog_intro": "Changes by version. The current release is 0.9.2.",
+  "changelog_intro": "Changes by version. The current release is 1.0.0.",
   "changelog_versions": [
     {
       "version": "0.1.0-SNAPSHOT",

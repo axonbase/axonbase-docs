@@ -1452,7 +1452,7 @@
     }
   ],
   "changelog_title": "Histórico",
-  "changelog_intro": "Mudanças por versão. A versão atual é a 0.9.2.",
+  "changelog_intro": "Mudanças por versão. A versão atual é a 1.0.0.",
   "changelog_versions": [
     {
       "version": "0.1.0-SNAPSHOT",
